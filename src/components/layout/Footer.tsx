@@ -62,7 +62,7 @@ export default function Footer() {
               </div>
               Email
             </div>
-            musclemeals@gmail.com
+            qravebites@gmail.com
           </div>
   
           <div className="flex flex-col justify-center items-start gap-2">
@@ -72,14 +72,14 @@ export default function Footer() {
               </div>
               Contact
             </div>
-            +91 6305938848
+            +91 6303660509
           </div>
         </div>
   
         <div className="w-10/12 flex flex-col md:flex-row justify-between mt-8 text-white relative z-2">
           <div className="w-full md:w-1/4 flex flex-col gap-6">
-            <Link href="/" className="text-2xl font-extrabold">Muscle Meals</Link>
-            <p>Lorem ipsum dolor sit, amet consectetur adipisicing elit.</p>
+            <Link href="/" className="text-2xl font-extrabold">QraveBites</Link>
+            <p>Your order will be on your table </p>
             <div className="flex flex-row gap-2">
               {/* Social Media Icons */}
               <Link href="https://www.facebook.com/musclemeals/" className="hover:bg-[#eb0029] p-2 border-2 border-solid border-white">

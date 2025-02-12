@@ -7,12 +7,12 @@ import {
   Table,
   TableBody,
   TableCell,
-  TableFooter,
   TableHead,
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
 import Image from "next/image";
+import { Input } from "@/components/ui/input";
 
 const initialCartItems = [
   {
@@ -34,96 +34,98 @@ const initialCartItems = [
 export default function Cart() {
   const [cartItems, setCartItems] = useState(initialCartItems);
 
-  const incrementQuantity = (itemId: number) => {
+  const updateQuantity = (itemId: number, change: number) => {
     setCartItems((prevItems) =>
       prevItems.map((item) =>
-        item.id === itemId
-          ? { ...item, quantity: item.quantity + 1 }
-          : item
-      )
-    );
-  };
-
-  const decrementQuantity = (itemId: number) => {
-    setCartItems((prevItems) =>
-      prevItems.map((item) =>
-        item.id === itemId && item.quantity > 1
-          ? { ...item, quantity: item.quantity - 1 }
+        item.id === itemId && item.quantity + change > 0
+          ? { ...item, quantity: item.quantity + change }
           : item
       )
     );
   };
 
   const handleRemoveItem = (itemId: number) => {
-    setCartItems((prevItems) =>
-      prevItems.filter((item) => item.id !== itemId)
-    );
+    setCartItems((prevItems) => prevItems.filter((item) => item.id !== itemId));
   };
 
-  const calculateTotal = () => {
-    return cartItems
+  const calculateTotal = () =>
+    cartItems
       .reduce((total, item) => total + item.price * item.quantity, 0)
       .toFixed(2);
-  };
 
   return (
-    <div>
+    <div className="flex flex-col w-full bg-white">
       <TitleHeader title="Cart Items" subtitle="Cart" />
-      <div className="w-full px-6 py-8 md:px-36 md:py-24 flex flex-col items-start justify-center bg-white">
-        {/* <div className="w-full bg-[#eb0029] p-3 text-white">Shipping Cost Updated</div> */}
-        <br/>
-        <div className="w-full border  border-gray-300  shadow-md">
-          <Table className="w-full  ">
-            <TableHeader className="w-full border-2 border-gray-300">
-              <TableRow className=" h-24 ">
-                <TableHead className="text-left font-bold  text-black pl-4">Item Image</TableHead>
-                <TableHead className="text-left font-bold  text-black ">Item Name</TableHead>
-                <TableHead className="text-left font-bold text-black ">Price</TableHead>
-                <TableHead className="text-center font-bold text-black ">Quantity</TableHead>
-                <TableHead className="text-right font-bold text-black ">Total</TableHead>
-                <TableHead className="text-right font-bold text-black pr-4">Remove</TableHead>
+      <div className="p-36">
+        <div className="w-full border shadow-md rounded-none overflow-hidden mt-6">
+          <Table className="min-w-full ">
+            <TableHeader>
+              <TableRow className="bg-gray-100 ">
+                <TableHead className="px-4 py-3 text-center text-gray-800 font-extrabold">
+                  Item Image
+                </TableHead>
+                <TableHead className="px-4 py-3 text-center text-gray-800 font-extrabold">
+                  Item Name
+                </TableHead>
+                <TableHead className="px-4 py-3 text-center text-gray-800 font-extrabold">
+                  Price
+                </TableHead>
+                <TableHead className="px-4 py-3 text-center text-gray-800 font-extrabold">
+                  Quantity
+                </TableHead>
+                <TableHead className="px-4 py-3 text-center text-gray-800 font-extrabold">
+                  Total
+                </TableHead>
+                <TableHead className="px-4 py-3 text-center text-gray-800 font-extrabold">
+                  Remove
+                </TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {cartItems.map((item) => (
-                <TableRow key={item.id}>
-                  <TableCell>
+                <TableRow key={item.id} className=" cursor-pointer">
+                  <TableCell className="px-4 py-8 flex justify-center items-center">
                     <Image
-                      width={100}
-                      height={100}
+                      width={60}
+                      height={60}
                       src={item.image}
                       alt={item.name}
+                      className="object-cover rounded"
                     />
                   </TableCell>
-                  <TableCell>{item.name}</TableCell>
-                  <TableCell>${item.price.toFixed(2)}</TableCell>
-                  <TableCell className="text-center">
-                    <div className="flex items-center justify-center">
+                  <TableCell className="px-4 py-8 text-center">
+                    {item.name}
+                  </TableCell>
+                  <TableCell className="px-4 py-8 text-center">
+                    ${item.price.toFixed(2)}
+                  </TableCell>
+                  <TableCell className="px-4 py-8 text-center">
+                    <div className="flex items-center justify-center space-x-2">
                       <Button
                         variant="outline"
-                        aria-label="Decrease quantity"
-                        onClick={() => decrementQuantity(item.id)}
+                        onClick={() => updateQuantity(item.id, -1)}
+                        className="px-2 py-1"
                       >
                         -
                       </Button>
-                      <span className="mx-2">{item.quantity}</span>
+                      <span>{item.quantity}</span>
                       <Button
                         variant="outline"
-                        aria-label="Increase quantity"
-                        onClick={() => incrementQuantity(item.id)}
+                        onClick={() => updateQuantity(item.id, 1)}
+                        className="px-2 py-1"
                       >
                         +
                       </Button>
                     </div>
                   </TableCell>
-                  <TableCell className="text-right">
+                  <TableCell className="px-4 py-8 text-center">
                     ${(item.price * item.quantity).toFixed(2)}
                   </TableCell>
-                  <TableCell className="text-right">
+                  <TableCell className="px-4 py-8 text-center">
                     <Button
-                      variant="outline"
-                      aria-label="Remove item"
+                      variant="ghost"
                       onClick={() => handleRemoveItem(item.id)}
+                      className="text-red-500"
                     >
                       <Trash />
                     </Button>
@@ -131,17 +133,48 @@ export default function Cart() {
                 </TableRow>
               ))}
             </TableBody>
-            <TableFooter className="border-t">
-              <TableRow>
-                <TableCell colSpan={4} className="text-left font-bold">Total</TableCell>
-                <TableCell className="text-right font-bold">
-                  ${calculateTotal()}
-                </TableCell>
-              </TableRow>
-            </TableFooter>
           </Table>
+
+          <div className="flex items-center flex-row justify-between p-8">
+            <div className="flex items-center flex-row justify-center gap-2 w-1/3">
+              <Input
+                type="text"
+                placeholder="Coupon code"
+                className="rounded-none p-6"
+                id="coupon"
+              />
+              <Button className="ml-2 bg-[#eb0029] rounded-none p-6">
+                Apply
+              </Button>
+            </div>
+
+            <div className="flex items-center flex-row justify-center gap-2  w-1/3">
+              <Button className="ml-2 bg-[#eb0029] rounded-none p-6">
+                Clear Cart
+              </Button>
+              <Button className="ml-2 bg-[#eb0029] rounded-none p-6">
+                Continue Shopping
+              </Button>{" "}
+            </div>
+          </div>
         </div>
+
+      <div className="flex flex-row w-full mt-20">
+        <div className="w-1/2"></div>
+        <div className="w-1/2 ">
+            <h1 className="text-gray-500  text-3xl mb-4">Card Totals</h1>
+            <div className="border h-40 shadow-sm rounded-none overflow-hidden">
+                
+            </div>
+        </div>
+       </div>
+
       </div>
+
+
+       
+      
+
     </div>
   );
 }

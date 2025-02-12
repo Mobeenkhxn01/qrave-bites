@@ -27,10 +27,11 @@ export default function Hero() {
       {/* Left section with text */}
       <div className="w-full md:w-1/2 flex flex-col justify-center items-start p-4 min-h-[300px] md:min-h-screen   z-10">
         <h1 className=" uppercase font-roboto text-2xl  font-extrabold text-[#fc791a]">
-          Welcome To Muscle Meals
+          Welcome To Qrave Bites
         </h1>
         <h1 className="uppercase font-roboto text-6xl  font-extrabold text-white">
-          Healthy Meals with included protein and carbs for evry gym lovers
+        “Scan Your Table’s QR, Order Instantly.
+        Savor the Meal—Not the Wait.”
         </h1>
         <div className="flex flex-col md:flex-row gap-2 p-3 justify-center">
           <Button  className=" bg-[#eb0029] m-4 p-8 text-xl rounded-none hover:bg-[#fc791a] ">

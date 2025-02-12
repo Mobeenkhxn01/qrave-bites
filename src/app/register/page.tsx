@@ -1,6 +1,6 @@
 "use client";
 import { z } from "zod";
-import React from "react";
+import React, { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -18,17 +18,26 @@ import {
 import { Input } from "@/components/ui/input";
 import { signIn } from "next-auth/react";
 import { toast } from "react-hot-toast";
+import userSignIn from "@/actions/sign-in";
 
+// API Endpoint Constant
+const API_REGISTER_URL = "/api/register";
+
+// Schema Validation
 const formSchema = z.object({
-  email: z.string().email({ message: "Invalid email address" }),
+  email: z.string().trim().email({ message: "Invalid email address" }),
   password: z
     .string()
-    .min(8, { message: "Password must be at least 8 characters" }),
+    .min(8, { message: "Password must be at least 8 characters" })
+    .regex(/[A-Z]/, { message: "Password must include an uppercase letter" })
+    .regex(/[!@#$%^&*(),.?":{}|<>]/, {
+      message: "Password must include a special character",
+    }),
 });
 
 export default function RegisterPage() {
   const router = useRouter();
-  const [isLoading, setIsLoading] = React.useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -41,28 +50,25 @@ export default function RegisterPage() {
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true);
     try {
-      const response = await fetch("/api/register", {
+      const response = await fetch(API_REGISTER_URL, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(values),
       });
 
       const data = await response.json();
 
       if (!response.ok) {
+        if (response.status === 409) {
+          throw new Error("User already exists!");
+        }
         throw new Error(data.error || "Registration failed");
       }
 
       toast.success("Registration successful! Redirecting to login...");
       setTimeout(() => router.push("/login"), 2000);
     } catch (error: unknown) {
-      if (error instanceof Error) {
-        toast.error(error.message);
-      } else {
-        toast.error("An unexpected error occurred");
-      }
+      toast.error(error instanceof Error ? error.message : "An unexpected error occurred");
     } finally {
       setIsLoading(false);
     }
@@ -72,7 +78,8 @@ export default function RegisterPage() {
     <section className="max-w-sm mx-auto p-4 mt-5 shadow-sm rounded-lg bg-[#f9f9f9]">
       <h1 className="text-center text-[#eb0029] text-4xl mb-4">Register</h1>
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+          {/* Email Field */}
           <FormField
             control={form.control}
             name="email"
@@ -91,6 +98,8 @@ export default function RegisterPage() {
               </FormItem>
             )}
           />
+
+          {/* Password Field */}
           <FormField
             control={form.control}
             name="password"
@@ -109,26 +118,39 @@ export default function RegisterPage() {
               </FormItem>
             )}
           />
+
+          {/* Submit Button */}
           <Button
             className="w-full bg-[#eb0029] hover:bg-[#eb0029]/90"
             type="submit"
             disabled={isLoading}
+            aria-live="polite"
           >
             {isLoading ? "Registering..." : "Register"}
           </Button>
+
+          {/* Provider Login */}
           <div className="my-4 text-center text-gray-500">
             or register with provider
           </div>
           <Button
-            className="w-full flex flex-row gap-4"
+            className="w-full flex items-center gap-4"
             variant="outline"
             type="button"
-            onClick={() => signIn("google")}
+            onClick={() => userSignIn()}
             disabled={isLoading}
           >
-            <Image src="/google.png" alt="Google logo" width={24} height={24} />
+            <Image
+              src="/google.png"
+              alt="Google logo"
+              width={24}
+              height={24}
+              priority={false}
+            />
             Continue with Google
           </Button>
+
+          {/* Redirect to Login */}
           <div className="text-center my-4 text-gray-500 border-t pt-4">
             Existing account?{" "}
             <Link className="underline hover:text-[#eb0029]" href="/login">

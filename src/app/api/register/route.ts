@@ -1,54 +1,25 @@
-import { NextResponse } from 'next/server';
-import bcrypt from 'bcryptjs';
-import  prisma  from '@/lib/prisma';
+import prisma from '@/lib/prisma';
+import bcrypt from 'bcrypt';
 
-export async function POST(req: Request) {
-  try {
-    const { email, password } = await req.json();
 
-    
-    if (!email || !password) {
-      return NextResponse.json(
-        { error: "Email and password are required" },
-        { status: 400 }
-      );
-    }
+export async function POST(req : Request) {
+  const body = await req.json();
+  const pass = body.password;
 
-    
-    const existingUser = await prisma.user.findUnique({
-        where: { email: email }
-    });
-
-    if (existingUser) {
-      return NextResponse.json(
-        { error: "User already exists" },
-        { status: 400 }
-      );
-    }
-
-   
-    const hashedPassword = await bcrypt.hash(password, 10);
-
-    
-    const user = await prisma.user.create({
-      data: {
-        email,
-        password: hashedPassword,
-        
-        role: 'USER' 
-      }
-    });
-
-    return NextResponse.json({ 
-      message: 'User created successfully',
-      userId: user.id 
-    }, { status: 201 });
-
-  } catch (error) {
-    console.error('Registration error:', error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+  if (!pass?.length || pass.length < 5) {
+    throw new Error('Password must be at least 5 characters');
   }
+
+  const salt = bcrypt.genSaltSync(10);
+  body.password = bcrypt.hashSync(pass, salt);
+
+  const createdUser = await prisma.user.create({
+    data: {
+      ...body,
+    },
+  });
+
+  return new Response(JSON.stringify(createdUser), {
+    headers: { 'Content-Type': 'application/json' },
+  });
 }

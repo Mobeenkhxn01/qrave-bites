@@ -48,10 +48,10 @@ export default function Cart() {
     setCartItems((prevItems) => prevItems.filter((item) => item.id !== itemId));
   };
 
-  const calculateTotal = () =>
-    cartItems
-      .reduce((total, item) => total + item.price * item.quantity, 0)
-      .toFixed(2);
+  // const calculateTotal = () =>
+  //   cartItems
+  //     .reduce((total, item) => total + item.price * item.quantity, 0)
+  //     .toFixed(2);
 
   return (
     <div className="flex flex-col w-full bg-white">

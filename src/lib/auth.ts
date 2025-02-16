@@ -6,6 +6,7 @@ import { PrismaAdapter } from "@auth/prisma-adapter"
 import prisma from "./prisma";
 
 
+
 export const { handlers, signIn, signOut, auth } = NextAuth({
   adapter: PrismaAdapter(prisma),
   providers: [Google,
@@ -22,7 +23,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         const pwHash = saltAndHashPassword(credentials.password)
  
         
-        user = await getUserFromDb(credentials.email, pwHash)
+        user = await getUserFromDb(credentials.email as string, pwHash)
  
         if (!user) {
          
@@ -45,15 +46,16 @@ function saltAndHashPassword(password: unknown) {
   return bcrypt.hashSync(password, salt);
 }
 
-async function getUserFromDb(email: unknown, pwHash: any): Promise<any> {
+async function getUserFromDb(email: string, pwHash: string){
   if (typeof email !== 'string') {
     throw new Error("Email must be a string.");
   }
 
-  
-  const user = await fakeDbQuery(email);
+  const user = await prisma.user.findUnique({
+    where: { email },
+  });
 
-  if (user && bcrypt.compareSync(pwHash, user.passwordHash)) {
+  if (user && bcrypt.compareSync(pwHash, user.password ||"")) {
     return {
       id: user.id,
       name: user.name,
@@ -65,18 +67,6 @@ async function getUserFromDb(email: unknown, pwHash: any): Promise<any> {
   return null;
 }
 
-// Fake database query function for demonstration purposes
-async function fakeDbQuery(email: string): Promise<any> {
-  // Simulate a user record from the database
-  const users = [
-    {
-      id: 1,
-      name: "John Doe",
-      email: "john.doe@example.com",
-      passwordHash: bcrypt.hashSync("password123", 10), // Example hashed password
-    },
-  ];
 
-  return users.find(user => user.email === email) || null;
-}
+
 

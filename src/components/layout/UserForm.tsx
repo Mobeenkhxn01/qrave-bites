@@ -7,15 +7,13 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 
 export default function UserForm() {
-  function setImage(link: string): void {
-    throw new Error("Function not implemented.");
-  }
+
 
   return (
     <div className="w-1/2 flex mx-auto gap-2 justify-center flex-wrap">
       <div>
         <div className="p-2 rounded-lg relative max-w-[120px]">
-          <EditableImage link={"/image"} setLink={setImage} />
+          <EditableImage  />
         </div>
       </div>
       <form className="grow">

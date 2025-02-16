@@ -1,3 +1,4 @@
+"use client";
 import UserTabs from "@/components/layout/UserTabs";
 import Link from "next/link";
 import Left from "@/components/icons/Left";

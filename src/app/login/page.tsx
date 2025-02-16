@@ -3,7 +3,6 @@
 import { z } from "zod";
 import React from "react";
 import Link from "next/link";
-import { signIn } from "@/lib/auth";
 import Image from "next/image";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";

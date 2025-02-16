@@ -1,8 +1,8 @@
 import { InstagramLogoIcon, TwitterLogoIcon } from "@radix-ui/react-icons";
 import {
-  ArrowBigLeft,
+  
   ArrowBigRightIcon,
-  Check,
+  
   MailIcon,
   PhoneCallIcon,
 } from "lucide-react";
@@ -10,7 +10,6 @@ import Link from "next/link";
 import { FiFacebook } from "react-icons/fi";
 import { IoLocationSharp, IoLogoWhatsapp } from "react-icons/io5";
 
-import { Form } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";

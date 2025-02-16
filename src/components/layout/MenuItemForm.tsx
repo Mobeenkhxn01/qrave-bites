@@ -1,6 +1,5 @@
-import { FormEvent } from "react";
-import { useForm } from "react-hook-form";
 
+"use client";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
@@ -16,16 +15,15 @@ import {
   SelectValue,
 } from "../ui/select";
 
+
 export default function MenuItemForm() {
-  function setImage(link: string): void {
-    throw new Error("Function not implemented.");
-  }
+  
 
   return (
     <form className="w-1/2 pt-8 flex mx-auto gap-2 justify-center flex-wrap">
       <div>
         <div className="p-2 rounded-lg relative max-w-[120px]">
-          <EditableImage link={"/image"} setLink={setImage} />
+          <EditableImage />
         </div>
       </div>
 

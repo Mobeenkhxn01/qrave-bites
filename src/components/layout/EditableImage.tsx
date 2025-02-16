@@ -1,18 +1,24 @@
+"use client";
 import Image from "next/image";
+import { useState, ChangeEvent, useEffect } from "react";
 import toast from "react-hot-toast";
-import { ChangeEvent } from "react";
+import { useSession } from "next-auth/react";
 
-interface EditableImageProps {
-  link: string | null;
-  setLink: (link: string) => void;
-}
+export default function EditableImage() {
+  const { data: session } = useSession();
+  const [link, setLink] = useState<string | null>(null);
 
-export default function EditableImage({ link, setLink }: EditableImageProps) {
+  useEffect(() => {
+    if (session?.user?.image) {
+      setLink(session.user.image);
+    }
+  }, [session]);
+
   async function handleFileChange(ev: ChangeEvent<HTMLInputElement>) {
     const files = ev.target.files;
     if (files?.length === 1) {
       const data = new FormData();
-      data.set("file", files[0]);
+      data.append("file", files[0]);
 
       const uploadPromise = fetch("/api/upload", {
         method: "POST",
@@ -50,7 +56,7 @@ export default function EditableImage({ link, setLink }: EditableImageProps) {
         </div>
       )}
       <label>
-        <input type="file" className="hidden"  />
+        <input type="file" className="hidden" onChange={handleFileChange} />
         <span className="block border border-gray-300 rounded-lg p-2 text-center cursor-pointer">
           Change image
         </span>

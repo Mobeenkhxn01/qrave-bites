@@ -5,7 +5,6 @@ import Link from "next/link";
 import { cn } from "@/lib/utils";
 import {
   NavigationMenu,
-  NavigationMenuContent,
   NavigationMenuItem,
   NavigationMenuLink,
   NavigationMenuList,
@@ -14,7 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { ArrowRightIcon, Menu } from "lucide-react";
 import {IoCartOutline} from "react-icons/io5"
-import { FiPlus } from "react-icons/fi";
+
 export default function NavigationMenuDemo() {
   return (
     <div className="bg-[#fff] w-full h-20 flex justify-between items-center sticky top-0 z-50 px-4 md:px-8">

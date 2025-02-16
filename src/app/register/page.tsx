@@ -16,7 +16,6 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { signIn } from "next-auth/react";
 import { toast } from "react-hot-toast";
 import userSignIn from "@/actions/sign-in";
 
@@ -68,7 +67,9 @@ export default function RegisterPage() {
       toast.success("Registration successful! Redirecting to login...");
       setTimeout(() => router.push("/login"), 2000);
     } catch (error: unknown) {
-      toast.error(error instanceof Error ? error.message : "An unexpected error occurred");
+      toast.error(
+        error instanceof Error ? error.message : "An unexpected error occurred"
+      );
     } finally {
       setIsLoading(false);
     }

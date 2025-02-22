@@ -1,7 +1,6 @@
 import UserTabs from "@/components/layout/UserTabs";
 import Link from "next/link";
 import Left from "@/components/icons/Left";
-import MenuItemForm from "@/components/layout/MenuItemForm";
 import { Button } from "@/components/ui/button";
 export default function NewMenuPage() {
     return(
@@ -16,7 +15,7 @@ export default function NewMenuPage() {
           <span>Show all menu items</span>
         </Link>
       </div>
-      <MenuItemForm  />
+     
       <div className="max-w-md mx-auto mt-2">
         <div className="max-w-xs ml-auto pl-4">
           <Button></Button>

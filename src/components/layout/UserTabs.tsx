@@ -44,7 +44,7 @@ export default function UserTabs() {
         <Link
           href="/users"
           className={`${
-            path.includes("/users") ? "bg-[#f13a01] text-white" : "bg-transparent"
+            path==="/users" ? "bg-[#f13a01] text-white" : "bg-transparent"
           } px-4 py-2 rounded-full border border-gray-300`}
         >
           Users

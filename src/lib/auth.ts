@@ -1,6 +1,6 @@
 import NextAuth, { DefaultSession } from "next-auth";
 import { PrismaAdapter } from "@auth/prisma-adapter";
-import { prisma } from "./prisma";
+import { PrismaClient } from "@prisma/client";
 import Google from "next-auth/providers/google";
 import CredentialsProvider from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
@@ -15,21 +15,21 @@ declare module "next-auth" {
 
   interface User {
     // ...other properties
-    role: string |undefined;
+    role: string | undefined;
   }
 }
 
+const prisma = new PrismaClient();
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
-  adapter:PrismaAdapter(prisma),
-  
-  providers: [
+  adapter: PrismaAdapter(prisma),
 
+  providers: [
     CredentialsProvider({
       name: "Credentials",
       credentials: {
-        email: { label: "Email", type: "text",value:"password" },
-        password: { label: "Password", type: "password", value:"password" },
+        email: { label: "Email", type: "text", value: "password" },
+        password: { label: "Password", type: "password", value: "password" },
       },
 
       async authorize(credentials) {
@@ -45,7 +45,6 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             throw new Error("No user found.");
           }
 
-        
           const isValidPassword = await bcrypt.compare(
             credentials.password as string,
             user.password as string
@@ -54,9 +53,8 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             throw new Error("Invalid password.");
           }
 
-
           return {
-            role: user.role ??"",
+            role: user.role ?? "",
             email: user.email,
             name: user.name,
             id: user.id,
@@ -72,7 +70,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   ],
 
   callbacks: {
-     async jwt({ token, user }) {
+    async jwt({ token, user }) {
       if (user) {
         token.id = user.id;
         token.role = user.role;
@@ -80,15 +78,15 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
 
       return token;
     },
-    async session({ session, token }){
-      session.user.id= token.id as string;
-      session.user.role=token.role as string;
+    async session({ session, token }) {
+      session.user.id = token.id as string;
+      session.user.role = token.role as string;
       return session;
-      },
+    },
   },
-  pages:{
-    signIn:"/login",
-    error:"/login",
+  pages: {
+    signIn: "/login",
+    error: "/login",
   },
   session: {
     strategy: "jwt",

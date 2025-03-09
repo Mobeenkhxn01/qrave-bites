@@ -24,10 +24,10 @@ export const GET = async (req: Request) => {
         });
 
         if (!order) {
-          return new Response(
-            JSON.stringify({ error: "Order not found" }),
-            { status: 404, headers: { "Content-Type": "application/json" } }
-          );
+          return new Response(JSON.stringify({ error: "Order not found" }), {
+            status: 404,
+            headers: { "Content-Type": "application/json" },
+          });
         }
 
         return new Response(JSON.stringify(order), {
@@ -45,7 +45,7 @@ export const GET = async (req: Request) => {
 
     if (email) {
       const userOrders = await prisma.order.findMany({
-        where: { email : email },
+        where: { userId: email },
       });
 
       return new Response(JSON.stringify(userOrders), {

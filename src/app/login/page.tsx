@@ -57,7 +57,7 @@ export default function LoginPage() {
   }
 
   return (
-    <section className="max-w-sm mx-auto p-4 mt-5 shadow-sm rounded-lg bg-[#f9f9f9]">
+    <section className="max-w-sm mx-auto p-4 mt-5 shadow-xs rounded-lg bg-[#f9f9f9]">
       <h1 className="text-center text-[#eb0029] text-4xl mb-4">Login</h1>
       {error && <p className="text-red-500 text-center">{error}</p>}
       <Form {...form}>

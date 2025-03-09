@@ -163,7 +163,7 @@ export default function Cart() {
         <div className="w-1/2"></div>
         <div className="w-1/2 ">
             <h1 className="text-gray-500  text-3xl mb-4">Card Totals</h1>
-            <div className="border h-40 shadow-sm rounded-none overflow-hidden">
+            <div className="border h-40 shadow-xs rounded-none overflow-hidden">
                 
             </div>
         </div>

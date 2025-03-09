@@ -8,7 +8,7 @@ type TitleHeaderProps = {
 export default function TitleHeader({ title, subtitle }: TitleHeaderProps) {
   return (
     <div
-      className="p-4 bg-cover bg-center shadow"
+      className="p-4 bg-cover bg-center shadow-sm"
       style={{ backgroundImage: 'url("/breadcumb.jpg")', objectFit: "fill" }}
     >
       <div className="w-full flex justify-center items-center flex-col bg-opacity-70 p-36 gap-8">

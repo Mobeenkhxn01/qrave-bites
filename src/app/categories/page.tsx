@@ -105,7 +105,7 @@ export default function Categories() {
                 control={form.control}
                 name="category"
                 render={({ field }) => (
-                  <FormItem className="flex-grow">
+                  <FormItem className="grow">
                     <FormControl>
                       <Input placeholder="Create New Categories" {...field} />
                     </FormControl>

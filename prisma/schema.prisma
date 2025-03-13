@@ -13,21 +13,20 @@ model User {
   email         String          @unique
   password      String?
   emailVerified DateTime?
-  role          String?     @default("user")
+  role          String?         @default("user")
   image         String?
   accounts      Account[]
   sessions      Session[]
-  Authenticator Authenticator[] // Optional for WebAuthn support
+  Authenticator Authenticator[]
 
-  menuItems MenuItem[] @ignore
+  menuItems   MenuItem[]    @relation("UserMenuItems")
+  orders      Order[]
+  Category    Category[]
+  UserAddress UserAddress[]
+  Cart        Cart[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-
-  orders Order[] @ignore
-
-  Category Category[] @ignore
-  UserAddress UserAddress[] @ignore
 }
 
 model Account {
@@ -72,7 +71,6 @@ model VerificationToken {
   @@unique([identifier, token])
 }
 
-// Optional for WebAuthn support
 model Authenticator {
   credentialID         String  @id @map("_id")
   userId               String  @db.ObjectId
@@ -95,21 +93,40 @@ model Category {
   userID String @db.ObjectId
   user   User   @relation(fields: [userID], references: [id], onDelete: Cascade)
 
-  menuItems MenuItem[] @ignore
+  menuItems MenuItem[] @relation("CategoryMenuItems")
 }
 
 model MenuItem {
-  id         String @id @default(auto()) @map("_id") @db.ObjectId
-  name       String
-  price      Float
-  categoryId String @db.ObjectId
+  id          String @id @default(auto()) @map("_id") @db.ObjectId
+  name        String
+  price       Float
   description String
-  image      String
+  image       String
 
-  userID String @db.ObjectId @map("user_id")
-  user   User   @relation(fields: [userID], references: [id], onDelete: Cascade)
+  userID String @db.ObjectId
+  user   User   @relation(fields: [userID], references: [id], onDelete: Cascade, name: "UserMenuItems")
 
-  category Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  categoryId String   @db.ObjectId
+  category   Category @relation(fields: [categoryId], references: [id], onDelete: Cascade, name: "CategoryMenuItems")
+
+  restaurantId String     @db.ObjectId
+  restaurant   Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade, name: "RestaurantMenuItems")
+
+  cartItems CartItem[]
+}
+
+model City {
+  id          String       @id @default(auto()) @map("_id") @db.ObjectId
+  name        String       @unique
+  restaurants Restaurant[]
+}
+
+model Restaurant {
+  id     String     @id @default(auto()) @map("_id") @db.ObjectId
+  name   String
+  cityId String     @db.ObjectId
+  city   City       @relation(fields: [cityId], references: [id], onDelete: Cascade)
+  menu   MenuItem[] @relation("RestaurantMenuItems")
 }
 
 model Order {
@@ -137,4 +154,24 @@ model UserAddress {
 
   userID String @db.ObjectId
   user   User   @relation(fields: [userID], references: [id], onDelete: Cascade)
+}
+
+model Cart {
+  id        String     @id @default(auto()) @map("_id") @db.ObjectId
+  userId    String     @db.ObjectId
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  cartItems CartItem[]
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+}
+
+model CartItem {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  menuItemId String   @db.ObjectId
+  menuItem   MenuItem @relation(fields: [menuItemId], references: [id])
+  quantity   Int      @default(1)
+  cartId     String   @db.ObjectId
+  cart       Cart     @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 }

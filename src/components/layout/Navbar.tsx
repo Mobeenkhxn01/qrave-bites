@@ -16,7 +16,6 @@ import { ArrowRightIcon, Menu } from "lucide-react";
 import { IoCartOutline } from "react-icons/io5";
 
 export default function NavigationMenuDemo() {
-  
   const { data: session } = useSession();
 
   return (
@@ -24,7 +23,10 @@ export default function NavigationMenuDemo() {
       {/* Logo */}
       <NavigationMenu>
         <NavigationMenuItem>
-          <Link href="/" className="text-bold font-serif text-black font-extrabold">
+          <Link
+            href="/"
+            className="text-bold font-serif text-black font-extrabold"
+          >
             <span className="text-[#d19b6f]">QraveBites</span>
           </Link>
         </NavigationMenuItem>
@@ -39,19 +41,29 @@ export default function NavigationMenuDemo() {
             </Link>
           </NavigationMenuItem>
           <NavigationMenuItem>
-            <Link href="/about" className="font-serif">About Us</Link>
+            <Link href="/about" className="font-serif">
+              About Us
+            </Link>
           </NavigationMenuItem>
           <NavigationMenuItem>
-            <Link href="/menu" className="font-serif">Food Menu</Link>
+            <Link href="/menu" className="font-serif">
+              Food Menu
+            </Link>
           </NavigationMenuItem>
           <NavigationMenuItem>
-            <Link href="/#chef" className="font-serif">Chef</Link>
+            <Link href="/#chef" className="font-serif">
+              Chef
+            </Link>
           </NavigationMenuItem>
           <NavigationMenuItem>
-            <Link href="/#gallery" className="font-serif">Gallery</Link>
+            <Link href="/#gallery" className="font-serif">
+              Gallery
+            </Link>
           </NavigationMenuItem>
           <NavigationMenuItem>
-            <Link href="/#blog" className="font-serif">Blog</Link>
+            <Link href="/#blog" className="font-serif">
+              Blog
+            </Link>
           </NavigationMenuItem>
         </NavigationMenuList>
       </NavigationMenu>
@@ -61,14 +73,21 @@ export default function NavigationMenuDemo() {
         {/* Auth State: Show login or username */}
         {session ? (
           <>
-            <span className="text-black font-serif">Hello, {session.user?.name}</span>
-            <Button onClick={() => signOut()} className="font-serif text-white bg-[#eb0029]">
+            <span className="text-black font-serif">
+              <Link href={"/profile"}>Hello, {session.user?.name}</Link>
+            </span>
+            <Button
+              onClick={() => signOut()}
+              className="font-serif text-white bg-[#eb0029]"
+            >
               Logout
             </Button>
           </>
         ) : (
           <Link href="/login">
-            <Button className="font-serif text-white bg-[#eb0029]">Login</Button>
+            <Button className="font-serif text-white bg-[#eb0029]">
+              Login
+            </Button>
           </Link>
         )}
 
@@ -80,18 +99,32 @@ export default function NavigationMenuDemo() {
         {/* Mobile Menu Button */}
         <Sheet>
           <SheetTrigger asChild>
-            <Button variant="outline" size="icon" className="shrink-0 text-black border-white">
+            <Button
+              variant="outline"
+              size="icon"
+              className="shrink-0 text-black border-white"
+            >
               <Menu className="h-6 w-6" />
               <span className="sr-only">Toggle navigation menu</span>
             </Button>
           </SheetTrigger>
           <SheetContent side="right" className="bg-[#fff] text-[#010f1c]">
             <nav className="grid gap-6 text-lg font-medium p-4">
-              <Link href="/" className="hover:text-[#d19b6f]">Home</Link>
-              <Link href="/menu" className="hover:text-[#d19b6f]">Menu</Link>
-              <Link href="/ourstory" className="hover:text-[#d19b6f]">Our Story</Link>
-              <Link href="/#contact" className="hover:text-[#d19b6f]">Contact Us</Link>
-              <Link href="/login" className="hover:text-[#d19b6f]">Login</Link>
+              <Link href="/" className="hover:text-[#d19b6f]">
+                Home
+              </Link>
+              <Link href="/menu" className="hover:text-[#d19b6f]">
+                Menu
+              </Link>
+              <Link href="/ourstory" className="hover:text-[#d19b6f]">
+                Our Story
+              </Link>
+              <Link href="/#contact" className="hover:text-[#d19b6f]">
+                Contact Us
+              </Link>
+              <Link href="/login" className="hover:text-[#d19b6f]">
+                Login
+              </Link>
               <div className="w-full">
                 <Button className="w-full p-8 font-serif font-semibold text-white border-none rounded-none bg-[#eb0029]">
                   Order Now

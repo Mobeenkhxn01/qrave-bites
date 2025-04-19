@@ -1,6 +1,5 @@
 
 import Hero from "@/components/layout/Hero";
-
 import PopularFood from "@/components/layout/PopularFood";
 
 export default function Home() {

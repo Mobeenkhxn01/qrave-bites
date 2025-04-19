@@ -1,35 +1,41 @@
 import { prisma } from "@/lib/prisma";
 import { NextRequest, NextResponse } from "next/server";
 
+
 export async function POST(req: NextRequest) {
   try {
-    const { name, description, price, image, userID, category } =
-      await req.json();
- 
-    if (!name || !description || !price || !userID) {
+    const { name, description, price, image, userID, categoryId, restaurantId } = await req.json();
+
+    if (!name || !description || !price || !userID || !categoryId || !restaurantId) {
       return NextResponse.json(
         { error: "Missing required fields" },
         { status: 400 }
       );
     }
+
     const menuItem = await prisma.menuItem.create({
-      data: { name, description, image, userID, price, categoryId: category },
+      data: {
+        name,
+        description,
+        image,
+        price,
+        user: { connect: { id: userID } },
+        category: { connect: { id: categoryId } },
+        restaurant: { connect: { id: restaurantId } },
+      },
     });
 
     return NextResponse.json(menuItem, { status: 201 });
   } catch (error) {
     console.error("Error creating menu item:", error);
-    return NextResponse.json(
-      { error: "Internal Server Error" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
   }
 }
 
 export async function GET() {
   try {
-    const menuItems = await prisma.menuItem.findMany();
-    return NextResponse.json(menuItems);
+    const menuItem = await prisma.menuItem.findMany();
+    return NextResponse.json(menuItem);
   } catch (error) {
     console.error("Error fetching menu items:", error);
     return NextResponse.json(

@@ -6,8 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
-
+import { useRouter, useParams } from "next/navigation";
 import {
   Select,
   SelectContent,
@@ -39,28 +38,30 @@ const formSchema = z.object({
 
 export default function NewMenuPage() {
   const router = useRouter();
+  const { id: restaurantId } = useParams(); // getting restaurantId from route
+  const { data: session } = useSession();
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: "",
       price: 0,
-      category: "" ,
+      category: "",
       description: "",
       image: undefined,
     },
   });
 
-  const {data:session}  = useSession();
-
   const [preview, setPreview] = useState<string | null>(null);
   const [redirectToItems, setRedirectToItems] = useState(false);
   const [categories, setCategories] = useState<{ id: string; name: string }[]>([]);
-  // Redirect when the state updates
+
   useEffect(() => {
     if (redirectToItems) {
       router.push("/menu-items");
     }
   }, [redirectToItems, router]);
+
   useEffect(() => {
     async function fetchCategories() {
       try {
@@ -96,29 +97,41 @@ export default function NewMenuPage() {
   }
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
+    if (!session?.user?.id || !restaurantId) {
+      return alert("Missing user or restaurant ID");
+    }
+
     let imageUrl = null;
 
     if (values.image) {
-      imageUrl = await uploadImage(values.image);
+      const uploaded = await uploadImage(values.image);
+      imageUrl = uploaded?.url || null;
     }
 
     const dataToSend = {
-      ...values,
-      image: imageUrl.url!,
-      userID: session?.user.id,
+      name: values.name,
+      description: values.description,
+      price: values.price,
+      image: imageUrl,
+      userID: session.user.id,
+      categoryId: values.category,
+      restaurantId: session.user.id,
     };
 
     try {
-
-      console.log(dataToSend);
-      const _ = await fetch("http://localhost:3000/api/menu-items", {
+      const res = await fetch("/api/menu-items", {
         method: "POST",
         body: JSON.stringify(dataToSend),
         headers: {
           "Content-Type": "application/json",
         },
       });
-      setRedirectToItems(true);
+
+      if (res.ok) {
+        setRedirectToItems(true);
+      } else {
+        console.error("Server Error:", await res.json());
+      }
     } catch (error) {
       console.error("Failed to create menu item", error);
     }
@@ -178,7 +191,7 @@ export default function NewMenuPage() {
             {/* Form Fields */}
             <div className="w-2/3">
               <h1 className="text-2xl font-semibold font-serif text-[#eb0029]">Add Item to Menu</h1>
-              
+
               <FormField control={form.control} name="name" render={({ field }) => (
                 <FormItem>
                   <FormLabel>Item Name</FormLabel>
@@ -195,36 +208,30 @@ export default function NewMenuPage() {
                 </FormItem>
               )} />
 
-<FormField
-      control={form.control}
-      name="category"
-      render={({ field }) => (
-        <FormItem>
-          <FormLabel>Category</FormLabel>
-          <Select onValueChange={field.onChange} defaultValue={field.value}>
-            <FormControl>
-              <SelectTrigger>
-                <SelectValue placeholder="Select a category" />
-              </SelectTrigger>
-            </FormControl>
-            <SelectContent>
-              {categories.length > 0 ? (
-                categories.map((category) => (
-                  <SelectItem key={category.id} value={category.id}>
-                    {category.name}
-                  </SelectItem>
-                ))
-              ) : (
-                <SelectItem value="loading" disabled>
-                  Loading...
-                </SelectItem>
-              )}
-            </SelectContent>
-          </Select>
-          <FormMessage />
-        </FormItem>
-      )}
-    />
+              <FormField control={form.control} name="category" render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Category</FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select a category" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {categories.length > 0 ? (
+                        categories.map((category) => (
+                          <SelectItem key={category.id} value={category.id}>
+                            {category.name}
+                          </SelectItem>
+                        ))
+                      ) : (
+                        <SelectItem value="loading" disabled>Loading...</SelectItem>
+                      )}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )} />
 
               <FormField control={form.control} name="price" render={({ field }) => (
                 <FormItem>
@@ -233,6 +240,8 @@ export default function NewMenuPage() {
                   <FormMessage />
                 </FormItem>
               )} />
+              
+              
 
               <Button type="submit" className="bg-[#eb0029] w-full mt-2">Submit</Button>
             </div>

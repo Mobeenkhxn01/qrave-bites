@@ -159,7 +159,7 @@ export default function ProfilePage() {
                 render={({ field }) => (
                   <FormItem className="flex flex-col items-center">
                     <Image
-                      src={preview || session?.user.image || ""}
+                      src={preview || session?.user.image ||"/breadcumb.jpg"}
                       className="rounded-lg w-32 mb-1"
                       width={512}
                       height={512}

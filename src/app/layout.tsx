@@ -5,6 +5,7 @@ import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { AuthProvider } from "@/actions/auth-context";
 import { SessionProvider } from "next-auth/react";
+import ReactQueryProvider from "@/providers/ReactQueryProvider";
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -32,15 +33,15 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <SessionProvider>
-          <AuthProvider>
-            <Navbar />
-            {children}
-            <Footer />
-          </AuthProvider>
-        </SessionProvider>
-   
-        
+        <ReactQueryProvider>
+          <SessionProvider>
+            <AuthProvider>
+              <Navbar />
+              {children}
+              <Footer />
+            </AuthProvider>
+          </SessionProvider>
+        </ReactQueryProvider>
       </body>
     </html>
   );

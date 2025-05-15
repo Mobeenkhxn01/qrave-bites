@@ -1,146 +1,111 @@
-"use client"
+"use client";
 
-import * as React from "react"
-import { X, Check, ChevronsUpDown } from "lucide-react"
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command"
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
-import { cn } from "@/lib/utils"
+import { useState, useEffect } from "react";
+import { Input } from "@/components/ui/input";
+import { cn } from "@/lib/utils";
+import { Search } from "lucide-react";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Label } from "@/components/ui/label";
 
-export type Option = {
-  label: string
-  value: string
-  disabled?: boolean
+export interface SelectableItem {
+  id: string;
+  name: string;
+  [key: string]: any;
 }
 
-interface MultiSelectProps {
-  options: Option[]
-  selected: string[]
-  onChange: (values: string[]) => void
-  placeholder?: string
-  searchPlaceholder?: string
-  emptyMessage?: string
-  disabled?: boolean
-  className?: string
-  maxDisplayItems?: number
-  renderOption?: (option: Option) => React.ReactNode
-  renderBadge?: (option: Option) => React.ReactNode
+interface SelectableListProps {
+  items: SelectableItem[];
+  selectedIds: string[];
+  onChange: (selectedIds: string[]) => void;
+  maxSelections?: number;
+  className?: string;
+  label?: string;
+  searchPlaceholder?: string;
+  maxHeight?: number;
 }
 
-export function MultiSelect({
-  options,
-  selected,
+export function SelectableList({
+  items,
+  selectedIds,
   onChange,
-  placeholder = "Select options",
-  searchPlaceholder = "Search options...",
-  emptyMessage = "No options found.",
-  disabled = false,
+  maxSelections = 3,
   className,
-  maxDisplayItems,
-  renderOption,
-  renderBadge,
-}: MultiSelectProps) {
-  const [open, setOpen] = React.useState(false)
+  label,
+  searchPlaceholder = "Search...",
+  maxHeight = 300,
+}: SelectableListProps) {
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filteredItems, setFilteredItems] = useState(items);
 
-  const handleUnselect = (value: string) => {
-    onChange(selected.filter((item) => item !== value))
-  }
+  // Filter items based on search term
+  useEffect(() => {
+    const filtered = items.filter((item) =>
+      item.name.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+    setFilteredItems(filtered);
+  }, [searchTerm, items]);
 
-  const handleSelect = (value: string) => {
-    const option = options.find((opt) => opt.value === value)
-    if (option?.disabled) return
-
-    if (selected.includes(value)) {
-      onChange(selected.filter((item) => item !== value))
+  const handleToggleSelect = (id: string) => {
+    if (selectedIds.includes(id)) {
+      // If already selected, remove it
+      onChange(selectedIds.filter((selectedId) => selectedId !== id));
     } else {
-      onChange([...selected, value])
+      // If not selected and under max limit, add it
+      if (selectedIds.length < maxSelections) {
+        onChange([...selectedIds, id]);
+      }
     }
-  }
-
-  const selectedOptions = options.filter((option) => selected.includes(option.value))
-  const displayedOptions =
-    maxDisplayItems && selectedOptions.length > maxDisplayItems
-      ? selectedOptions.slice(0, maxDisplayItems)
-      : selectedOptions
+  };
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
-        <Button
-          variant="outline"
-          role="combobox"
-          aria-expanded={open}
-          className={cn("w-full justify-between", className)}
-          disabled={disabled}
-        >
-          <div className="flex flex-wrap gap-1 items-center">
-            {displayedOptions.length > 0 ? (
-              <>
-                {displayedOptions.map((option) => (
-                  <Badge key={option.value} variant="secondary" className="mr-1 mb-1">
-                    {renderBadge ? renderBadge(option) : option.label}
-                    <button
-                      className="ml-1 ring-offset-background rounded-full outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter") {
-                          handleUnselect(option.value)
-                        }
-                      }}
-                      onMouseDown={(e) => {
-                        e.preventDefault()
-                        e.stopPropagation()
-                      }}
-                      onClick={(e) => {
-                        e.preventDefault()
-                        e.stopPropagation()
-                        handleUnselect(option.value)
-                      }}
-                    >
-                      <X className="h-3 w-3" />
-                      <span className="sr-only">Remove {option.label}</span>
-                    </button>
-                  </Badge>
-                ))}
-                {maxDisplayItems && selectedOptions.length > maxDisplayItems && (
-                  <Badge variant="secondary">+{selectedOptions.length - maxDisplayItems} more</Badge>
-                )}
-              </>
-            ) : (
-              <span className="text-muted-foreground">{placeholder}</span>
-            )}
-          </div>
-          <ChevronsUpDown className="h-4 w-4 shrink-0 opacity-50" />
-        </Button>
-      </PopoverTrigger>
-      <PopoverContent className="w-full p-0" align="start">
-        <Command>
-          <CommandInput placeholder={searchPlaceholder} />
-          <CommandList>
-            <CommandEmpty>{emptyMessage}</CommandEmpty>
-            <CommandGroup>
-              {options.map((option) => {
-                const isSelected = selected.includes(option.value)
-                return (
-                  <CommandItem
-                    key={option.value}
-                    value={option.value}
-                    disabled={option.disabled}
-                    onSelect={() => handleSelect(option.value)}
-                    className={cn(
-                      option.disabled && "cursor-not-allowed opacity-60",
-                      "flex items-center justify-between",
-                    )}
-                  >
-                    <div className="flex-1">{renderOption ? renderOption(option) : option.label}</div>
-                    {isSelected && <Check className="h-4 w-4 ml-2" />}
-                  </CommandItem>
-                )
-              })}
-            </CommandGroup>
-          </CommandList>
-        </Command>
-      </PopoverContent>
-    </Popover>
-  )
+    <div className={cn("space-y-2", className)}>
+      {label && <Label>{label}</Label>}
+
+      {/* Search input */}
+      <div className="relative">
+        <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+        <Input
+          placeholder={searchPlaceholder}
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="pl-8"
+        />
+      </div>
+
+      {/* Selection limit indicator */}
+      <div className="text-sm text-muted-foreground">
+        {selectedIds.length} of {maxSelections} selected
+      </div>
+
+      {/* Selectable items */}
+      <ScrollArea className="h-72 w-full border rounded-md">
+        <div className="p-2 grid grid-cols-2 gap-2">
+          {filteredItems.length > 0 ? (
+            filteredItems.map((item) => {
+              const isSelected = selectedIds.includes(item.id);
+              return (
+                <div
+                  key={item.id}
+                  className={cn(
+                    "p-3 rounded-md cursor-pointer transition-all",
+                    "hover:bg-muted/50",
+                    isSelected
+                      ? "border-2 border-primary bg-primary/5"
+                      : "border border-border"
+                  )}
+                  onClick={() => handleToggleSelect(item.id)}
+                >
+                  <div className="font-medium">{item.name}</div>
+                </div>
+              );
+            })
+          ) : (
+            <div className="col-span-2 text-center py-4 text-muted-foreground">
+              No items found
+            </div>
+          )}
+        </div>
+      </ScrollArea>
+    </div>
+  );
 }

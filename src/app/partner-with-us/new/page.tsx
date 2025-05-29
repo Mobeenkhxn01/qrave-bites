@@ -31,6 +31,7 @@ import Right from "@/components/icons/Right";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import dynamic from "next/dynamic";
+import TitleHeaderPartner from "../titleheader";
 
 const LocationMapWithSearch = dynamic(
   () => import("@/components/layout/LocationMapWithSearch"),
@@ -80,58 +81,11 @@ export default function NewRestaurantRegister() {
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
           <div className="flex justify-between items-start gap-6">
             <aside className="w-1/3 p-12 flex justify-center items-end">
-              <Card className=" w-full">
-                <CardHeader>
-                  <h1>Complete your registration</h1>
-                  <div className="border-t border-gray-300 w-full p-0" />
-                </CardHeader>
-                <CardContent>
-                  <div className="flex justify-start items-center gap-2">
-                    <div className="w-12 h-12 rounded-full border-black border"></div>
-                    <div>
-                      <h1 className="text-lg text-[#596738]">
-                        Restaurant Information
-                      </h1>
-                      <Link
-                        href={"/partner-with-us/new"}
-                        className="underline text-extralight text-link text-[#4947e0]"
-                      >
-                        edit details
-                      </Link>
-                    </div>
-                  </div>
-                  <div className="border-l border-gray-300 border-bold h-5"></div>
-                  <div className="flex justify-start items-center gap-2">
-                    <div className="w-12 h-12 rounded-full border-black border"></div>
-                    <div>
-                      <h1 className="text-lg text-[#596738]">
-                        Menu and operational details
-                      </h1>
-                      <p className="font-extralight text-gray-500">
-                        Menu,dish images and timings
-                      </p>
-                      <Link
-                        href={"/partner-with-us/add-menu-items"}
-                        className="underline text-extralight text-link text-[#4947e0]"
-                      >
-                        edit details
-                      </Link>
-                    </div>
-                  </div>
-                  <div className="border-l border-gray-300 border-bold h-5"></div>
-                  <div className="flex justify-start items-center gap-2">
-                    <div className="w-12 h-12 rounded-full border-black border"></div>
-                    <h1 className="text-lg text-[#596738]">
-                      Restaurant documents
-                    </h1>
-                  </div>
-                  <div className="border-l border-gray-300 border-bold h-5"></div>
-                  <div className="flex justify-start items-center gap-2">
-                    <div className="w-12 h-12 rounded-full border-black border"></div>
-                    <h1 className="text-lg text-[#596738]">Partner contract</h1>
-                  </div>
-                </CardContent>
-              </Card>
+              <TitleHeaderPartner
+                title="Restaurant Registration"
+                subtitle="Fill all steps"
+                activeStep={1}
+              />
             </aside>
 
             <section className="w-2/3 pr-20">
@@ -360,7 +314,7 @@ export default function NewRestaurantRegister() {
                     </div>
 
                     <div className="w-1/2 grid items-center gap-1.5">
-                       <FormField
+                      <FormField
                         control={form.control}
                         name="city"
                         render={({ field }) => (

@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/form";
 import Link from "next/link";
 import { Input } from "@/components/ui/input";
-import { days,CUISINE_ITEMS } from "./constant";
+import { days, CUISINE_ITEMS } from "./constant";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import Right from "@/components/icons/Right";
@@ -24,6 +24,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { ImageInput } from "@/components/ui/image-input";
 import { SelectableList } from "@/components/ui/multi-select";
+import TitleHeaderPartner from "../titleheader";
 
 const formSchema = z.object({
   cuisine: z
@@ -32,9 +33,7 @@ const formSchema = z.object({
     .max(3, "You can select up to 3 team members"),
   restaurantImage: z
     .any()
-    .refine((file) => file instanceof File, {
-      message: "Required image file",
-    })
+    .refine((file) => file instanceof File, { message: "Required image file" })
     .refine((file) => file.size <= 5 * 1024 * 1024, {
       message: "Max file size is 5MB",
     })
@@ -46,9 +45,7 @@ const formSchema = z.object({
     ),
   foodImage: z
     .any()
-    .refine((file) => file instanceof File, {
-      message: "Required image file",
-    })
+    .refine((file) => file instanceof File, { message: "Required image file" })
     .refine((file) => file.size <= 5 * 1024 * 1024, {
       message: "Max file size is 5MB",
     })
@@ -60,9 +57,7 @@ const formSchema = z.object({
     ),
   restaurantProfileImage: z
     .any()
-    .refine((file) => file instanceof File, {
-      message: "Required image file",
-    })
+    .refine((file) => file instanceof File, { message: "Required image file" })
     .refine((file) => file.size <= 5 * 1024 * 1024, {
       message: "Max file size is 5MB",
     })
@@ -74,9 +69,7 @@ const formSchema = z.object({
     ),
   delieveryImage: z
     .any()
-    .refine((file) => file instanceof File, {
-      message: "Required image file",
-    })
+    .refine((file) => file instanceof File, { message: "Required image file" })
     .refine((file) => file.size <= 5 * 1024 * 1024, {
       message: "Max file size is 5MB",
     })
@@ -89,6 +82,8 @@ const formSchema = z.object({
   days: z.array(z.string()).refine((value) => value.some((day) => day), {
     message: "You have to select at least one day",
   }),
+  openingTime: z.string().nonempty("Opening time is required"),
+  closingTime: z.string().nonempty("Closing time is required"),
 });
 
 export default function NewRestaurantRegister() {
@@ -111,62 +106,13 @@ export default function NewRestaurantRegister() {
           <div className="flex justify-between items-start gap-6">
             {/* Aside tab with option*/}
             <aside className="w-1/3 p-12 flex justify-center items-end">
-              <Card className=" w-full">
-                <CardHeader>
-                  <h1>Complete your registration</h1>
-                  <div className="border-t border-gray-300 w-full p-0" />
-                </CardHeader>
-                <CardContent>
-                  <div className="flex justify-start items-center gap-2">
-                    <div className="w-12 h-12 rounded-full border-black border"></div>
-                    <div>
-                      <h1 className="text-lg text-[#596738]">
-                        Restaurant Information
-                      </h1>
-                      <Link
-                        href={"/partner-with-us/new"}
-                        className="underline text-extralight text-link text-[#4947e0]"
-                      >
-                        edit details
-                      </Link>
-                    </div>
-                  </div>
-                  <div className="border-l border-gray-300 border-bold h-5"></div>
-                  <div className="flex justify-start items-center gap-2">
-                    <div className="w-12 h-12 rounded-full border-black border"></div>
-                    <div>
-                      <h1 className="text-lg text-[#596738]">
-                        Menu and operational details
-                      </h1>
-                      <p className="font-extralight text-gray-500">
-                        Menu,dish images and timings
-                      </p>
-                      <Link
-                        href={"/partner-with-us/add-menu-items"}
-                        className="underline text-extralight text-link text-[#4947e0]"
-                      >
-                        edit details
-                      </Link>
-                    </div>
-                  </div>
-                  <div className="border-l border-gray-300 border-bold h-5"></div>
-                  <div className="flex justify-start items-center gap-2">
-                    <div className="w-12 h-12 rounded-full border-black border"></div>
-                    <h1 className="text-lg text-[#596738]">
-                      Restaurant documents
-                    </h1>
-                  </div>
-                  <div className="border-l border-gray-300 border-bold h-5"></div>
-                  <div className="flex justify-start items-center gap-2">
-                    <div className="w-12 h-12 rounded-full border-black border"></div>
-                    <h1 className="text-lg text-[#596738]">Partner contract</h1>
-                  </div>
-                </CardContent>
-              </Card>
+              <TitleHeaderPartner
+                
+                activeStep={2}
+              />
             </aside>
 
-
-           { /* Step 2 form for restaurant registration*/}
+            {/* Step 2 form for restaurant registration*/}
             <section className="w-2/3 pr-20">
               <h1 className="text-4xl font-semibold mb-6">
                 Menu and other operational details
@@ -332,10 +278,6 @@ export default function NewRestaurantRegister() {
                 </CardContent>
               </Card>
 
-
-
-
-
               {/*Restaurant Timing Card*/}
               <Card className="mb-10">
                 <CardHeader>
@@ -385,32 +327,39 @@ export default function NewRestaurantRegister() {
                   </div>
                 </CardContent>
                 <CardFooter>
-                  <FormField 
+                  <FormField
                     control={form.control}
                     name="days"
-                    render={({field}) => (
+                    render={({ field }) => (
                       <FormItem className="flex flex-row gap-2">
                         {days.map((day) => {
-                              const isChecked=field.value?.includes(day.id);
-                              return (
-                                <FormItem key={day.id} className="flex border rounded-2xl p-2 flex-row items-start space-x-2 space-y-0">
-                                  <FormControl>
-                                    <Checkbox
-                                      checked={isChecked}
-                                      onCheckedChange={(checked) => {
-                                        if(checked){
-                                           field.onChange([...field.value,day.id]);
-                                        }else{
-                                           field.onChange(field.value?.filter((val) => val!== day.id));
-                                        }
-                                      }}
-                                    />
-                                  </FormControl>
-                                  <FormLabel>{day.label}</FormLabel>
-                                </FormItem>
-                              );
-                            })}
-                          <FormMessage/>
+                          const isChecked = field.value?.includes(day.id);
+                          return (
+                            <FormItem
+                              key={day.id}
+                              className="flex border rounded-2xl p-2 flex-row items-start space-x-2 space-y-0"
+                            >
+                              <FormControl>
+                                <Checkbox
+                                // checked={isChecked}
+                                // // onCheckedChange={(checked) => {
+                                // //   if (checked) {
+                                // //     field.onChange([...field.value, day.id]);
+                                // //   } else {
+                                // //     field.onChange(
+                                // //       field.value?.filter(
+                                // //         (val) => val !== day.id
+                                // //       )
+                                // //     );
+                                // //   }
+                                // // }}
+                                />
+                              </FormControl>
+                              <FormLabel>{day.label}</FormLabel>
+                            </FormItem>
+                          );
+                        })}
+                        <FormMessage />
                       </FormItem>
                     )}
                   />

@@ -171,11 +171,15 @@ bun run start
 6. Add the following **Environment Variables**:
 
 ```env
-DATABASE_URL=your_mongo_uri
-NEXTAUTH_SECRET=your_secret
-NEXTAUTH_URL=https://your-app.onrender.com
-STRIPE_SECRET_KEY=your_stripe_secret
-STRIPE_PUBLIC_KEY=your_stripe_public
+AUTH_GOOGLE_ID="google client id"
+AUTH_GOOGLE_SECRET="google secret"
+AUTH_SECRET="your auth secret"
+AWS_ACCESS_KEY="your aws access key"
+AWS_BUCKET_NAME="aws bucket name"
+AWS_REGION="aws region"
+AWS_SECRET_KEY="your aws secret key"
+DATABASE_URL="mongodb url"
+JWT_SECRET="jwt secret token"
 ```
 
 7. Hit Deploy!

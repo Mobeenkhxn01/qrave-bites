@@ -82,8 +82,7 @@ export default function NewRestaurantRegister() {
           <div className="flex justify-between items-start gap-6">
             <aside className="w-1/3 p-12 flex justify-center items-end">
               <TitleHeaderPartner
-                title="Restaurant Registration"
-                subtitle="Fill all steps"
+                
                 activeStep={1}
               />
             </aside>
@@ -346,6 +345,8 @@ export default function NewRestaurantRegister() {
               <div className="mt-6 flex justify-end item-center ">
                 <div className="">
                   <Button
+                    type="submit"
+                    disabled={!form.formState.isValid}
                     variant={"outline"}
                     size={"lg"}
                     className="rounded-2xl bg-[#4947e0]"

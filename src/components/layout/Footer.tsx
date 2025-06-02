@@ -81,16 +81,16 @@ export default function Footer() {
             <p>Your order will be on your table </p>
             <div className="flex flex-row gap-2">
               {/* Social Media Icons */}
-              <Link href="https://www.facebook.com/musclemeals/" className="hover:bg-[#eb0029] p-2 border-2 border-solid border-white">
+              <Link href="https://www.facebook.com/mobeenkhan02/" className="hover:bg-[#eb0029] p-2 border-2 border-solid border-white">
                 <FiFacebook className="w-6 h-6 text-white" />
               </Link>
-              <Link href="https://twitter.com/musclemeals" className="hover:bg-[#eb0029] p-2 border-2 border-solid border-white">
+              <Link href="https://twitter.com/errornotfound33" className="hover:bg-[#eb0029] p-2 border-2 border-solid border-white">
                 <TwitterLogoIcon className="w-6 h-6 text-white" />
               </Link>
-              <Link href="https://www.instagram.com/musclemeals/" className="hover:bg-[#eb0029] p-2 border-2 border-solid border-white">
+              <Link href="https://www.instagram.com/mobeenkhxn01/" className="hover:bg-[#eb0029] p-2 border-2 border-solid border-white">
                 <InstagramLogoIcon className="w-6 h-6 text-white" />
               </Link>
-              <Link href="https://wa.me/+916305938848" className="hover:bg-[#eb0029] p-2 border-2 border-solid border-white">
+              <Link href="https://wa.me/+916303660509" className="hover:bg-[#eb0029] p-2 border-2 border-solid border-white">
                 <IoLogoWhatsapp className="w-6 h-6 text-white" />
               </Link>
             </div>
@@ -103,16 +103,16 @@ export default function Footer() {
             <Link href="/contact" className="hover:text-[#eb0029]">Contact</Link>
             <Link href="/menu" className="hover:text-[#eb0029]">Menu</Link>
             <Link href="/blog" className="hover:text-[#eb0029]">Blog</Link>
-            <Link href="/gallery" className="hover:text-[#eb0029]">Gallery</Link>
+            <Link href="/partner-with-us" className="hover:text-[#eb0029]">Partner-with-us</Link>
           </div>
   
           <div className="w-full md:w-1/4 flex flex-col gap-6">
             <div className="text-2xl font-extrabold">Our Menu</div>
-            <Link href="/protein" className="hover:text-[#eb0029]">Protein Diet</Link>
-            <Link href="/fibre" className="hover:text-[#eb0029]">Fibre Rich</Link>
+            <Link href="/chinese" className="hover:text-[#eb0029]">Chinese</Link>
+            <Link href="/italian" className="hover:text-[#eb0029]">Italian</Link>
             <Link href="/veg" className="hover:text-[#eb0029]">Vegetarian</Link>
             <Link href="/nonveg" className="hover:text-[#eb0029]">Non-Veg</Link>
-            <Link href="/carbs" className="hover:text-[#eb0029]">Carbs Rich</Link>
+            <Link href="/south-indian" className="hover:text-[#eb0029]">South-Indian</Link>
           </div>
   
           <div className="w-full md:w-1/4 flex flex-col gap-6">

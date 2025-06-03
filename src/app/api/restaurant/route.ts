@@ -15,8 +15,8 @@ export async function POST(req: NextRequest) {
         name,
         description,
         foodType,
-        user: { connect: { id: userID } },   // ✅ Connect user by ID
-        city: { connect: { id: cityId } },   // ✅ Connect city by ID
+        user: { connect: { id: userID } }, 
+        city: { connect: { id: cityId } }, 
       },
     });
 

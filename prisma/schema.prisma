@@ -17,17 +17,17 @@ model User {
   image         String?
   accounts      Account[]
   sessions      Session[]
-  Authenticator Authenticator[]
+  authenticators Authenticator[]
 
-  menuItems   MenuItem[]    @relation("UserMenuItems")
-  orders      Order[]
-  Category    Category[]
-  UserAddress UserAddress[]
-  Cart        Cart[]
+  menuItems     MenuItem[]      @relation("UserMenuItems")
+  orders        Order[]
+  categories    Category[]
+  userAddresses UserAddress[]
+  carts         Cart[]
 
-  createdAt  DateTime     @default(now())
-  updatedAt  DateTime     @updatedAt
-  Restaurant Restaurant[]
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+  restaurants   Restaurant[]
 }
 
 model Account {
@@ -88,51 +88,56 @@ model Authenticator {
 }
 
 model Category {
-  id   String @id @default(auto()) @map("_id") @db.ObjectId
-  name String
+  id      String  @id @default(auto()) @map("_id") @db.ObjectId
+  name    String
 
-  userID String @db.ObjectId
-  user   User   @relation(fields: [userID], references: [id], onDelete: Cascade)
+  userId  String  @db.ObjectId
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   menuItems MenuItem[] @relation("CategoryMenuItems")
 }
 
 model MenuItem {
-  id          String @id @default(auto()) @map("_id") @db.ObjectId
+  id          String     @id @default(auto()) @map("_id") @db.ObjectId
   name        String
   price       Float
   description String
   image       String
 
-  userID String @db.ObjectId
-  user   User   @relation(fields: [userID], references: [id], onDelete: Cascade, name: "UserMenuItems")
+  userId      String     @db.ObjectId
+  user        User       @relation(fields: [userId], references: [id], onDelete: Cascade, name: "UserMenuItems")
 
-  categoryId String   @db.ObjectId
-  category   Category @relation(fields: [categoryId], references: [id], onDelete: Cascade, name: "CategoryMenuItems")
+  categoryId  String     @db.ObjectId
+  category    Category   @relation(fields: [categoryId], references: [id], onDelete: Cascade, name: "CategoryMenuItems")
 
   restaurantId String     @db.ObjectId
   restaurant   Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade, name: "RestaurantMenuItems")
 
-  cartItems CartItem[]
-}
-
-model City {
-  id          String       @id @default(auto()) @map("_id") @db.ObjectId
-  name        String       @unique
-  restaurants Restaurant[]
+  cartItems   CartItem[]
 }
 
 model Restaurant {
-  id          String     @id @default(auto()) @map("_id") @db.ObjectId
-  name        String
-  description String
-  foodType    String
-  userID      String     @db.ObjectId
-  cityId      String     @db.ObjectId
-  
-  user        User       @relation(fields: [userID], references: [id], onDelete: Cascade)
-  city        City       @relation(fields: [cityId], references: [id], onDelete: Cascade)
-  menu        MenuItem[] @relation("RestaurantMenuItems")
+  id             String     @id @default(auto()) @map("_id") @db.ObjectId
+  restaurantName String
+  ownerName      String
+  email          String     @unique
+  phone          String
+  mobile         Boolean?
+  shop           Int
+  floor          String?
+  area           String
+  city           String
+  landmark       String?
+  latitude       Float?
+  longitude      Float?
+  address        String?
+
+  userId         String     @db.ObjectId
+  user           User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  menu           MenuItem[] @relation("RestaurantMenuItems")
+
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
 }
 
 model Order {
@@ -149,7 +154,7 @@ model Order {
 
 model UserAddress {
   id            String   @id @default(auto()) @map("_id") @db.ObjectId
-  email         String   @unique
+  email         String
   streetAddress String?
   postalCode    String?
   city          String?
@@ -158,8 +163,10 @@ model UserAddress {
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
-  userID String @db.ObjectId
-  user   User   @relation(fields: [userID], references: [id], onDelete: Cascade)
+  userId String @db.ObjectId
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([email, userId])
 }
 
 model Cart {

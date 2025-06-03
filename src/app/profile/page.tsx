@@ -40,7 +40,7 @@ const formSchema = z.object({
     .regex(/^\d+$/, { message: "Phone number must contain only digits." })
     .min(10, { message: "Phone number must be at least 10 digits." })
     .max(15, { message: "Phone number cannot exceed 15 digits." }),
-  userID: z.string(),
+  userId: z.string(),
   image: z.any().optional(),
 });
 
@@ -62,7 +62,7 @@ export default function ProfilePage() {
       city: "",
       country: "",
       phone: "",
-      userID: "",
+      userId: "",
       image: undefined,
     },
   });
@@ -73,7 +73,7 @@ export default function ProfilePage() {
       form.reset({
         name: session.user.name || "",
         email: session.user.email || "",
-        userID: session.user.id || "",
+        userId: session.user.id || "",
       });
     }
   }, [session, form]);
@@ -125,7 +125,7 @@ export default function ProfilePage() {
 
     const dataToSend = {
       ...values,
-      userID: session?.user.id,
+      userId: session?.user.id,
       image: imageUrl ? imageUrl.url : undefined,
     };
 

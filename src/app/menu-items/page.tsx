@@ -11,7 +11,7 @@ export default async function MenuItemsPage() {
 
   const data = await prisma.menuItem.findMany({
     where: {
-      userID: session?.user.id,
+      userId: session?.user.id,
     },
   });
 
@@ -31,7 +31,7 @@ export default async function MenuItemsPage() {
             {data.map((item) => (
               <Link
                 key={item.id}
-                href={`/menu-items/edit/${item.id}`}
+                href={`/menu-items/${item.id}`}
                 className="bg-gray-200 rounded-lg p-4"
               >
                 <div className="relative">

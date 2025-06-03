@@ -18,13 +18,19 @@ import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 
 const formSchema = z.object({
-  category: z.string().min(2).max(50),
+  category: z.string().min(2).max(50).trim(),
 });
 
 export default function Categories() {
-  const [categories, setCategories] = useState<{ id: string; userID: string; name: string }[]>([]);
-  const [editedCategory, setEditedCategory] = useState<{ id: string; userID: string; name: string } | null>(null);
-  
+  const [categories, setCategories] = useState<
+    { id: string; userId: string; name: string }[]
+  >([]);
+  const [editedCategory, setEditedCategory] = useState<{
+    id: string;
+    userId: string;
+    name: string;
+  } | null>(null);
+
   const { data: session } = useSession();
   const form = useForm({
     resolver: zodResolver(formSchema),
@@ -32,12 +38,15 @@ export default function Categories() {
   });
 
   useEffect(() => {
-    fetchCategories();
-  }, []);
+    if (session?.user.id) {
+      fetchCategories();
+    }
+  }, [session?.user.id]);
 
   async function fetchCategories() {
     try {
-      const response = await fetch("/api/categories");
+      if (!session?.user.id) return;
+      const response = await fetch(`/api/categories?userId=${session.user.id}`);
       const data = await response.json();
       setCategories(data);
     } catch (error) {
@@ -52,11 +61,12 @@ export default function Categories() {
         return;
       }
 
-      // Check if category already exists
+      // Check if category already exists (case-insensitive)
       const categoryExists = categories.some(
         (category) =>
           category.name.toLowerCase() === values.category.toLowerCase() &&
-          category.userID === session.user.id
+          category.userId === session.user.id &&
+          (!editedCategory || category.id !== editedCategory.id) // exclude currently edited category
       );
 
       if (categoryExists) {
@@ -64,27 +74,36 @@ export default function Categories() {
         return;
       }
 
-      const data = { name: values.category, userID: session.user.id };
+      // Prepare payload for POST or PUT
+      const data = editedCategory
+        ? { id: editedCategory.id, name: values.category }
+        : { name: values.category, userId: session.user.id };
+
       const response = await fetch("/api/categories", {
         method: editedCategory ? "PUT" : "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
       });
 
-      if (!response.ok) throw new Error("Request failed");
+      if (!response.ok) {
+        const resData = await response.json();
+        throw new Error(resData.error || "Request failed");
+      }
 
       toast.success(editedCategory ? "Category updated!" : "Category created!");
       setEditedCategory(null);
       form.reset();
       fetchCategories();
-    } catch (error) {
-      toast.error("Error processing request");
+    } catch (error: any) {
+      toast.error(error.message || "Error processing request");
     }
   }
 
   async function handleDelete(id: string) {
     try {
-      const response = await fetch(`/api/categories?id=${id}`, { method: "DELETE" });
+      const response = await fetch(`/api/categories?id=${id}`, {
+        method: "DELETE",
+      });
       if (!response.ok) throw new Error("Failed to delete category");
 
       setCategories((prev) => prev.filter((category) => category.id !== id));
@@ -112,7 +131,20 @@ export default function Categories() {
                   </FormItem>
                 )}
               />
-              <Button type="submit" className="bg-[#eb0029]">Create</Button>
+              <Button type="submit" className="bg-[#eb0029]">
+                {editedCategory ? "Update" : "Create"}
+              </Button>
+              {editedCategory && (
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setEditedCategory(null);
+                    form.reset();
+                  }}
+                >
+                  Cancel
+                </Button>
+              )}
             </div>
           </form>
         </Form>
@@ -123,7 +155,10 @@ export default function Categories() {
         <Label>Existing Categories</Label>
         {categories.length > 0 ? (
           categories.map((category) => (
-            <div key={category.id} className="bg-[#F3F4F6] flex justify-between items-center rounded-md p-2 mt-2">
+            <div
+              key={category.id}
+              className="bg-[#F3F4F6] flex justify-between items-center rounded-md p-2 mt-2"
+            >
               <p className="p-4">{category.name}</p>
               <div className="flex gap-2">
                 <Button

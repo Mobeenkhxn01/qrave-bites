@@ -28,7 +28,7 @@ import dynamic from "next/dynamic";
 import TitleHeaderPartner from "../titleheader";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
-import { toast } from "sonner"; // Add this to your project: npm install sonner
+import toast, { Toaster } from "react-hot-toast"; // Add this to your project: npm install sonner
 
 const LocationMapWithSearch = dynamic(
   () => import("@/components/layout/LocationMapWithSearch"),
@@ -122,7 +122,7 @@ export default function NewRestaurantRegister() {
             form.setValue("address", restaurant.location.address);
           }
           
-          toast.info("Existing restaurant data loaded");
+          toast.error("Existing restaurant data loaded");
         }
       } catch (error) {
         // Restaurant doesn't exist yet, which is fine
@@ -169,7 +169,6 @@ export default function NewRestaurantRegister() {
             
             toast.success(message);
             
-            // Navigate to next step
             router.push("/partner-with-us/add-menu-items");
           } else {
             toast.error("Failed to save restaurant information");
@@ -212,24 +211,34 @@ export default function NewRestaurantRegister() {
   }
 
   return (
-    <div className="px-4">
+    <div className="px-4 md:px-6 lg:px-8">
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-          <div className="flex justify-between items-start gap-6">
-            <aside className="w-1/3 p-12 flex justify-center items-end">
+          {/* Mobile/Small Screen Layout - Aside on top */}
+          <div className="block lg:hidden">
+            <div className="w-full p-6 flex justify-center items-center mb-8">
+              <TitleHeaderPartner activeStep={1} />
+            </div>
+          </div>
+
+          {/* Main Content Layout */}
+          <div className="flex flex-col lg:flex-row justify-between items-start gap-6">
+            {/* Desktop Aside - Left sidebar */}
+            <aside className="hidden lg:block w-1/3 p-12 justify-center items-end">
               <TitleHeaderPartner activeStep={1} />
             </aside>
 
-            <section className="w-2/3 pr-20">
-              <h1 className="text-4xl font-semibold mb-6">
+            {/* Main Content Section */}
+            <section className="w-full lg:w-2/3 lg:pr-20">
+              <h1 className="text-2xl md:text-3xl lg:text-4xl font-semibold mb-6">
                 Restaurant Information
               </h1>
 
               {/* Restaurant Name Card */}
-              <Card className="mb-10">
+              <Card className="mb-6 lg:mb-10">
                 <CardHeader>
-                  <h2 className="text-2xl font-semibold">Restaurant name</h2>
-                  <p className="font-extralight text-cyan-900">
+                  <h2 className="text-xl md:text-2xl font-semibold">Restaurant name</h2>
+                  <p className="font-extralight text-cyan-900 text-sm md:text-base">
                     Customers will see this name on QraveBites
                   </p>
                 </CardHeader>
@@ -242,7 +251,7 @@ export default function NewRestaurantRegister() {
                         <FormLabel>Restaurant name</FormLabel>
                         <FormControl>
                           <Input
-                            className="h-12"
+                            className="h-10 md:h-12"
                             placeholder="Restaurant Name*"
                             {...field}
                           />
@@ -255,17 +264,17 @@ export default function NewRestaurantRegister() {
               </Card>
 
               {/* Owner Details Card */}
-              <Card className="mb-10">
+              <Card className="mb-6 lg:mb-10">
                 <CardHeader>
-                  <h2 className="text-2xl font-semibold">Owner details</h2>
-                  <p className="font-extralight text-cyan-900">
+                  <h2 className="text-xl md:text-2xl font-semibold">Owner details</h2>
+                  <p className="font-extralight text-cyan-900 text-sm md:text-base">
                     QraveBites will use these details for all business
                     communications
                   </p>
                 </CardHeader>
 
-                <CardContent className="flex gap-4">
-                  <div className="w-1/2 grid items-center gap-1.5">
+                <CardContent className="flex flex-col md:flex-row gap-4">
+                  <div className="w-full md:w-1/2 grid items-center gap-1.5">
                     <FormField
                       control={form.control}
                       name="ownername"
@@ -274,7 +283,7 @@ export default function NewRestaurantRegister() {
                           <FormLabel>Full name</FormLabel>
                           <FormControl>
                             <Input
-                              className="h-12"
+                              className="h-10 md:h-12"
                               placeholder="Full Name*"
                               {...field}
                             />
@@ -285,7 +294,7 @@ export default function NewRestaurantRegister() {
                     />
                   </div>
 
-                  <div className="w-1/2 grid items-center gap-1.5">
+                  <div className="w-full md:w-1/2 grid items-center gap-1.5">
                     <FormField
                       control={form.control}
                       name="email"
@@ -294,7 +303,7 @@ export default function NewRestaurantRegister() {
                           <FormLabel>Email Address</FormLabel>
                           <FormControl>
                             <Input
-                              className="h-12"
+                              className="h-10 md:h-12"
                               placeholder="Email Address *"
                               disabled
                               value={userEmail}
@@ -308,9 +317,9 @@ export default function NewRestaurantRegister() {
                   </div>
                 </CardContent>
 
-                <CardFooter className="flex flex-col ">
-                  <div className="w-full flex items-end gap-2">
-                    <div className="w-1/12 flex items-center justify-center border rounded-md px-2 py-3">
+                <CardFooter className="flex flex-col">
+                  <div className="w-full flex flex-col sm:flex-row items-end gap-2">
+                    <div className="w-full sm:w-1/12 flex items-center justify-center border rounded-md px-2 py-3">
                       <Image
                         className="w-6 h-auto"
                         src="/india-flag.webp"
@@ -322,7 +331,7 @@ export default function NewRestaurantRegister() {
                       <span className="ml-1">+91</span>
                     </div>
 
-                    <div className="w-11/12 flex flex-col items-start gap-1.5">
+                    <div className="w-full sm:w-11/12 flex flex-col items-start gap-1.5">
                       <FormField
                         control={form.control}
                         name="phone"
@@ -331,7 +340,7 @@ export default function NewRestaurantRegister() {
                             <FormLabel>Phone Number</FormLabel>
                             <FormControl>
                               <Input
-                                className="h-12 w-full"
+                                className="h-10 md:h-12 w-full"
                                 placeholder="Phone Number *"
                                 {...field}
                               />
@@ -344,13 +353,13 @@ export default function NewRestaurantRegister() {
                   </div>
                   
                   <div className="w-full flex item-start flex-col justify-center mt-6">
-                    <h1 className="text-2xl font-semibold">
+                    <h1 className="text-lg md:text-xl lg:text-2xl font-semibold">
                       Restaurant&apos;s primary contact number
                     </h1>
-                    <p className="font-extralight text-cyan-900">
+                    <p className="font-extralight text-cyan-900 text-sm md:text-base">
                       Customers may call on this number for order support
                     </p>
-                    <div className="flex font-extralight items-center space-x-2 rounded-2xl">
+                    <div className="flex font-extralight items-center space-x-2 rounded-2xl mt-2">
                       <FormField
                         control={form.control}
                         name="mobile"
@@ -363,7 +372,7 @@ export default function NewRestaurantRegister() {
                               />
                             </FormControl>
                             <div className="space-y-1 leading-none">
-                              <FormLabel>
+                              <FormLabel className="text-sm md:text-base">
                                 This is same as owner mobile number
                               </FormLabel>
                             </div>
@@ -378,7 +387,7 @@ export default function NewRestaurantRegister() {
               {/* Location Card */}
               <Card>
                 <CardHeader>
-                  <h2 className="text-2xl font-semibold">
+                  <h2 className="text-xl md:text-2xl font-semibold">
                     Add your restaurant&apos;s location
                   </h2>
                 </CardHeader>
@@ -390,8 +399,8 @@ export default function NewRestaurantRegister() {
                 </CardContent> 
 
                 <CardFooter className="flex flex-col">
-                  <div className="w-full flex gap-4 mb-6">
-                    <div className="w-1/2 grid items-center gap-1.5">
+                  <div className="w-full flex flex-col md:flex-row gap-4 mb-6">
+                    <div className="w-full md:w-1/2 grid items-center gap-1.5">
                       <FormField
                         control={form.control}
                         name="shop"
@@ -399,7 +408,7 @@ export default function NewRestaurantRegister() {
                           <FormItem>
                             <FormControl>
                               <Input
-                                className="h-12"
+                                className="h-10 md:h-12"
                                 placeholder="Shop Number/ Building Number *"
                                 {...field}
                               />
@@ -410,7 +419,7 @@ export default function NewRestaurantRegister() {
                       />
                     </div>
 
-                    <div className="w-1/2 grid items-center gap-1.5">
+                    <div className="w-full md:w-1/2 grid items-center gap-1.5">
                       <FormField
                         control={form.control}
                         name="floor"
@@ -418,7 +427,7 @@ export default function NewRestaurantRegister() {
                           <FormItem>
                             <FormControl>
                               <Input
-                                className="h-12"
+                                className="h-10 md:h-12"
                                 placeholder="Floor / Tower number (Optional)"
                                 {...field}
                               />
@@ -430,8 +439,8 @@ export default function NewRestaurantRegister() {
                     </div>
                   </div>
 
-                  <div className="w-full flex gap-4">
-                    <div className="w-1/2 grid items-center gap-1.5">
+                  <div className="w-full flex flex-col md:flex-row gap-4">
+                    <div className="w-full md:w-1/2 grid items-center gap-1.5">
                       <FormField
                         control={form.control}
                         name="area"
@@ -439,7 +448,7 @@ export default function NewRestaurantRegister() {
                           <FormItem>
                             <FormControl>
                               <Input
-                                className="h-12"
+                                className="h-10 md:h-12"
                                 placeholder="Area/ sector/ Locality *"
                                 {...field}
                               />
@@ -450,7 +459,7 @@ export default function NewRestaurantRegister() {
                       />
                     </div>
 
-                    <div className="w-1/2 grid items-center gap-1.5">
+                    <div className="w-full md:w-1/2 grid items-center gap-1.5">
                       <FormField
                         control={form.control}
                         name="city"
@@ -458,7 +467,7 @@ export default function NewRestaurantRegister() {
                           <FormItem>
                             <FormControl>
                               <Input
-                                className="h-12"
+                                className="h-10 md:h-12"
                                 placeholder="City *"
                                 {...field}
                               />
@@ -479,7 +488,7 @@ export default function NewRestaurantRegister() {
                           <FormControl>
                             <Input
                               type="text"
-                              className="h-12"
+                              className="h-10 md:h-12"
                               placeholder="Add any nearby landmark (optional)"
                               {...field}
                             />
@@ -492,14 +501,14 @@ export default function NewRestaurantRegister() {
                 </CardFooter>
               </Card>
               
-              <div className="mt-6 flex justify-end item-center">
+              <div className="mt-6 flex justify-center md:justify-end item-center">
                 <div className="">
                   <Button
                     type="submit"
                     disabled={isPending || isLoading}
                     variant={"outline"}
                     size={"lg"}
-                    className="rounded-2xl bg-[#4947e0] text-white hover:bg-[#3a38c7]"
+                    className="rounded-2xl bg-[#4947e0] text-white hover:bg-[#3a38c7] w-full md:w-auto"
                   >
                     {isPending || isLoading ? "Processing..." : "Next"}
                     <Right />

@@ -22,7 +22,7 @@ const createMarkerIcon = () => new L.Icon({
   shadowSize: [41, 41]
 });
 
-const GEOAPIFY_API_KEY = 'e1dac72fdf5c4362bcbc9a78c558925c';
+const GEOAPIFY_API_KEY = process.env.NEXT_PUBLIC_GEOAPIFY_API_KEY;
 
 interface LocationMapWithSearchProps {
   onLocationChange: (lat: number, lng: number, address: string) => void;
@@ -65,7 +65,7 @@ export default function LocationMapWithSearch({
       } else {
         setError('Address not found');
       }
-    } catch (err) {
+    } catch (err: unknown) {
       setError('Failed to search location. Please try again.');
       console.error('Geocoding error:', err);
     } finally {
@@ -83,7 +83,7 @@ export default function LocationMapWithSearch({
       const addr = data.features?.[0]?.properties?.formatted || '';
       setAddress(addr);
       onLocationChange(lat, lng, addr);
-    } catch (err) {
+    } catch (err: unknown) {
       console.error('Reverse geocoding error:', err);
       setAddress('');
     }
@@ -136,7 +136,7 @@ export default function LocationMapWithSearch({
         reverseGeocode(initialPosition[0], initialPosition[1]);
       }
     }
-  }, [initialPosition, initialAddress]);
+  }, [initialPosition, initialAddress, position, reverseGeocode]);
 
   return (
     <div className="space-y-4">

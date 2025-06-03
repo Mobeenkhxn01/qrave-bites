@@ -2,7 +2,6 @@ import { prisma } from "@/lib/prisma";
 import { NextResponse, NextRequest } from "next/server";
 import { z } from "zod";
 
-// Validation schema
 const restaurantSchema = z.object({
   restaurantname: z.string().min(2, "Restaurant name must be at least 2 characters").max(50, "Restaurant name must be less than 50 characters"),
   ownername: z.string().min(2, "Owner name must be at least 2 characters").max(50, "Owner name must be less than 50 characters"),

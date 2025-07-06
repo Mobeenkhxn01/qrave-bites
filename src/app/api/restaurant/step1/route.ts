@@ -1,17 +1,18 @@
 import { prisma } from "@/lib/prisma";
 import { NextResponse, NextRequest } from "next/server";
 import { z } from "zod";
+import slugify from "slugify";
 
 const restaurantSchema = z.object({
-  restaurantname: z.string().min(2, "Restaurant name must be at least 2 characters").max(50, "Restaurant name must be less than 50 characters"),
-  ownername: z.string().min(2, "Owner name must be at least 2 characters").max(50, "Owner name must be less than 50 characters"),
-  email: z.string().email("Invalid email format"),
-  phone: z.string().regex(/^\d{10,15}$/, "Phone number must be 10-15 digits"),
+  restaurantname: z.string().min(2).max(50),
+  ownername: z.string().min(2).max(50),
+  email: z.string().email(),
+  phone: z.string().regex(/^\d{10,15}$/),
   mobile: z.boolean().optional().default(false),
-  shop: z.number().min(1, "Shop number must be at least 1").max(99999, "Shop number too large"),
+  shop: z.number().min(1).max(99999),
   floor: z.string().optional().nullable(),
-  area: z.string().min(2, "Area must be at least 2 characters").max(50, "Area must be less than 50 characters"),
-  city: z.string().min(2, "City must be at least 2 characters").max(50, "City must be less than 50 characters"),
+  area: z.string().min(2).max(50),
+  city: z.string().min(2).max(50),
   landmark: z.string().optional().nullable(),
   latitude: z.number().nullable().optional(),
   longitude: z.number().nullable().optional(),
@@ -21,21 +22,16 @@ const restaurantSchema = z.object({
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    
-    // Validate input data
     const validationResult = restaurantSchema.safeParse(body);
-    
+
     if (!validationResult.success) {
-      return NextResponse.json(
-        { 
-          error: "Validation failed", 
-          details: validationResult.error.issues.map(issue => ({
-            field: issue.path.join('.'),
-            message: issue.message
-          }))
-        },
-        { status: 400 }
-      );
+      return NextResponse.json({
+        error: "Validation failed",
+        details: validationResult.error.issues.map(issue => ({
+          field: issue.path.join('.'),
+          message: issue.message
+        }))
+      }, { status: 400 });
     }
 
     const {
@@ -54,53 +50,58 @@ export async function POST(req: NextRequest) {
       address,
     } = validationResult.data;
 
-    // 🔍 Check if user exists
     const existingUser = await prisma.user.findUnique({
       where: { email },
       select: { id: true, email: true, role: true }
     });
 
     if (!existingUser) {
-      return NextResponse.json(
-        { error: "User not found. Please register first." },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "User not found." }, { status: 404 });
     }
 
-    // 🔄 Use upsert for create or update
+    // Slugify restaurant name
+    let baseSlug = slugify(restaurantname, { lower: true, strict: true });
+    let slug = baseSlug;
+    let suffix = 1;
+
+    while (await prisma.restaurantStep1.findUnique({ where: { slug } })) {
+      slug = `${baseSlug}-${suffix++}`;
+    }
+
+    // Upsert restaurant record
     const restaurantstep1 = await prisma.restaurantStep1.upsert({
-      where: {
-        email: email,
-      },
+      where: { email },
       update: {
         restaurantName: restaurantname,
         ownerName: ownername,
-        phone: phone,
-        mobile: mobile,
-        shop: shop,
+        phone,
+        mobile,
+        shop,
         floor: floor || null,
-        area: area,
-        city: city,
+        area,
+        city,
         landmark: landmark || null,
         latitude: latitude || null,
         longitude: longitude || null,
         address: address || null,
+        slug, // 👈 update slug on name change
         updatedAt: new Date(),
       },
       create: {
         restaurantName: restaurantname,
         ownerName: ownername,
-        email: email,
-        phone: phone,
-        mobile: mobile,
-        shop: shop,
+        email,
+        phone,
+        mobile,
+        shop,
         floor: floor || null,
-        area: area,
-        city: city,
+        area,
+        city,
         landmark: landmark || null,
         latitude: latitude || null,
         longitude: longitude || null,
-        address: address || null, 
+        address: address || null,
+        slug, // 👈 save slug
         user: {
           connect: {
             id: existingUser.id,
@@ -113,135 +114,20 @@ export async function POST(req: NextRequest) {
             id: true,
             email: true,
             name: true,
-          }
-        }
-      }
-    });
-
-    // Determine if it was created or updated
-    const isNewRestaurantStep1 = restaurantstep1.createdAt.getTime() === restaurantstep1.updatedAt.getTime();
-
-    return NextResponse.json(
-      {
-        success: true,
-        message: isNewRestaurantStep1 
-          ? "Restaurant created successfully" 
-          : "Restaurant updated successfully",
-        data: {
-          restaurant: {
-            id: restaurantstep1.id,
-            restaurantName: restaurantstep1.restaurantName,
-            ownerName: restaurantstep1.ownerName,
-            email: restaurantstep1.email,
-            phone: restaurantstep1.phone,
-            mobile: restaurantstep1.mobile,
-            location: {
-              shop: restaurantstep1.shop,
-              floor: restaurantstep1.floor,
-              area: restaurantstep1.area,
-              city: restaurantstep1.city,
-              landmark: restaurantstep1.landmark,
-              address: restaurantstep1.address,
-              coordinates: {
-                latitude: restaurantstep1.latitude,
-                longitude: restaurantstep1.longitude,
-              }
-            },
-            createdAt: restaurantstep1.createdAt,
-            updatedAt: restaurantstep1.updatedAt,
           },
-          user: restaurantstep1.ownerName,
-          isNew: isNewRestaurantStep1,
-        }
+        },
       },
-      { status: isNewRestaurantStep1 ? 201 : 200 }
-    );
-
-  } catch (error) {
-    console.error("Error in restaurant registration:", error);
- 
-      return NextResponse.json(
-        { 
-          error: "Duplicate entry", 
-          message: "A restaurant with this information already exists" 
-        },
-        { status: 409 }
-      );
-   
-      return NextResponse.json(
-        { 
-          error: "Foreign key constraint", 
-          message: "Referenced user does not exist" 
-        },
-        { status: 400 }
-      );
-
-      return NextResponse.json(
-        { 
-          error: "Record not found", 
-          message: "User not found for restaurant creation" 
-        },
-        { status: 404 }
-      );
-   
-
-    // Handle JSON parsing errors
-    if (error instanceof SyntaxError) {
-      return NextResponse.json(
-        { error: "Invalid JSON in request body" },
-        { status: 400 }
-      );
-    }
-
-    // Generic error response
-    return NextResponse.json(
-      { 
-        error: "Internal Server Error",
-        message: "Something went wrong while processing your request"
-      },
-      { status: 500 }
-    );
-  }
-}
-
-// GET method to retrieve restaurant data
-export async function GET(req: NextRequest) {
-  try {
-    const { searchParams } = new URL(req.url);
-    const email = searchParams.get('email');
-    
-    if (!email) {
-      return NextResponse.json(
-        { error: "Email parameter is required" },
-        { status: 400 }
-      );
-    }
-
-    const restaurantstep1 = await prisma.restaurantStep1.findUnique({
-      where: { email },
-      include: {
-        user: {
-          select: {
-            id: true,
-            email: true,
-            name: true,
-          }
-        }
-      }
     });
 
-    if (!restaurantstep1) {
-      return NextResponse.json(
-        { error: "Restaurant not found" },
-        { status: 404 }
-      );
-    }
+    const isNew = restaurantstep1.createdAt.getTime() === restaurantstep1.updatedAt.getTime();
 
     return NextResponse.json({
       success: true,
+      message: isNew ? "Restaurant created successfully" : "Restaurant updated successfully",
       data: {
         restaurant: {
           id: restaurantstep1.id,
+          slug: restaurantstep1.slug,
           restaurantName: restaurantstep1.restaurantName,
           ownerName: restaurantstep1.ownerName,
           email: restaurantstep1.email,
@@ -257,20 +143,85 @@ export async function GET(req: NextRequest) {
             coordinates: {
               latitude: restaurantstep1.latitude,
               longitude: restaurantstep1.longitude,
-            }
+            },
           },
           createdAt: restaurantstep1.createdAt,
           updatedAt: restaurantstep1.updatedAt,
         },
         user: restaurantstep1.user,
+        isNew,
       }
-    });
+    }, { status: isNew ? 201 : 200 });
 
   } catch (error) {
-    console.error("Error fetching restaurant:", error);
-    return NextResponse.json(
-      { error: "Internal Server Error" },
-      { status: 500 }
-    );
+    console.error("POST Error:", error);
+
+    if (error instanceof SyntaxError) {
+      return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+    }
+
+    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+  }
+}
+
+
+export async function GET(req: NextRequest) {
+  try {
+    const { searchParams } = new URL(req.url);
+    const email = searchParams.get("email");
+
+    if (!email) {
+      return NextResponse.json({ error: "Email is required" }, { status: 400 });
+    }
+
+    const restaurantstep1 = await prisma.restaurantStep1.findUnique({
+      where: { email },
+      include: {
+        user: {
+          select: {
+            id: true,
+            email: true,
+            name: true,
+          },
+        },
+      },
+    });
+
+    if (!restaurantstep1) {
+      return NextResponse.json({ error: "Restaurant not found" }, { status: 404 });
+    }
+
+    return NextResponse.json({
+      success: true,
+      data: {
+        restaurant: {
+          id: restaurantstep1.id,
+          slug: restaurantstep1.slug,
+          restaurantName: restaurantstep1.restaurantName,
+          ownerName: restaurantstep1.ownerName,
+          email: restaurantstep1.email,
+          phone: restaurantstep1.phone,
+          mobile: restaurantstep1.mobile,
+          location: {
+            shop: restaurantstep1.shop,
+            floor: restaurantstep1.floor,
+            area: restaurantstep1.area,
+            city: restaurantstep1.city,
+            landmark: restaurantstep1.landmark,
+            address: restaurantstep1.address,
+            coordinates: {
+              latitude: restaurantstep1.latitude,
+              longitude: restaurantstep1.longitude,
+            },
+          },
+          createdAt: restaurantstep1.createdAt,
+          updatedAt: restaurantstep1.updatedAt,
+        },
+        user: restaurantstep1.user,
+      },
+    });
+  } catch (error) {
+    console.error("GET Error:", error);
+    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
   }
 }

@@ -124,6 +124,7 @@ model MenuItem {
 model RestaurantStep1 {
   id             String     @id @default(auto()) @map("_id") @db.ObjectId
   restaurantName String
+  slug           String     @unique
   ownerName      String
   email          String     @unique
   phone          String     @unique

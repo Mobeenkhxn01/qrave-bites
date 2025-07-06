@@ -27,7 +27,10 @@ model User {
 
   createdAt     DateTime        @default(now())
   updatedAt     DateTime        @updatedAt
-  restaurants   Restaurant[]
+  restaurantstep1   RestaurantStep1[]
+  restaurantstep2   RestaurantStep2[]
+  restaurantstep3   RestaurantStep3[]
+  restaurantstep4   RestaurantStep4[]
 }
 
 model Account {
@@ -111,17 +114,19 @@ model MenuItem {
   category    Category   @relation(fields: [categoryId], references: [id], onDelete: Cascade, name: "CategoryMenuItems")
 
   restaurantId String     @db.ObjectId
-  restaurant   Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade, name: "RestaurantMenuItems")
-
+  restaurantstep1   RestaurantStep1 @relation(fields: [restaurantId], references: [id], onDelete: Cascade, name: "RestaurantMenuItems")
+  restaurantstep2   RestaurantStep2 @relation(fields: [restaurantId], references: [id], onDelete: Cascade, name: "RestaurantMenuItems")
+  restaurantstep3   RestaurantStep3 @relation(fields: [restaurantId], references: [id], onDelete: Cascade, name: "RestaurantMenuItems")
+  restaurantstep4   RestaurantStep4 @relation(fields: [restaurantId], references: [id], onDelete: Cascade, name: "RestaurantMenuItems")
   cartItems   CartItem[]
 }
 
-model Restaurant {
+model RestaurantStep1 {
   id             String     @id @default(auto()) @map("_id") @db.ObjectId
   restaurantName String
   ownerName      String
   email          String     @unique
-  phone          String
+  phone          String     @unique
   mobile         Boolean?
   shop           Int
   floor          String?
@@ -131,6 +136,54 @@ model Restaurant {
   latitude       Float?
   longitude      Float?
   address        String?
+
+  userId         String     @db.ObjectId
+  user           User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  menu           MenuItem[] @relation("RestaurantMenuItems")
+
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+}
+model RestaurantStep2{
+  id             String     @id @default(auto()) @map("_id") @db.ObjectId
+  cuisine              String[] 
+  restaurantImageUrl   String
+  foodImageUrl         String
+  deliveryImageUrl     String
+  restaurantProfileUrl String
+  days                 String[] 
+  openingTime          String
+  closingTime          String
+
+  userId         String     @db.ObjectId
+  user           User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  menu           MenuItem[] @relation("RestaurantMenuItems")
+
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+}
+model RestaurantStep3{
+  id             String     @id @default(auto()) @map("_id") @db.ObjectId
+  panNumber      String    @unique 
+  fullName       String
+  restaurantAddress String
+  panImage      String? 
+  accountNumber String   @unique
+  confirmAccountNumber String
+  ifscCode   String
+  accountType String
+  upiId    String? @unique
+  
+  userId         String     @db.ObjectId
+  user           User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  menu           MenuItem[] @relation("RestaurantMenuItems")
+
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+}
+model RestaurantStep4{
+  id             String     @id @default(auto()) @map("_id") @db.ObjectId
+  agreement      Boolean
 
   userId         String     @db.ObjectId
   user           User       @relation(fields: [userId], references: [id], onDelete: Cascade)

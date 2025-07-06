@@ -43,7 +43,6 @@ const formSchema = z.object({
 
 export default function NewMenuPage() {
   const router = useRouter();
-  const { id: restaurantId } = useParams(); // still available if needed
   const { data: session } = useSession();
 
   const form = useForm<z.infer<typeof formSchema>>({

@@ -1,11 +1,6 @@
 "use client";
 
-import {
-  Card,
-  CardContent,
-  CardFooter,
-  CardHeader,
-} from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { z } from "zod";
 import {
   Form,
@@ -15,163 +10,199 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import Link from "next/link";
-import { Input } from "@/components/ui/input";
-
-import { Checkbox } from "@/components/ui/checkbox";
-import { Button } from "@/components/ui/button";
-import Right from "@/components/icons/Right";
-import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-import { ImageInput } from "@/components/ui/image-input";
-import { SelectableList } from "@/components/ui/multi-select";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import TitleHeaderPartner from "../titleheader";
-import { ScrollArea } from "@radix-ui/react-scroll-area";
+import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
+import axios from "axios";
+import toast from "react-hot-toast";
+import Right from "@/components/icons/Right";
 
-// You can define the form validation schema here.
-// Currently empty, but you can add fields later.
+// ✅ Step 4 Zod schema
 const formSchema = z.object({
-  // Example field:
-  // acceptTerms: z.boolean().refine(val => val === true, "You must accept terms"),
+  agreement: z.literal(true, {
+    errorMap: () => ({ message: "You must accept the agreement to proceed." }),
+  }),
 });
 
-export default function NewRestaurantRegister() {
-  // onSubmit handler, receives validated form data
-  function onSubmit(values: z.infer<typeof formSchema>) {
-    // Use form values here - e.g., send to API or update state
-    console.log("Form submitted with values:", values);
-  }
+export default function RestaurantStep4() {
+  const router = useRouter();
+  const { data: session, status } = useSession();
 
-  // Initialize react-hook-form with Zod resolver and default values
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      cuisine: [], // example default value
+      agreement: true,
     },
   });
+
+  const onSubmit = async (values: z.infer<typeof formSchema>) => {
+    const email = session?.user?.email;
+    if (!email) {
+      toast.error("User email not found");
+      return;
+    }
+
+    try {
+      const response = await axios.post("/api/restaurant/step4", {
+        agreement: values.agreement,
+        email,
+      });
+
+      if (response.data.success) {
+        toast.success("Agreement accepted successfully");
+        router.push("/partner-with-us/thank-you"); // Replace with your next route
+      } else {
+        toast.error(response.data.message || "Failed to save agreement");
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error("Something went wrong while saving agreement");
+    }
+  };
+
+  if (status === "loading") return <div className="p-10">Loading...</div>;
+  if (status === "unauthenticated") {
+    router.push("/login");
+    return null;
+  }
 
   return (
     <div className="px-4">
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
           <div className="flex justify-between items-start gap-6">
-            {/* Left side tab / stepper */}
+            {/* Sidebar step indicator */}
             <aside className="w-1/3 p-12 flex justify-center items-end">
               <TitleHeaderPartner activeStep={4} />
             </aside>
 
-            {/* Main form section */}
+            {/* Main content */}
             <section className="w-2/3 pr-20">
               <h1 className="text-4xl font-semibold mb-6">
                 Partner Contract and Agreement
               </h1>
 
               <Card className="mb-10 p-4">
-                <ScrollArea className="h-screen w-full border rounded-md overflow-y-auto">
-                  <CardContent className="p-4">
-                    {/* Your contract text here */}
-                    Lorem ipsum dolor sit amet, consectetur adipisicing elit.
-                    Distinctio, est? Esse commodi ad hic beatae officiis placeat
-                    omnis enim. Quia impedit commodi fugiat laboriosam eum
-                    necessitatibus optio facere est enim.
-                    <br />
-                    Quidem cumque eum asperiores assumenda, aperiam ullam
-                    facilis unde voluptates maiores ad quas deserunt nam, animi
-                    nemo optio doloribus...
-                    {/* continue your text */}
-                    Lorem ipsum dolor sit, amet consectetur adipisicing elit.
-                    Natus saepe illum molestias earum rerum cum modi obcaecati,
-                    dolore repudiandae veritatis id minus facere sunt
-                    reprehenderit totam nihil neque doloremque fuga? Quisquam
-                    est, dolor voluptatum aliquam consequatur reiciendis nemo
-                    repellat temporibus, laborum quo cupiditate praesentium
-                    vitae. Facere dolores alias quidem dignissimos voluptas
-                    dolore. Voluptas natus velit itaque fugit excepturi cumque
-                    labore. Sequi aperiam recusandae facilis cupiditate eum
-                    totam porro dolore ea illo quam libero consequatur voluptas,
-                    tempora architecto temporibus excepturi adipisci facere
-                    nesciunt corrupti eos officia. Expedita autem ad quibusdam
-                    quasi. Quia exercitationem possimus omnis deleniti quisquam?
-                    Reiciendis suscipit pariatur ad, numquam, distinctio
-                    adipisci nesciunt nostrum molestiae repellat fugit illo
-                    earum iure non a natus at! Rerum illum harum repellendus
-                    nam! Labore quibusdam voluptatem veritatis explicabo saepe
-                    nihil totam, mollitia voluptatibus possimus odit reiciendis
-                    velit, eum ut architecto optio animi, excepturi minima.
-                    Molestiae atque earum sequi dolorum consequuntur ea
-                    blanditiis delectus. Quia accusantium incidunt alias itaque
-                    corporis odit officiis quos obcaecati minima! Neque totam
-                    ullam ex aliquid exercitationem dicta odit, fugit deserunt
-                    suscipit excepturi enim tenetur temporibus mollitia! In, aut
-                    illum? Iste repellendus tenetur asperiores est laborum.
-                    Neque alias repellendus maxime, nemo ea vero at eaque eius
-                    molestias odit aspernatur mollitia non ducimus, cumque,
-                    fugiat minima quia aperiam ex amet culpa. Maiores assumenda
-                    ipsa debitis, quos perferendis necessitatibus, numquam
-                    placeat laboriosam expedita praesentium sint optio tempora
-                    dolores id architecto molestias! Non, assumenda. Alias eum
-                    ipsum quis officia amet ad autem magni. Non quasi autem
-                    ratione aspernatur possimus perferendis, nobis unde quae
-                    voluptatibus laboriosam, deserunt aut eveniet voluptatem
-                    dolorem ab minima fuga dolorum maxime obcaecati doloremque
-                    voluptas architecto! Laboriosam dolor nemo quae. Provident,
-                    beatae. Ea sapiente eius assumenda, harum voluptates modi
-                    quos minima accusamus eos aut accusantium iusto. Amet sint,
-                    quos dignissimos quam ipsum, commodi itaque est deserunt
-                    rerum error veniam incidunt. Veniam facilis saepe provident
-                    commodi nam eius iste dignissimos ut illo voluptate deserunt
-                    modi quasi, consequuntur accusamus ad quaerat explicabo
-                    temporibus optio, numquam odio, non neque tenetur. Tempora,
-                    eligendi hic. Laborum maiores qui voluptas minus quia nam
-                    blanditiis porro laboriosam mollitia dolorem! Impedit
-                    consequatur nemo, neque esse optio ipsa quasi quae beatae
-                    quod suscipit voluptates similique exercitationem non nam
-                    unde! Ratione quod vero possimus distinctio doloribus hic
-                    incidunt odit natus, amet dicta culpa deserunt debitis sed
-                    eligendi eos! Aliquid reiciendis perferendis esse natus
-                    corrupti earum, dolorem tenetur deleniti nulla ab! Facilis
-                    magni cumque dolores sint repellat commodi adipisci
-                    asperiores nostrum dolorum aperiam praesentium ad
-                    perspiciatis corrupti temporibus labore rem, vel modi
-                    distinctio, doloribus doloremque incidunt. Tenetur
-                    voluptates amet quaerat perferendis! Tenetur molestiae
-                    quaerat dignissimos et aliquid corporis nulla sunt
-                    perspiciatis magnam vitae omnis nostrum nemo cum quos, ex a
-                    aperiam minus commodi quisquam doloremque tempore optio
-                    facere minima id. Eum? Odit laudantium autem sed earum
-                    praesentium voluptas aspernatur ad enim fugit voluptatum
-                    eligendi ratione est, necessitatibus illo sunt, veniam quod,
-                    officiis rerum nesciunt ipsa provident natus! Dolorum minus
-                    eaque repudiandae! Et iure minus qui quam, fugiat cum in
-                    sint dicta tenetur nemo suscipit vitae numquam ipsam ut?
-                    Necessitatibus molestiae nihil, vitae mollitia ipsa
-                    consequuntur sequi unde obcaecati sit. Nam, fugit? Ipsa,
-                    beatae nesciunt quas iste saepe sint. Quisquam est
-                    laboriosam nobis repellendus consequatur amet error ab
-                    mollitia quos suscipit aut accusantium, placeat nihil esse,
-                    voluptatem ea ut incidunt cupiditate perferendis! Pariatur,
-                    beatae praesentium sint nam provident ipsum. Nemo,
-                    accusantium voluptatem! Dicta ad error voluptas, nesciunt
-                    odit quae molestias delectus ut dignissimos cumque cum in
-                    consequuntur minus. Vitae voluptatibus quod repudiandae? Qui
-                    magnam tempore magni soluta eligendi. Similique sequi
-                    aliquid veritatis natus, animi nulla facilis necessitatibus
-                    placeat tenetur fuga eaque quaerat cum ab cupiditate dolorum
-                    beatae, ut ex mollitia sed. Minus.\
+                <ScrollArea className="h-[400px] w-full rounded-md overflow-y-auto">
+                  <CardContent className="p-4 text-sm space-y-4">
+                    <h2 className="text-xl font-bold">
+                      Restaurant Partner Agreement
+                    </h2>
+
+                    <p>
+                      This Restaurant Partner Agreement ("Agreement") is made
+                      between you ("Partner") and QraveBites ("we", "us").
+                    </p>
+
+                    <h3 className="font-semibold">1. Partner Obligations</h3>
+                    <ul className="list-disc pl-6 space-y-1">
+                      <li>
+                        Comply with all food safety and legal regulations.
+                      </li>
+                      <li>
+                        Ensure timely fulfillment of orders with accurate menu
+                        listings.
+                      </li>
+                      <li>
+                        Provide current and valid documents (PAN, FSSAI, Bank
+                        Details, etc.).
+                      </li>
+                    </ul>
+
+                    <h3 className="font-semibold">2. Our Responsibilities</h3>
+                    <p>
+                      We will list your restaurant, process customer orders, and
+                      remit payouts after deducting agreed commissions.
+                    </p>
+
+                    <h3 className="font-semibold">3. Payments & Commissions</h3>
+                    <p>
+                      You agree to the payout schedule and commission percentage
+                      discussed during onboarding. Refunds/chargebacks are
+                      adjusted in your statements.
+                    </p>
+
+                    <h3 className="font-semibold">4. Taxes</h3>
+                    <p>
+                      You are responsible for complying with GST, PAN, and all
+                      applicable tax filings.
+                    </p>
+
+                    <h3 className="font-semibold">5. Termination</h3>
+                    <p>
+                      Either party may terminate this agreement with 15 days'
+                      written notice. Breaches may result in immediate
+                      suspension.
+                    </p>
+
+                    <h3 className="font-semibold">6. Privacy Policy</h3>
+                    <p>
+                      We collect your business info (contact, PAN, GST, bank
+                      info, etc.) for onboarding and order fulfillment. Data is
+                      stored securely and may be shared with government or third
+                      parties only as required.
+                    </p>
+
+                    <h3 className="font-semibold">7. Confidentiality</h3>
+                    <p>
+                      You agree not to disclose any non-public information
+                      including platform terms, pricing, or technology.
+                    </p>
+
+                    <h3 className="font-semibold">8. Dispute Resolution</h3>
+                    <p>
+                      Disputes will be resolved through arbitration in your
+                      local jurisdiction. Indian law shall govern the Agreement.
+                    </p>
+
+                    <h3 className="font-semibold">9. Consent</h3>
+                    <p>
+                      By accepting, you confirm that you are authorized to bind
+                      your business and agree to QraveBites’ terms and privacy
+                      policy.
+                    </p>
                   </CardContent>
                 </ScrollArea>
               </Card>
 
-              {/* Submit / Next button aligned right */}
+              {/* Agreement Checkbox */}
+              <FormField
+                control={form.control}
+                name="agreement"
+                render={({ field }) => (
+                  <FormItem className="flex items-center space-x-2">
+                    <FormControl>
+                      <Checkbox
+                        id="agreement"
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                      />
+                    </FormControl>
+                    <FormLabel
+                      htmlFor="agreement"
+                      className="text-sm font-medium"
+                    >
+                      I have read and agree to the Partner Agreement
+                    </FormLabel>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {/* Submit Button */}
               <div className="mt-6 flex justify-end items-center">
                 <Button
                   type="submit"
-                  variant={"outline"}
-                  size={"lg"}
-                  className="rounded-2xl bg-[#4947e0]"
+                  size="lg"
+                  className="rounded-2xl bg-[#4947e0] text-white hover:bg-[#3a38b8]"
                 >
                   Next
-                  <Right />
+                  <Right className="ml-2" />
                 </Button>
               </div>
             </section>

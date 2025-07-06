@@ -68,7 +68,7 @@ export async function POST(req: NextRequest) {
     }
 
     // 🔄 Use upsert for create or update
-    const restaurant = await prisma.restaurant.upsert({
+    const restaurantstep1 = await prisma.restaurantStep1.upsert({
       where: {
         email: email,
       },
@@ -100,7 +100,7 @@ export async function POST(req: NextRequest) {
         landmark: landmark || null,
         latitude: latitude || null,
         longitude: longitude || null,
-        address: address || null,
+        address: address || null, 
         user: {
           connect: {
             id: existingUser.id,
@@ -119,42 +119,42 @@ export async function POST(req: NextRequest) {
     });
 
     // Determine if it was created or updated
-    const isNewRestaurant = restaurant.createdAt.getTime() === restaurant.updatedAt.getTime();
+    const isNewRestaurantStep1 = restaurantstep1.createdAt.getTime() === restaurantstep1.updatedAt.getTime();
 
     return NextResponse.json(
       {
         success: true,
-        message: isNewRestaurant 
+        message: isNewRestaurantStep1 
           ? "Restaurant created successfully" 
           : "Restaurant updated successfully",
         data: {
           restaurant: {
-            id: restaurant.id,
-            restaurantName: restaurant.restaurantName,
-            ownerName: restaurant.ownerName,
-            email: restaurant.email,
-            phone: restaurant.phone,
-            mobile: restaurant.mobile,
+            id: restaurantstep1.id,
+            restaurantName: restaurantstep1.restaurantName,
+            ownerName: restaurantstep1.ownerName,
+            email: restaurantstep1.email,
+            phone: restaurantstep1.phone,
+            mobile: restaurantstep1.mobile,
             location: {
-              shop: restaurant.shop,
-              floor: restaurant.floor,
-              area: restaurant.area,
-              city: restaurant.city,
-              landmark: restaurant.landmark,
-              address: restaurant.address,
+              shop: restaurantstep1.shop,
+              floor: restaurantstep1.floor,
+              area: restaurantstep1.area,
+              city: restaurantstep1.city,
+              landmark: restaurantstep1.landmark,
+              address: restaurantstep1.address,
               coordinates: {
-                latitude: restaurant.latitude,
-                longitude: restaurant.longitude,
+                latitude: restaurantstep1.latitude,
+                longitude: restaurantstep1.longitude,
               }
             },
-            createdAt: restaurant.createdAt,
-            updatedAt: restaurant.updatedAt,
+            createdAt: restaurantstep1.createdAt,
+            updatedAt: restaurantstep1.updatedAt,
           },
-          user: restaurant.user,
-          isNew: isNewRestaurant,
+          user: restaurantstep1.ownerName,
+          isNew: isNewRestaurantStep1,
         }
       },
-      { status: isNewRestaurant ? 201 : 200 }
+      { status: isNewRestaurantStep1 ? 201 : 200 }
     );
 
   } catch (error) {
@@ -217,7 +217,7 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    const restaurant = await prisma.restaurant.findUnique({
+    const restaurantstep1 = await prisma.restaurantStep1.findUnique({
       where: { email },
       include: {
         user: {
@@ -230,7 +230,7 @@ export async function GET(req: NextRequest) {
       }
     });
 
-    if (!restaurant) {
+    if (!restaurantstep1) {
       return NextResponse.json(
         { error: "Restaurant not found" },
         { status: 404 }
@@ -241,28 +241,28 @@ export async function GET(req: NextRequest) {
       success: true,
       data: {
         restaurant: {
-          id: restaurant.id,
-          restaurantName: restaurant.restaurantName,
-          ownerName: restaurant.ownerName,
-          email: restaurant.email,
-          phone: restaurant.phone,
-          mobile: restaurant.mobile,
+          id: restaurantstep1.id,
+          restaurantName: restaurantstep1.restaurantName,
+          ownerName: restaurantstep1.ownerName,
+          email: restaurantstep1.email,
+          phone: restaurantstep1.phone,
+          mobile: restaurantstep1.mobile,
           location: {
-            shop: restaurant.shop,
-            floor: restaurant.floor,
-            area: restaurant.area,
-            city: restaurant.city,
-            landmark: restaurant.landmark,
-            address: restaurant.address,
+            shop: restaurantstep1.shop,
+            floor: restaurantstep1.floor,
+            area: restaurantstep1.area,
+            city: restaurantstep1.city,
+            landmark: restaurantstep1.landmark,
+            address: restaurantstep1.address,
             coordinates: {
-              latitude: restaurant.latitude,
-              longitude: restaurant.longitude,
+              latitude: restaurantstep1.latitude,
+              longitude: restaurantstep1.longitude,
             }
           },
-          createdAt: restaurant.createdAt,
-          updatedAt: restaurant.updatedAt,
+          createdAt: restaurantstep1.createdAt,
+          updatedAt: restaurantstep1.updatedAt,
         },
-        user: restaurant.user,
+        user: restaurantstep1.user,
       }
     });
 

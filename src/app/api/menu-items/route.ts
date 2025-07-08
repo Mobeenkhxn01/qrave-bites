@@ -18,7 +18,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Auto-fetch restaurant for user
-    const restaurant = await prisma.restaurant.findFirst({ where: { userId } });
+    const restaurant = await prisma.restaurantStep1.findFirst({ where: { userId } });
 
     if (!restaurant) {
       return NextResponse.json({ error: "Restaurant not found for user" }, { status: 404 });
@@ -32,7 +32,7 @@ export async function POST(req: NextRequest) {
         price,
         user: { connect: { id: userId } },
         category: { connect: { id: categoryId } },
-        restaurant: { connect: { id: restaurant.id } },
+        restaurantstep1: { connect: { id: restaurant.id } },
       },
     });
 
@@ -71,7 +71,7 @@ export async function PUT(req: NextRequest) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
     }
 
-    const restaurant = await prisma.restaurant.findFirst({ where: { userId } });
+    const restaurant = await prisma.restaurantStep1.findFirst({ where: { userId } });
 
     if (!restaurant) {
       return NextResponse.json({ error: "Restaurant not found for user" }, { status: 404 });
@@ -86,7 +86,7 @@ export async function PUT(req: NextRequest) {
         price,
         user: { connect: { id: userId } },
         category: { connect: { id: categoryId } },
-        restaurant: { connect: { id: restaurant.id } },
+        restaurantstep1: { connect: { id: restaurant.id } },
       },
     });
 

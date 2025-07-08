@@ -14,6 +14,8 @@ import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { ArrowRightIcon, Menu } from "lucide-react";
 import { IoCartOutline } from "react-icons/io5";
+import ShoppingCart from "../icons/ShoppingCart";
+import { CartIcon } from "../menu/CartIcon";
 
 export default function NavigationMenuDemo() {
   const { data: session } = useSession();
@@ -92,9 +94,8 @@ export default function NavigationMenuDemo() {
         )}
 
         {/* Cart Icon */}
-        <Link href="/cart">
-          <IoCartOutline className="w-6 h-6" />
-        </Link>
+        
+          <CartIcon />
 
         {/* Mobile Menu Button */}
         <Sheet>

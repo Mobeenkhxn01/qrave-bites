@@ -1,4 +1,4 @@
-import MenuItemCard from "@/components/menu/MenuItemCard";
+import {MenuItemCard} from "@/components/menu/MenuItemCard";
 import { prisma } from "@/lib/prisma";
 
 export default async function MenuItemsPage({
@@ -20,13 +20,11 @@ export default async function MenuItemsPage({
     <div className="max-w-4xl mx-auto py-10">
       <h1 className="text-3xl font-bold mb-4">
         Menu for {restaurant.restaurantName}
-        <MenuItemCard />
+        
       </h1>
       <ul className="space-y-2">
         {menuItems.map((item) => (
-          <li key={item.id}>
-            🍽️ {item.name} - ₹{item.price}
-          </li>
+          <MenuItemCard key={item.id} item={item}/>
         ))}
       </ul>
     </div>

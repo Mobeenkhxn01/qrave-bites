@@ -1,31 +1,46 @@
-// /app/city/[city]/[slug]/page.tsx
 import { prisma } from "@/lib/prisma";
-import Link from "next/link";
+import { MenuItemCard } from "@/components/menu/MenuItemCard";
+import { notFound } from "next/navigation";
+
+export const revalidate = 60;
 
 export default async function RestaurantPage({
-  params,
+  params
 }: {
-  params: { city: string; slug: string };
+  params: Promise<{ city: string; slug: string }>;
 }) {
+  const data=await params
+  const city = decodeURIComponent(data.city);
+  const slug = decodeURIComponent(data.slug);
+
   const restaurant = await prisma.restaurantStep1.findUnique({
-    where: { slug: params.slug },
+    where: { slug },
   });
 
-  if (!restaurant || restaurant.city !== decodeURIComponent(params.city)) {
-    return <p>Restaurant not found or city mismatch</p>;
+  if (!restaurant || decodeURIComponent(restaurant.city) !== city) {
+    return notFound();
   }
 
-  return (
-    <div className="max-w-4xl mx-auto py-10 space-y-4">
-      <h1 className="text-4xl font-bold">{restaurant.restaurantName}</h1>
-      <p>{restaurant.area}, {restaurant.city}</p>
+  const menuItems = await prisma.menuItem.findMany({
+    where: { restaurantId: restaurant.id },
+  });
 
-      <Link
-        className="text-blue-600 underline"
-        href={`/city/${params.city}/${params.slug}/menu-items`}
-      >
-        View Menu Items
-      </Link>
+  return (
+    <div className="max-w-5xl mx-auto py-10 px-4 space-y-6">
+      <div>
+        <h1 className="text-4xl font-bold">{restaurant.restaurantName}</h1>
+        <p className="text-gray-600">
+          {restaurant.area}, {restaurant.city}
+        </p>
+      </div>
+      <div>
+        <h2 className="text-2xl font-semibold mb-4">Menu</h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+          {menuItems.map((item) => (
+            <MenuItemCard key={item.id} item={item} />
+          ))}
+        </div>
+      </div>
     </div>
   );
 }

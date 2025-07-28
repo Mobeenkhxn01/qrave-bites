@@ -11,7 +11,7 @@ import {
   NavigationMenuList,
 } from "@/components/ui/navigation-menu";
 import { Button } from "@/components/ui/button";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { ArrowRightIcon, Menu } from "lucide-react";
 import { IoCartOutline } from "react-icons/io5";
 import ShoppingCart from "../icons/ShoppingCart";
@@ -109,6 +109,7 @@ export default function NavigationMenuDemo() {
               <span className="sr-only">Toggle navigation menu</span>
             </Button>
           </SheetTrigger>
+          <SheetHeader><SheetTitle></SheetTitle></SheetHeader>
           <SheetContent side="right" className="bg-[#fff] text-[#010f1c]">
             <nav className="grid gap-6 text-lg font-medium p-4">
               <Link href="/" className="hover:text-[#d19b6f]">

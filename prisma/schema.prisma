@@ -28,7 +28,6 @@ model User {
   createdAt     DateTime        @default(now())
   updatedAt     DateTime        @updatedAt
   restaurantstep1   RestaurantStep1[]
-  restaurantstep2   RestaurantStep2[]
   restaurantstep3   RestaurantStep3[]
   restaurantstep4   RestaurantStep4[]
 }
@@ -135,12 +134,15 @@ model RestaurantStep1 {
   longitude      Float?
   address        String?
 
-  userId         String     @db.ObjectId
+  userId         String     @db.ObjectId @unique
   user           User       @relation(fields: [userId], references: [id], onDelete: Cascade)
   menu           MenuItem[] @relation("RestaurantMenuItems")
 
   createdAt      DateTime   @default(now())
   updatedAt      DateTime   @updatedAt
+
+
+  RestaurantStep2 RestaurantStep2?
 }
 model RestaurantStep2{
   id             String     @id @default(auto()) @map("_id") @db.ObjectId
@@ -153,8 +155,10 @@ model RestaurantStep2{
   openingTime          String
   closingTime          String
 
-  userId         String     @db.ObjectId
-  user           User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+
+  userId         String     @db.ObjectId @unique
+  step1          RestaurantStep1 @relation(fields: [userId], references: [userId])
   
 
   createdAt      DateTime   @default(now())

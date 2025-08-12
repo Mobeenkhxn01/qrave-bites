@@ -5,7 +5,7 @@ export default function Dashboard() {
   const { data: session } = useSession();
   if (session?.user?.role === "admin") {
     return(
-      <div>
+      <div className="w-full">
         This is admin dashboard
       </div>
     ); 

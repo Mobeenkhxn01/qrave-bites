@@ -77,7 +77,7 @@ export default function RestaurantStep4() {
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
           <div className="flex justify-between items-start gap-6">
             {/* Sidebar step indicator */}
-            <aside className="w-1/3 p-12 flex justify-center items-end">
+            <aside className="w-1/3 p-12 flex justify-center items-center">
               <TitleHeaderPartner activeStep={4} />
             </aside>
 

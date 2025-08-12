@@ -224,7 +224,7 @@ export default function RestaurantDocument() {
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
           <div className="flex flex-col lg:flex-row justify-between items-start gap-6">
-            <aside className="w-full lg:w-1/3 p-6 lg:p-12 flex justify-center items-end">
+            <aside className="w-full lg:w-1/3 p-6 lg:p-12 flex justify-center items-center">
               <TitleHeaderPartner activeStep={3} />
             </aside>
 

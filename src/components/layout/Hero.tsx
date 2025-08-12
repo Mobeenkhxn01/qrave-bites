@@ -22,7 +22,7 @@ export default function Hero() {
           Welcome To Qrave Bites
         </h1>
         <h1 className="uppercase font-roboto text-6xl  font-extrabold text-white">
-        “Scan Your Table’s QR, Order Instantly.
+        “Scan Your Table's QR, Order Instantly.
         Savor the Meal—Not the Wait.”
         </h1>
         <div className="flex flex-col md:flex-row gap-2 p-3 justify-center">

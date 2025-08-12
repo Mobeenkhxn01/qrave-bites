@@ -1,12 +1,13 @@
 "use client";
+
 import UserTabs from "@/components/layout/UserTabs";
 import Link from "next/link";
 import Left from "@/components/icons/Left";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-import { useState, useEffect } from "react";
-import { useRouter, useParams } from "next/navigation";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
 import {
   Select,
   SelectContent,
@@ -28,6 +29,8 @@ import { Textarea } from "@/components/ui/textarea";
 import Image from "next/image";
 import { useSession } from "next-auth/react";
 import axios from "axios";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import toast from "react-hot-toast";
 
 const formSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters." }),
@@ -44,6 +47,7 @@ const formSchema = z.object({
 export default function NewMenuPage() {
   const router = useRouter();
   const { data: session } = useSession();
+  const queryClient = useQueryClient();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -57,81 +61,58 @@ export default function NewMenuPage() {
   });
 
   const [preview, setPreview] = useState<string | null>(null);
-  const [redirectToItems, setRedirectToItems] = useState(false);
-  const [categories, setCategories] = useState<{ id: string; name: string }[]>(
-    []
-  );
 
-  useEffect(() => {
-    if (redirectToItems) {
-      router.push("/menu-items");
-    }
-  }, [redirectToItems, router]);
-
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    async function fetchCategories() {
-      try {
-        if (!session?.user?.id) return;
-        const { data } = await axios.get("/api/categories", {
-          params: { userId: session.user.id },
-        });
-        setCategories(data);
-      } catch (err) {
-        console.error("Failed to load categories", err);
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    fetchCategories();
-  }, [session?.user?.id]);
-
-  async function uploadImage(file: File): Promise<any | null> {
-    const formData = new FormData();
-    formData.append("file", file);
-
-    try {
-      const { data } = await axios.post("/api/upload", formData);
+  /** 🔹 Fetch categories with TanStack Query */
+  const { data: categories = [], isLoading: loadingCategories } = useQuery({
+    queryKey: ["categories", session?.user?.id],
+    queryFn: async () => {
+      if (!session?.user?.id) return [];
+      const { data } = await axios.get("/api/categories", {
+        params: { userId: session.user.id },
+      });
       return data;
-    } catch (error) {
-      console.error("Upload Error:", error);
-      return null;
-    }
-  }
+    },
+    enabled: !!session?.user?.id,
+  });
 
-  async function onSubmit(values: z.infer<typeof formSchema>) {
-    if (!session?.user?.id) {
-      return alert("Missing user ID");
-    }
+  /** 🔹 Mutation to create menu item */
+  const createMenuItem = useMutation({
+    mutationFn: async (values: z.infer<typeof formSchema>) => {
+      if (!session?.user?.id) throw new Error("Missing user ID");
 
-    let imageUrl = null;
-
-    if (values.image) {
-      const uploaded = await uploadImage(values.image);
-      imageUrl = uploaded?.url || null;
-    }
-
-    const dataToSend = {
-      name: values.name,
-      description: values.description,
-      price: values.price,
-      image: imageUrl,
-      userId: session.user.id,
-      categoryId: values.category,
-    };
-
-    try {
-      const res = await axios.post("/api/menu-items", dataToSend);
-      if (res.status === 201) {
-        setRedirectToItems(true);
-      } else {
-        console.error("Server Error:", res.data);
+      let imageUrl = null;
+      if (values.image) {
+        const formData = new FormData();
+        formData.append("file", values.image);
+        const { data: uploaded } = await axios.post("/api/upload", formData);
+        imageUrl = uploaded?.url || null;
       }
-    } catch (error: any) {
-      console.error("Failed to create menu item", error.response?.data || error);
-    }
+
+      const dataToSend = {
+        name: values.name,
+        description: values.description,
+        price: values.price,
+        image: imageUrl,
+        userId: session.user.id,
+        categoryId: values.category,
+      };
+
+      const res = await axios.post("/api/menu-items", dataToSend);
+      if (res.status !== 201) throw new Error("Failed to create menu item");
+      return res.data;
+    },
+    onSuccess: () => {
+      toast.success("Menu item created successfully!");
+      queryClient.invalidateQueries({ queryKey: ["menu-items"] });
+      router.push("/menu-items");
+    },
+    onError: (error: any) => {
+      toast.error(error?.response?.data || "Failed to create menu item");
+    },
+  });
+
+  function onSubmit(values: z.infer<typeof formSchema>) {
+    createMenuItem.mutate(values);
   }
 
   return (
@@ -151,7 +132,7 @@ export default function NewMenuPage() {
             onSubmit={form.handleSubmit(onSubmit)}
             className="space-y-6 flex flex-row justify-between"
           >
-            {/* Image Upload Section */}
+            {/* Image Upload */}
             <div className="w-1/4 flex justify-center items-start">
               <FormField
                 control={form.control}
@@ -220,10 +201,7 @@ export default function NewMenuPage() {
                   <FormItem>
                     <FormLabel>Description</FormLabel>
                     <FormControl>
-                      <Textarea
-                        placeholder="Enter item description"
-                        {...field}
-                      />
+                      <Textarea placeholder="Enter item description" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -245,12 +223,12 @@ export default function NewMenuPage() {
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {loading ? (
+                        {loadingCategories ? (
                           <SelectItem value="loading" disabled>
                             Loading...
                           </SelectItem>
                         ) : categories.length > 0 ? (
-                          categories.map((category) => (
+                          categories.map((category: any) => (
                             <SelectItem key={category.id} value={category.id}>
                               {category.name}
                             </SelectItem>
@@ -266,7 +244,6 @@ export default function NewMenuPage() {
                   </FormItem>
                 )}
               />
-
               <FormField
                 control={form.control}
                 name="price"
@@ -274,19 +251,19 @@ export default function NewMenuPage() {
                   <FormItem>
                     <FormLabel>Price</FormLabel>
                     <FormControl>
-                      <Input
-                        type="number"
-                        placeholder="Enter price"
-                        {...field}
-                      />
+                      <Input type="number" placeholder="Enter price" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
 
-              <Button type="submit" className="bg-[#eb0029] w-full mt-2">
-                Submit
+              <Button
+                type="submit"
+                className="bg-[#eb0029] w-full mt-2"
+                disabled={createMenuItem.isPending}
+              >
+                {createMenuItem.isPending ? "Submitting..." : "Submit"}
               </Button>
             </div>
           </form>

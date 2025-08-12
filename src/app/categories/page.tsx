@@ -1,30 +1,33 @@
 "use client";
+
 import toast, { Toaster } from "react-hot-toast";
 import Trash from "@/components/icons/Trash";
 import UserTabs from "@/components/layout/UserTabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-} from "@/components/ui/form";
+import { Form, FormControl, FormField, FormItem } from "@/components/ui/form";
 import { Label } from "@/components/ui/label";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useSession } from "next-auth/react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import axios from "axios";
 
 const formSchema = z.object({
   category: z.string().min(2).max(50).trim(),
 });
 
+// Capitalize first letter of each word but keep spaces
+function capitalizeWords(str: string) {
+  return str
+    .split(/\s+/)
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .join(" ");
+}
+
 export default function Categories() {
-  const [categories, setCategories] = useState<
-    { id: string; userId: string; name: string }[]
-  >([]);
   const [editedCategory, setEditedCategory] = useState<{
     id: string;
     userId: string;
@@ -32,93 +35,98 @@ export default function Categories() {
   } | null>(null);
 
   const { data: session } = useSession();
+  const queryClient = useQueryClient();
+
   const form = useForm({
     resolver: zodResolver(formSchema),
     defaultValues: { category: "" },
   });
 
-  useEffect(() => {
-    if (session?.user.id) {
-      fetchCategories();
-    }
-  }, [session?.user.id]);
 
-  async function fetchCategories() {
-    try {
-      if (!session?.user.id) return;
-      const response = await fetch(`/api/categories?userId=${session.user.id}`);
-      const data = await response.json();
-      setCategories(data);
-    } catch (error) {
-      toast.error("Failed to fetch categories!");
-    }
-  }
+  const { data: categories = [], isLoading } = useQuery({
+    queryKey: ["categories", session?.user.id],
+    queryFn: async () => {
+      if (!session?.user.id) return [];
+      const { data } = await axios.get(`/api/categories`, {
+        params: { userId: session.user.id },
+      });
+      return data;
+    },
+    enabled: !!session?.user.id,
+  });
 
-  async function onSubmit(values: z.infer<typeof formSchema>) {
-    try {
-      if (!session?.user.id) {
-        toast.error("User not authenticated");
-        return;
-      }
+  /** --------------------
+   *  Mutations
+   ---------------------*/
+  const createOrUpdateCategory = useMutation({
+    mutationFn: async (values: z.infer<typeof formSchema>) => {
+      if (!session?.user.id) throw new Error("User not authenticated");
+
+      // Capitalize words before saving
+      const formattedCategory = capitalizeWords(values.category);
 
       // Check if category already exists (case-insensitive)
       const categoryExists = categories.some(
-        (category) =>
-          category.name.toLowerCase() === values.category.toLowerCase() &&
+        (category: any) =>
+          category.name.toLowerCase() === formattedCategory.toLowerCase() &&
           category.userId === session.user.id &&
-          (!editedCategory || category.id !== editedCategory.id) // exclude currently edited category
+          (!editedCategory || category.id !== editedCategory.id)
       );
-
       if (categoryExists) {
-        toast.error("Category already exists!");
-        return;
+        throw new Error("Category already exists!");
       }
 
-      // Prepare payload for POST or PUT
-      const data = editedCategory
-        ? { id: editedCategory.id, name: values.category }
-        : { name: values.category, userId: session.user.id };
+      const payload = editedCategory
+        ? { id: editedCategory.id, name: formattedCategory }
+        : { name: formattedCategory, userId: session.user.id };
 
-      const response = await fetch("/api/categories", {
-        method: editedCategory ? "PUT" : "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
-      });
-
-      if (!response.ok) {
-        const resData = await response.json();
-        throw new Error(resData.error || "Request failed");
+      if (editedCategory) {
+        await axios.put("/api/categories", payload);
+      } else {
+        await axios.post("/api/categories", payload);
       }
-
+    },
+    onSuccess: () => {
       toast.success(editedCategory ? "Category updated!" : "Category created!");
       setEditedCategory(null);
       form.reset();
-      fetchCategories();
-    } catch (error: any) {
-      toast.error(error.message || "Error processing request");
-    }
-  }
+      queryClient.invalidateQueries({ queryKey: ["categories", session?.user.id] });
+    },
+    onError: (err: any) => {
+      toast.error(err.response?.data?.error || err.message || "Error processing request");
+    },
+  });
 
-  async function handleDelete(id: string) {
-    try {
-      const response = await fetch(`/api/categories?id=${id}`, {
-        method: "DELETE",
-      });
-      if (!response.ok) throw new Error("Failed to delete category");
-
-      setCategories((prev) => prev.filter((category) => category.id !== id));
+  const deleteCategory = useMutation({
+    mutationFn: async (id: string) => {
+      await axios.delete(`/api/categories`, { params: { id } });
+    },
+    onSuccess: () => {
       toast.success("Category deleted!");
-    } catch (error) {
-      toast.error("Error deleting category");
-    }
+      queryClient.invalidateQueries({ queryKey: ["categories", session?.user.id] });
+    },
+    onError: (err: any) => {
+      toast.error(err.response?.data?.error || "Error deleting category");
+    },
+  });
+
+  /** --------------------
+   *  Submit Handler
+   ---------------------*/
+  function onSubmit(values: z.infer<typeof formSchema>) {
+    createOrUpdateCategory.mutate(values);
   }
 
   return (
     <section className="py-8 relative bottom-0 mb-0 bg-white">
       <UserTabs />
+
       <div className="w-1/2 mx-auto p-4">
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="w-full space-y-8">
+          <form
+            onSubmit={form.handleSubmit(onSubmit)}
+            className="w-full space-y-8"
+          >
             <div className="flex gap-2">
               <FormField
                 control={form.control}
@@ -131,12 +139,17 @@ export default function Categories() {
                   </FormItem>
                 )}
               />
-              <Button type="submit" className="bg-[#eb0029]">
+              <Button
+                type="submit"
+                className="bg-[#eb0029]"
+                disabled={createOrUpdateCategory.isPending}
+              >
                 {editedCategory ? "Update" : "Create"}
               </Button>
               {editedCategory && (
                 <Button
                   variant="outline"
+                  type="button"
                   onClick={() => {
                     setEditedCategory(null);
                     form.reset();
@@ -153,8 +166,10 @@ export default function Categories() {
 
       <div className="w-1/2 mx-auto p-4">
         <Label>Existing Categories</Label>
-        {categories.length > 0 ? (
-          categories.map((category) => (
+        {isLoading ? (
+          <p className="p-4 text-gray-500">Loading...</p>
+        ) : categories.length > 0 ? (
+          categories.map((category: any) => (
             <div
               key={category.id}
               className="bg-[#F3F4F6] flex justify-between items-center rounded-md p-2 mt-2"
@@ -170,7 +185,11 @@ export default function Categories() {
                 >
                   Edit
                 </Button>
-                <Button variant="outline" onClick={() => handleDelete(category.id)}>
+                <Button
+                  variant="outline"
+                  onClick={() => deleteCategory.mutate(category.id)}
+                  disabled={deleteCategory.isPending}
+                >
                   <Trash />
                 </Button>
               </div>

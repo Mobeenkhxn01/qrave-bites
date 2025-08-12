@@ -20,7 +20,7 @@ export default async function CityPage( {
   params: Promise<{ city: string}>
 } ) {
 
-  const data=use(params)
+  const data=await params;
   const city = decodeURIComponent(data.city);
 
   const step1 = await prisma.restaurantStep1.findMany({

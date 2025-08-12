@@ -224,7 +224,7 @@ export default function NewRestaurantRegister() {
           {/* Main Content Layout */}
           <div className="flex flex-col lg:flex-row justify-between items-start gap-6">
             {/* Desktop Aside - Left sidebar */}
-            <aside className="hidden lg:block w-1/3 p-12 justify-center items-end">
+            <aside className="hidden lg:block w-1/3 p-12 justify-center items-center">
               <TitleHeaderPartner activeStep={1} />
             </aside>
 

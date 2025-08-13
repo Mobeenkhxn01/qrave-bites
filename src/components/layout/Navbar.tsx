@@ -3,140 +3,123 @@
 import * as React from "react";
 import Link from "next/link";
 import { useSession, signOut } from "next-auth/react";
-import { cn } from "@/lib/utils";
 import {
   NavigationMenu,
   NavigationMenuItem,
-  NavigationMenuLink,
   NavigationMenuList,
 } from "@/components/ui/navigation-menu";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { ArrowRightIcon, Menu } from "lucide-react";
-import { IoCartOutline } from "react-icons/io5";
-import ShoppingCart from "../icons/ShoppingCart";
 import { CartIcon } from "../menu/CartIcon";
+import { usePathname } from "next/navigation";
 
-export default function NavigationMenuDemo() {
+export default function Header() {
   const { data: session } = useSession();
+  const pathname = usePathname();
+
+  const navLinks = [
+    { href: "/", label: "Home" },
+    { href: "/about", label: "About Us" },
+    { href: "/menu", label: "Food Menu" },
+    { href: "/#chef", label: "Chef" },
+    { href: "/#gallery", label: "Gallery" },
+    { href: "/#blog", label: "Blog" },
+  ];
 
   return (
-    <div className="bg-[#fff] w-full h-20 flex justify-between items-center sticky top-0 z-50 px-4 md:px-8">
-      {/* Logo */}
+    <header className="bg-white w-full h-20 flex justify-between items-center sticky top-0 z-50 px-4  md:px-8 shadow-md">
       <NavigationMenu>
         <NavigationMenuItem>
-          <Link
-            href="/"
-            className="text-bold font-serif text-black font-extrabold"
-          >
+          <Link href="/" className="font-serif font-extrabold text-black">
             <span className="text-[#d19b6f]">QraveBites</span>
           </Link>
         </NavigationMenuItem>
       </NavigationMenu>
 
-      {/* Desktop Menu */}
+      
       <NavigationMenu className="hidden md:flex">
         <NavigationMenuList className="flex gap-4">
-          <NavigationMenuItem>
-            <Link href="/" className="capitalize font-serif text-[#010f1c]">
-              Home
-            </Link>
-          </NavigationMenuItem>
-          <NavigationMenuItem>
-            <Link href="/about" className="font-serif">
-              About Us
-            </Link>
-          </NavigationMenuItem>
-          <NavigationMenuItem>
-            <Link href="/menu" className="font-serif">
-              Food Menu
-            </Link>
-          </NavigationMenuItem>
-          <NavigationMenuItem>
-            <Link href="/#chef" className="font-serif">
-              Chef
-            </Link>
-          </NavigationMenuItem>
-          <NavigationMenuItem>
-            <Link href="/#gallery" className="font-serif">
-              Gallery
-            </Link>
-          </NavigationMenuItem>
-          <NavigationMenuItem>
-            <Link href="/#blog" className="font-serif">
-              Blog
-            </Link>
-          </NavigationMenuItem>
+          {navLinks.map(({ href, label }) => (
+            <NavigationMenuItem key={href}>
+              <Link
+                href={href}
+                className={`capitalize font-serif transition-colors ${
+                  pathname === href ? "text-[#d19b6f]" : "text-[#010f1c] hover:text-[#d19b6f]"
+                }`}
+              >
+                {label}
+              </Link>
+            </NavigationMenuItem>
+          ))}
         </NavigationMenuList>
       </NavigationMenu>
 
-      {/* Mobile Menu & User Section */}
-      <div className="flex flex-row gap-4 items-center justify-center">
-        {/* Auth State: Show login or username */}
+      {/* User + Cart + Mobile Menu */}
+      <div className="flex gap-4 items-center">
         {session ? (
           <>
-            <span className="text-black font-serif">
-              <Link href={"/profile"}>Hello, {session.user?.name}</Link>
-            </span>
+            <Link href="/profile" className="text-black font-serif">
+              Hello, {session.user?.name}
+            </Link>
             <Button
               onClick={() => signOut()}
-              className="font-serif text-white bg-[#eb0029]"
+              className="font-serif text-white bg-[#eb0029] hover:bg-[#d19b6f]"
             >
               Logout
             </Button>
           </>
         ) : (
           <Link href="/login">
-            <Button className="font-serif text-white bg-[#eb0029]">
+            <Button className="font-serif text-white bg-[#eb0029] hover:bg-[#d19b6f]">
               Login
             </Button>
           </Link>
         )}
 
-        {/* Cart Icon */}
-        
-          <CartIcon />
+        {/* Cart */}
+        <CartIcon />
 
-        {/* Mobile Menu Button */}
+        {/* Mobile Menu */}
         <Sheet>
           <SheetTrigger asChild>
-            <Button
-              variant="outline"
-              size="icon"
-              className="shrink-0 text-black border-white"
-            >
+            <Button variant="outline" size="icon" className="border border-gray-300 text-black">
               <Menu className="h-6 w-6" />
               <span className="sr-only">Toggle navigation menu</span>
             </Button>
           </SheetTrigger>
-          <SheetHeader><SheetTitle></SheetTitle></SheetHeader>
-          <SheetContent side="right" className="bg-[#fff] text-[#010f1c]">
+          <SheetContent side="right" className="bg-white text-[#010f1c]">
+            <SheetHeader>
+              <SheetTitle>Navigation</SheetTitle>
+            </SheetHeader>
             <nav className="grid gap-6 text-lg font-medium p-4">
-              <Link href="/" className="hover:text-[#d19b6f]">
-                Home
-              </Link>
-              <Link href="/menu" className="hover:text-[#d19b6f]">
-                Menu
-              </Link>
-              <Link href="/ourstory" className="hover:text-[#d19b6f]">
-                Our Story
-              </Link>
-              <Link href="/#contact" className="hover:text-[#d19b6f]">
-                Contact Us
-              </Link>
-              <Link href="/login" className="hover:text-[#d19b6f]">
-                Login
-              </Link>
-              <div className="w-full">
-                <Button className="w-full p-8 font-serif font-semibold text-white border-none rounded-none bg-[#eb0029]">
-                  Order Now
-                  <ArrowRightIcon className="ml-4 bg-white text-[#eb0029]" />
+              {navLinks.map(({ href, label }) => (
+                <Link key={href} href={href} className="hover:text-[#d19b6f]">
+                  {label}
+                </Link>
+              ))}
+              {session ? (
+                <Button
+                  onClick={() => signOut()}
+                  className="bg-[#eb0029] hover:bg-[#d19b6f] w-full text-white"
+                >
+                  Logout
                 </Button>
-              </div>
+              ) : (
+                <Link href="/login" className="w-full">
+                  <Button className="bg-[#eb0029] hover:bg-[#d19b6f] w-full text-white">
+                    Login
+                  </Button>
+                </Link>
+              )}
+              <Button className="w-full py-6 font-serif font-semibold text-white rounded-none bg-[#eb0029] hover:bg-[#d19b6f]">
+                Order Now
+                <ArrowRightIcon className="ml-4 bg-white text-[#eb0029] rounded-full p-1" />
+              </Button>
             </nav>
           </SheetContent>
         </Sheet>
       </div>
-    </div>
+    </header>
   );
 }

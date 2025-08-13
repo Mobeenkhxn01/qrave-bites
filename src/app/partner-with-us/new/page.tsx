@@ -28,7 +28,7 @@ import dynamic from "next/dynamic";
 import TitleHeaderPartner from "../titleheader";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
-import toast, { Toaster } from "react-hot-toast"; // Add this to your project: npm install sonner
+import toast, { Toaster } from "react-hot-toast";
 
 const LocationMapWithSearch = dynamic(
   () => import("@/components/layout/LocationMapWithSearch"),
@@ -143,6 +143,9 @@ export default function NewRestaurantRegister() {
     form.setValue("longitude", lng);
     form.setValue("address", address);
   };
+  const notifySaveSuccess = () => {
+    toast.success("Restaurant information saved successfully!");
+  }
 
   async function onSubmit(values: FormData) {
     if (!userEmail) {
@@ -506,6 +509,9 @@ export default function NewRestaurantRegister() {
                   <Button
                     type="submit"
                     disabled={isPending || isLoading}
+                    onClick={() => {
+                      notifySaveSuccess();}
+                    }
                     variant={"outline"}
                     size={"lg"}
                     className="rounded-2xl bg-[#4947e0] text-white hover:bg-[#3a38c7] w-full md:w-auto"

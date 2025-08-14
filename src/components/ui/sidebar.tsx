@@ -155,7 +155,7 @@ function Sidebar({
   side = "left",
   variant = "sidebar",
   collapsible = "offcanvas",
-  className="absolute inset-y-0 z-10 flex h-svh w-(--sidebar-width) flex-col",
+  className,
   children,
   ...props
 }: React.ComponentProps<"div"> & {

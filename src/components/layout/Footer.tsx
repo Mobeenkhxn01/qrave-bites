@@ -11,7 +11,7 @@ import { Label } from "../ui/label";
 
 export default function Footer() {
   return (
-    <footer className="relative w-full bg-[#212529] pt-6 mt-6 overflow-hidden">
+    <footer className="relative w-full bg-[#212529] pt-6  overflow-hidden">
       {/* Background Shapes */}
       <div className="absolute top-0 right-0">
         <Image

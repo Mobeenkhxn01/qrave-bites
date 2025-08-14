@@ -28,7 +28,7 @@ export default function Header() {
   ];
 
   return (
-    <header className="bg-white w-full h-20 flex justify-between items-center sticky top-0 z-50 px-4  md:px-8 shadow-md">
+    <header className="bg-white w-full h-20 flex justify-between items-center  z-50 px-4  md:px-8 shadow-md">
       <NavigationMenu>
         <NavigationMenuItem>
           <Link href="/" className="font-serif font-extrabold text-black">

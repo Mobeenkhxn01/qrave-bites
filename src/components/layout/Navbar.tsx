@@ -13,10 +13,24 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/co
 import { ArrowRightIcon, Menu } from "lucide-react";
 import { CartIcon } from "../menu/CartIcon";
 import { usePathname } from "next/navigation";
+import { IoRestaurant } from "react-icons/io5";
+import { useQuery } from "@tanstack/react-query";
+import axios from "axios";
+
+
+const fetchUserProfile = async () => {
+  const response = await axios.get("/api/profile");
+  return response.data;
+};
 
 export default function Header() {
   const { data: session } = useSession();
   const pathname = usePathname();
+  const { data: userProfile, isLoading } = useQuery({
+    queryKey: ["userProfile"],
+    queryFn: fetchUserProfile,
+    enabled: !!session,
+  });
 
   const navLinks = [
     { href: "/", label: "Home" },
@@ -28,16 +42,20 @@ export default function Header() {
   ];
 
   return (
-    <header className="bg-white w-full h-20 flex justify-between items-center  z-50 px-4  md:px-8 shadow-md">
+    <header className="bg-white w-full h-20 flex justify-between items-center z-50 px-4 md:px-8 shadow-md">
+      {/* Logo */}
       <NavigationMenu>
-        <NavigationMenuItem>
-          <Link href="/" className="font-serif font-extrabold text-black">
-            <span className="text-[#d19b6f]">QraveBites</span>
-          </Link>
-        </NavigationMenuItem>
+        <NavigationMenuList>
+          <NavigationMenuItem>
+            <Link href="/" className="font-serif font-extrabold text-black flex items-center gap-2 text-2xl">
+              <IoRestaurant />
+              <span className="text-[#d19b6f]">QraveBites</span>
+            </Link>
+          </NavigationMenuItem>
+        </NavigationMenuList>
       </NavigationMenu>
 
-      
+      {/* Desktop Navigation */}
       <NavigationMenu className="hidden md:flex">
         <NavigationMenuList className="flex gap-4">
           {navLinks.map(({ href, label }) => (
@@ -59,9 +77,11 @@ export default function Header() {
       <div className="flex gap-4 items-center">
         {session ? (
           <>
+            {/* ✅ Display fetched name */}
             <Link href="/profile" className="text-black font-serif">
-              Hello, {session.user?.name}
+              {isLoading ? "Loading..." : `Hello, ${userProfile?.name || "User"}`}
             </Link>
+
             <Button
               onClick={() => signOut()}
               className="font-serif text-white bg-[#eb0029] hover:bg-[#d19b6f]"
@@ -77,7 +97,7 @@ export default function Header() {
           </Link>
         )}
 
-        {/* Cart */}
+        {/* Cart Icon */}
         <CartIcon />
 
         {/* Mobile Menu */}

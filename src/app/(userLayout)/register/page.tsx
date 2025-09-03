@@ -1,6 +1,6 @@
 "use client";
 import { z } from "zod";
-import React, { useState } from "react";
+import React from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -18,6 +18,8 @@ import {
 import { Input } from "@/components/ui/input";
 import { toast } from "react-hot-toast";
 import { signIn } from "next-auth/react";
+import { useMutation } from "@tanstack/react-query";
+import axios from "axios";
 
 // API Endpoint Constant
 const API_REGISTER_URL = "/api/register";
@@ -29,14 +31,13 @@ const formSchema = z.object({
     .string()
     .min(8, { message: "Password must be at least 8 characters" })
     .regex(/[A-Z]/, { message: "Password must include an uppercase letter" })
-    .regex(/[!@#$%^&*(),.?":{}|<>]/, {
+    .regex(/[!@#$%^&*(),.?\":{}|<>]/, {
       message: "Password must include a special character",
     }),
 });
 
 export default function RegisterPage() {
   const router = useRouter();
-  const [isLoading, setIsLoading] = useState(false);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -46,39 +47,39 @@ export default function RegisterPage() {
     },
   });
 
-  async function onSubmit(values: { email: string; password: string }) {
-    setIsLoading(true);
-
-    try {
-      const response = await fetch(API_REGISTER_URL, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(values),
-      });
-
-      if (!response.ok) {
-        throw new Error("An error occurred while registering");
-      }
-
-      const data = await response.json();
-
-      if (data.error) {
-        throw new Error(data.error);
-      }
-
+  // Mutation for normal registration
+  const registerMutation = useMutation({
+    mutationFn: async (values: { email: string; password: string }) => {
+      const { data } = await axios.post(API_REGISTER_URL, values);
+      return data;
+    },
+    onSuccess: () => {
       toast.success("Account created successfully");
       router.push("/login");
-    } catch (error) {
-      if (error instanceof Error) {
+    },
+    onError: (error: unknown) => {
+      if (axios.isAxiosError(error)) {
+        toast.error(error.response?.data?.error || "Registration failed");
+      } else if (error instanceof Error) {
         toast.error(error.message);
       } else {
         toast.error("An unknown error occurred");
       }
-    } finally {
-      setIsLoading(false);
-    }
+    },
+  });
+
+  // Mutation for Google provider login
+  const googleSignInMutation = useMutation({
+    mutationFn: async () => {
+      await signIn("google", { callbackUrl: "/" });
+    },
+    onError: () => {
+      toast.error("Google sign-in failed");
+    },
+  });
+
+  function onSubmit(values: { email: string; password: string }) {
+    registerMutation.mutate(values);
   }
 
   return (
@@ -98,7 +99,7 @@ export default function RegisterPage() {
                     type="email"
                     placeholder="Enter your email"
                     {...field}
-                    disabled={isLoading}
+                    disabled={registerMutation.isPending}
                   />
                 </FormControl>
                 <FormMessage />
@@ -118,7 +119,7 @@ export default function RegisterPage() {
                     type="password"
                     placeholder="Password"
                     {...field}
-                    disabled={isLoading}
+                    disabled={registerMutation.isPending}
                   />
                 </FormControl>
                 <FormMessage />
@@ -130,10 +131,10 @@ export default function RegisterPage() {
           <Button
             className="w-full bg-[#eb0029] hover:bg-[#eb0029]/90"
             type="submit"
-            disabled={isLoading}
+            disabled={registerMutation.isPending}
             aria-live="polite"
           >
-            {isLoading ? "Registering..." : "Register"}
+            {registerMutation.isPending ? "Registering..." : "Register"}
           </Button>
 
           {/* Provider Login */}
@@ -144,8 +145,8 @@ export default function RegisterPage() {
             className="w-full flex items-center gap-4"
             variant="outline"
             type="button"
-            onClick={() => signIn("google", { callbackUrl: "/" })}
-            disabled={isLoading}
+            onClick={() => googleSignInMutation.mutate()}
+            disabled={googleSignInMutation.isPending}
           >
             <Image
               src="/google.png"
@@ -154,7 +155,9 @@ export default function RegisterPage() {
               height={24}
               priority={false}
             />
-            Continue with Google
+            {googleSignInMutation.isPending
+              ? "Redirecting..."
+              : "Continue with Google"}
           </Button>
 
           {/* Redirect to Login */}

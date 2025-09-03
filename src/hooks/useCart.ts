@@ -22,9 +22,7 @@ interface Cart {
 }
 
 export const useCart = () => {
-  //const queryClient = useQueryClient()
   const queryClient=useQueryClient();
-  // Fetch cart data
   const { data: cart, isLoading } = useQuery<Cart>({
     queryKey: ['cart'],
     queryFn: async () => {
@@ -33,7 +31,6 @@ export const useCart = () => {
     }
   })
 
-  // Add to cart mutation
   const addToCart = useMutation({
     mutationFn: async (menuItemId: string) => {
       const response = await axios.post('/api/cart', { menuItemId })

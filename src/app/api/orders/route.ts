@@ -17,7 +17,7 @@ export const GET = async (req: Request) => {
   const orderId = url.searchParams.get("_id");
 
   try {
-    if (role === "ADMIN") {
+    if (role === "ADMIN" ) {
       if (orderId) {
         const order = await prisma.order.findUnique({
           where: { id: orderId },

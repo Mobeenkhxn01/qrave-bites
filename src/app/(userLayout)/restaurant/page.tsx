@@ -16,7 +16,7 @@ import {
 import { Label } from "@/components/ui/label";
 import { FiSearch } from "react-icons/fi";
 import Image from "next/image";
-import MenuItemCard from "@/components/menu/MenuItemCard";
+import {MenuItemCard} from "@/components/menu/MenuItemCard";
 
 type Restaurant = {
   id: string;

@@ -6,7 +6,9 @@ import Footer from "@/components/layout/footer/Footer";
 import { AuthProvider } from "@/actions/auth-context";
 import { SessionProvider } from "next-auth/react";
 import ReactQueryProvider from "@/providers/ReactQueryProvider";
-import {CartProvider} from "@/context/CardContext"
+import { CartProvider } from "@/context/CardContext";
+import ClientLoadingWrapper from "@/components/layout/ClientLoadingWrapper";
+import LoginModalWrapper from "@/providers/LoginDialogWrapper";
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -34,15 +36,21 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-          <ReactQueryProvider>
-            <CartProvider>
-          <SessionProvider>
-            <AuthProvider>
-               <Navbar /> 
-              {children}
-               <Footer /> 
-            </AuthProvider>
-          </SessionProvider>
+        <ReactQueryProvider>
+          <CartProvider>
+            <ClientLoadingWrapper>
+
+            
+            <SessionProvider>
+              <AuthProvider>
+                
+                  <Navbar />
+                  {children}
+                  <Footer />
+                  <LoginModalWrapper/>
+              </AuthProvider>
+            </SessionProvider>
+            </ClientLoadingWrapper>
           </CartProvider>
         </ReactQueryProvider>
       </body>

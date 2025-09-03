@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import localFont from "next/font/local";
 import "./globals.css";
 import Navbar from "@/components/layout/navbar/Navbar";
-import Footer from "@/components/layout/Footer";
+import Footer from "@/components/layout/footer/Footer";
 import { AuthProvider } from "@/actions/auth-context";
 import { SessionProvider } from "next-auth/react";
 import ReactQueryProvider from "@/providers/ReactQueryProvider";

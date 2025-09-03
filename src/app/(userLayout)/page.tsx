@@ -1,11 +1,8 @@
-import Hero from "@/components/layout/Hero";
-import PopularFood from "@/components/layout/PopularFood";
-
+import HomePage from "@/components/layout/homepage/HomePage";
 export default function Home() {
   return (
     <main className="flex flex-col items-center justify-center flex-1 w-full">
-      <Hero />
-      <PopularFood />
+      <HomePage/>
     </main>
   );
 }

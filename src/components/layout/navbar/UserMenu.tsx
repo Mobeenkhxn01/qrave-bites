@@ -37,15 +37,15 @@ export default function UserMenu() {
   }
   return (
     <>
-      <DropdownMenu>
-        <DropdownMenuTrigger>
-          <Avatar>
+      <DropdownMenu >
+        <DropdownMenuTrigger >
+          <Avatar className="rounded-full" >
             <AvatarImage src={session?.user?.image || ""} />
             <AvatarFallback>CN</AvatarFallback>
           </Avatar>
         </DropdownMenuTrigger>
         <DropdownMenuContent>
-          <DropdownMenuLabel>
+          <DropdownMenuLabel className="font-sans">
             {isLoading ? "Loading..." : `Hello, ${userProfile?.name || "User"}`}
           </DropdownMenuLabel>
           <DropdownMenuSeparator />
@@ -55,10 +55,11 @@ export default function UserMenu() {
           <DropdownMenuItem>
             <Link href={"/settings"}>Settings</Link>
           </DropdownMenuItem>
+          <DropdownMenuSeparator />
           <DropdownMenuItem>
             <Button
               onClick={() => signOut()}
-              className="font-serif text-white bg-[#eb0029] hover:bg-[#d19b6f]"
+              className="w-full font-serif text-white bg-[#eb0029] hover:bg-[#d19b6f]"
             >
               Logout
             </Button>

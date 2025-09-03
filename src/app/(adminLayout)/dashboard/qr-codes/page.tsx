@@ -6,9 +6,9 @@ import {
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { DashboardHeader } from "@/components/dashboard-header"
+import { DashboardHeader } from "@/components/shadcn-components/dashboard-header"
 import { Badge } from "@/components/ui/badge"
-import { AppSidebar } from "@/components/app-sidebar"
+import { AppSidebar } from "@/components/shadcn-components/app-sidebar"
 
 export default function QRCodesPage() {
   return (

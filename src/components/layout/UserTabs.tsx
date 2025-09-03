@@ -1,7 +1,6 @@
 "use client";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
-import { auth } from "@/lib/auth";
 import { useSession } from "next-auth/react";
 
 export default function UserTabs() {

@@ -3,13 +3,13 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { DashboardHeader } from "@/components/dashboard-header"
+import { DashboardHeader } from "@/components/shadcn-components/dashboard-header"
 import { PackageIcon, AlertTriangleIcon, TrendingDownIcon, PlusIcon } from "lucide-react"
 import {
   SidebarInset,
   SidebarProvider,
 } from "@/components/ui/sidebar"
-import { AppSidebar } from "@/components/app-sidebar"
+import { AppSidebar } from "@/components/shadcn-components/app-sidebar"
 
 interface InventoryItem {
   id: string

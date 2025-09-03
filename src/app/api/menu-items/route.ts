@@ -147,7 +147,6 @@ export async function PUT(req: Request) {
   }
 }
 
-// ---------------------- DELETE MENU ITEM ----------------------
 export async function DELETE(req: Request) {
   try {
     const session = await auth();
@@ -167,12 +166,18 @@ export async function DELETE(req: Request) {
       );
     }
 
-    // Ensure the menu item belongs to the user before deleting
+    // 1️⃣ Ensure the menu item belongs to the user
     const existingMenuItem = await prisma.menuItem.findFirst({ where: { id, userId } });
     if (!existingMenuItem) {
       return NextResponse.json({ error: "Menu item not found" }, { status: 404 });
     }
 
+    // 2️⃣ Delete related CartItems first
+    await prisma.cartItem.deleteMany({
+      where: { menuItemId: id },
+    });
+
+    // 3️⃣ Now safely delete the MenuItem
     await prisma.menuItem.delete({
       where: { id },
     });
@@ -186,3 +191,4 @@ export async function DELETE(req: Request) {
     );
   }
 }
+

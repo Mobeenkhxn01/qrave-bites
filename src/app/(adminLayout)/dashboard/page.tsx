@@ -1,8 +1,8 @@
-import { AppSidebar } from "@/components/app-sidebar"
-import { ChartAreaInteractive } from "@/components/chart-area-interactive"
-import { DataTable } from "@/components/data-table"
-import { SectionCards } from "@/components/section-cards"
-import { SiteHeader } from "@/components/site-header"
+import { AppSidebar } from "@/components/shadcn-components/app-sidebar"
+import { ChartAreaInteractive } from "@/components/shadcn-components/chart-area-interactive"
+import { DataTable } from "@/components/shadcn-components/data-table"
+import { SectionCards } from "@/components/shadcn-components/section-cards"
+import { SiteHeader } from "@/components/shadcn-components/site-header"
 import {
   SidebarInset,
   SidebarProvider,

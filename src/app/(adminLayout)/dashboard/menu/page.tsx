@@ -21,9 +21,9 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
-import { DashboardHeader } from "@/components/dashboard-header"
+import { DashboardHeader } from "@/components/shadcn-components/dashboard-header"
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
-import { AppSidebar } from "@/components/app-sidebar"
+import { AppSidebar } from "@/components/shadcn-components/app-sidebar"
 interface MenuItem {
   id: number
   name: string

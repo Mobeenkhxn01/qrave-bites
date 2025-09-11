@@ -5,9 +5,11 @@ import Image from "next/image";
 import { useSession } from "next-auth/react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { z } from "zod";
 import toast, { Toaster } from "react-hot-toast";
+
+import { useUserProfile } from "@/hooks/useUserProfile";
 
 import {
   Form,
@@ -21,21 +23,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import UserTabs from "@/components/layout/UserTabs";
 
-// Fetch user profile
-const fetchUserProfile = async () => {
-  const response = await fetch("/api/profile");
-  if (!response.ok) throw new Error("Failed to fetch profile");
-  return response.json();
-};
-
-export const useUserProfile = () => {
-  return useQuery({
-    queryKey: ["userProfile"],
-    queryFn: fetchUserProfile,
-  });
-};
-
-// Form validation schema
+// Validation Schema
 const formSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters." }),
   email: z.string().email(),
@@ -58,7 +46,6 @@ export default function ProfilePage() {
   const [imageFile, setImageFile] = useState<File | null>(null);
   const { data: profile, isLoading } = useUserProfile();
 
-  // Initialize form
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -72,7 +59,6 @@ export default function ProfilePage() {
     },
   });
 
-  // Reset form when profile data is loaded
   useEffect(() => {
     if (profile) {
       form.reset({
@@ -84,15 +70,11 @@ export default function ProfilePage() {
         country: profile.userAddresses?.[0]?.country || "",
         phone: profile.userAddresses?.[0]?.phone || "",
       });
-
-      if (profile.image) {
-        setPreview(profile.image);
-      }
+      if (profile.image) setPreview(profile.image);
     }
   }, [profile, form]);
 
-  // Image upload handler
-  const uploadImage = async (file: File): Promise<any | null> => {
+  const uploadImage = async (file: File) => {
     const formData = new FormData();
     formData.append("file", file);
 
@@ -102,17 +84,14 @@ export default function ProfilePage() {
     });
 
     if (!response.ok) throw new Error("Image upload failed");
-
-    return await response.json();
+    return response.json();
   };
 
-  // Update profile mutation
   const updateProfileMutation = useMutation({
     mutationFn: async (values: z.infer<typeof formSchema>) => {
       toast.loading("Saving your profile...");
 
       let imageUrl = null;
-
       if (imageFile) {
         const uploaded = await uploadImage(imageFile);
         imageUrl = uploaded.url;
@@ -130,7 +109,7 @@ export default function ProfilePage() {
         headers: { "Content-Type": "application/json" },
       });
 
-      toast.dismiss(); // remove loading toast
+      toast.dismiss();
 
       if (!response.ok) {
         const error = await response.json();
@@ -163,18 +142,15 @@ export default function ProfilePage() {
 
   return (
     <section className="py-8 bg-white">
-      {/* Toast Container */}
       <Toaster position="top-right" reverseOrder={false} />
-
       <UserTabs />
-
       <div className="max-w-4xl mx-auto p-4">
         <Form {...form}>
           <form
             onSubmit={form.handleSubmit(onSubmit)}
             className="space-y-6 flex flex-col md:flex-row justify-center gap-6"
           >
-            {/* Profile Image Section */}
+            {/* Profile Image */}
             <div className="flex justify-center md:w-1/3 mt-8">
               <div className="flex flex-col items-center">
                 <Image
@@ -203,7 +179,7 @@ export default function ProfilePage() {
               </div>
             </div>
 
-            {/* Form Fields Section */}
+            {/* Form Fields */}
             <div className="md:w-2/3 space-y-4">
               <FormField
                 control={form.control}
@@ -218,7 +194,6 @@ export default function ProfilePage() {
                   </FormItem>
                 )}
               />
-
               <FormField
                 control={form.control}
                 name="email"
@@ -232,7 +207,6 @@ export default function ProfilePage() {
                   </FormItem>
                 )}
               />
-
               <FormField
                 control={form.control}
                 name="streetAddress"
@@ -246,7 +220,6 @@ export default function ProfilePage() {
                   </FormItem>
                 )}
               />
-
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <FormField
                   control={form.control}
@@ -261,7 +234,6 @@ export default function ProfilePage() {
                     </FormItem>
                   )}
                 />
-
                 <FormField
                   control={form.control}
                   name="city"
@@ -276,7 +248,6 @@ export default function ProfilePage() {
                   )}
                 />
               </div>
-
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <FormField
                   control={form.control}
@@ -291,7 +262,6 @@ export default function ProfilePage() {
                     </FormItem>
                   )}
                 />
-
                 <FormField
                   control={form.control}
                   name="country"
@@ -306,7 +276,6 @@ export default function ProfilePage() {
                   )}
                 />
               </div>
-
               <Button
                 type="submit"
                 className="bg-[#eb0029] w-full mt-2"

@@ -3,13 +3,15 @@ import { notFound } from "next/navigation";
 import { Copy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
-interface Props {
-  params: { slug: string };
-}
-
-export default async function RestaurantPage({ params }: Props) {
+export default async function RestaurantPage({
+   params 
+  }: {
+    params:Promise<{slug:string}>;}
+  ) {
+  const data=await params
+  const slug = decodeURIComponent(data.slug);  
   const step1 = await prisma.restaurantStep1.findUnique({
-    where: { slug: params.slug },
+    where: { slug },
   });
 
   if (!step1) return notFound();

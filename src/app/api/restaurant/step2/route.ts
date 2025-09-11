@@ -10,19 +10,19 @@ export async function GET(req: Request) {
     return NextResponse.json({ success: false, message: "Email is required" }, { status: 400 });
   }
 
-  const user = await prisma.user.findUnique({
+  const step1 = await prisma.restaurantStep1.findUnique({
     where: { email },
-    include: { restaurantstep2: true },
+    include: { RestaurantStep2: true },
   });
 
-  if (!user || !user.restaurantstep2) {
+  if (!step1 || !step1.RestaurantStep2) {
     return NextResponse.json({ success: false, message: "No data found" }, { status: 404 });
   }
 
   return NextResponse.json({
     success: true,
     data: {
-      restaurant: user.restaurantstep2,
+      restaurant: step1.RestaurantStep2,
     },
   });
 }

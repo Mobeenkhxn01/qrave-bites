@@ -22,7 +22,7 @@ declare module "next-auth" {
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   adapter: PrismaAdapter(prisma),
-//  trustHost:true,
+  trustHost:!!process.env.NEXTAUTH_TRUST_HOST,
   providers: [
     CredentialsProvider({
       name: "Credentials",

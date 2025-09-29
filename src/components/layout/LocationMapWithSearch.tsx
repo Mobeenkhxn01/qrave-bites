@@ -1,4 +1,3 @@
-// --- components/layout/LocationMapWithSearch.tsx ---
 'use client';
 
 import {
@@ -12,15 +11,18 @@ import { useEffect, useRef, useState, useCallback } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 
-const createMarkerIcon = () => new L.Icon({
-  iconUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon.png',
-  iconRetinaUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon-2x.png',
-  shadowUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-shadow.png',
-  iconSize: [25, 41],
-  iconAnchor: [12, 41],
-  popupAnchor: [1, -34],
-  shadowSize: [41, 41]
-});
+const createMarkerIcon = () =>
+  new L.Icon({
+    iconUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon.png',
+    iconRetinaUrl:
+      'https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon-2x.png',
+    shadowUrl:
+      'https://unpkg.com/leaflet@1.7.1/dist/images/marker-shadow.png',
+    iconSize: [25, 41],
+    iconAnchor: [12, 41],
+    popupAnchor: [1, -34],
+    shadowSize: [41, 41],
+  });
 
 const GEOAPIFY_API_KEY = process.env.NEXT_PUBLIC_GEOAPIFY_API_KEY;
 
@@ -41,6 +43,33 @@ export default function LocationMapWithSearch({
   const [error, setError] = useState<string | null>(null);
   const mapRef = useRef<L.Map | null>(null);
 
+  // -------------------------------
+  // Reverse Geocode
+  // -------------------------------
+  const reverseGeocode = useCallback(
+    async (lat: number, lng: number) => {
+      if (!lat || !lng) return setAddress('');
+      try {
+        const res = await fetch(
+          `https://api.geoapify.com/v1/geocode/reverse?lat=${lat}&lon=${lng}&apiKey=${GEOAPIFY_API_KEY}`
+        );
+        if (!res.ok) throw new Error('Reverse geocoding failed');
+        const data = await res.json();
+        const addr = data.features?.[0]?.properties?.formatted || '';
+        setAddress(addr);
+        onLocationChange(lat, lng, addr);
+      } catch (err) {
+        console.error('Reverse geocoding error:', err);
+        setAddress('');
+        onLocationChange(lat, lng, '');
+      }
+    },
+    [onLocationChange]
+  );
+
+  // -------------------------------
+  // Search by address
+  // -------------------------------
   const handleSearch = useCallback(async () => {
     if (!address.trim()) {
       setError('Please enter an address');
@@ -48,12 +77,12 @@ export default function LocationMapWithSearch({
     }
     setIsSearching(true);
     setError(null);
-
     try {
       const res = await fetch(
-        `https://api.geoapify.com/v1/geocode/search?text=${encodeURIComponent(address)}&apiKey=${GEOAPIFY_API_KEY}`
+        `https://api.geoapify.com/v1/geocode/search?text=${encodeURIComponent(
+          address
+        )}&apiKey=${GEOAPIFY_API_KEY}`
       );
-
       if (!res.ok) throw new Error('Geocoding failed');
       const data = await res.json();
       if (data.features && data.features.length > 0) {
@@ -73,22 +102,9 @@ export default function LocationMapWithSearch({
     }
   }, [address, onLocationChange]);
 
-  const reverseGeocode = useCallback(async (lat: number, lng: number) => {
-    try {
-      const res = await fetch(
-        `https://api.geoapify.com/v1/geocode/reverse?lat=${lat}&lon=${lng}&apiKey=${GEOAPIFY_API_KEY}`
-      );
-      if (!res.ok) throw new Error('Reverse geocoding failed');
-      const data = await res.json();
-      const addr = data.features?.[0]?.properties?.formatted || '';
-      setAddress(addr);
-      onLocationChange(lat, lng, addr);
-    } catch (err: unknown) {
-      console.error('Reverse geocoding error:', err);
-      setAddress('');
-    }
-  }, [onLocationChange]);
-
+  // -------------------------------
+  // Map Click Handler
+  // -------------------------------
   const MapClickHandler = () => {
     useMapEvents({
       click: async (e) => {
@@ -100,6 +116,9 @@ export default function LocationMapWithSearch({
     return null;
   };
 
+  // -------------------------------
+  // Draggable Marker
+  // -------------------------------
   const DraggableMarker = () => {
     const markerRef = useRef<L.Marker>(null);
     const map = useMap();
@@ -116,30 +135,32 @@ export default function LocationMapWithSearch({
       },
     };
 
-    return (
-      <Marker
-        draggable={true}
-        eventHandlers={eventHandlers}
-        position={position}
-        icon={createMarkerIcon()}
-        ref={markerRef}
-      />
-    );
+    return <Marker draggable eventHandlers={eventHandlers} position={position} icon={createMarkerIcon()} ref={markerRef} />;
   };
 
+  // -------------------------------
+  // Handle Initial Position / Address
+  // -------------------------------
   useEffect(() => {
-    if (initialPosition && (initialPosition[0] !== position[0] || initialPosition[1] !== position[1])) {
+    if (
+      initialPosition &&
+      initialPosition[0] &&
+      initialPosition[1] &&
+      (initialPosition[0] !== position[0] || initialPosition[1] !== position[1])
+    ) {
       setPosition(initialPosition);
       if (initialAddress) {
         setAddress(initialAddress);
+        onLocationChange(initialPosition[0], initialPosition[1], initialAddress);
       } else {
         reverseGeocode(initialPosition[0], initialPosition[1]);
       }
     }
-  }, [initialPosition, initialAddress, position, reverseGeocode]);
+  }, [initialPosition, initialAddress, position, reverseGeocode, onLocationChange]);
 
   return (
     <div className="space-y-4">
+      {/* Address Input */}
       <div className="relative">
         <input
           className="border p-2 rounded w-full mb-1 pr-10"
@@ -163,6 +184,7 @@ export default function LocationMapWithSearch({
         </button>
       </div>
 
+      {/* Use Current Location */}
       <button
         onClick={() => {
           if (!navigator.geolocation) {
@@ -172,8 +194,13 @@ export default function LocationMapWithSearch({
           setIsSearching(true);
           setError(null);
           navigator.geolocation.getCurrentPosition(
-            async (position) => {
-              const { latitude, longitude } = position.coords;
+            async (pos) => {
+              const { latitude, longitude } = pos.coords;
+              if (!latitude || !longitude) {
+                setError("Invalid coordinates from browser");
+                setIsSearching(false);
+                return;
+              }
               const newPosition: [number, number] = [latitude, longitude];
               setPosition(newPosition);
               mapRef.current?.flyTo(newPosition, 16);
@@ -193,13 +220,15 @@ export default function LocationMapWithSearch({
         Use Current Location
       </button>
 
+      {/* Error Message */}
       {error && <p className="text-red-500 text-sm">{error}</p>}
 
+      {/* Map */}
       <div className="border rounded overflow-hidden">
         <MapContainer
           center={position}
           zoom={5}
-          scrollWheelZoom={true}
+          scrollWheelZoom
           style={{ height: '400px', width: '100%' }}
         >
           <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />

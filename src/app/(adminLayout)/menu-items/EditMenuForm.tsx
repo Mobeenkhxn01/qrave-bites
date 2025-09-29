@@ -1,10 +1,18 @@
 "use client";
+
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -22,7 +30,13 @@ const formSchema = z.object({
   image: z.instanceof(File).optional(),
 });
 
-export default function EditMenuForm({ item, onClose }: { item: any; onClose: () => void }) {
+export default function EditMenuForm({
+  item,
+  onClose,
+}: {
+  item: any;
+  onClose: () => void;
+}) {
   const { data: session } = useSession();
   const queryClient = useQueryClient();
 
@@ -39,19 +53,20 @@ export default function EditMenuForm({ item, onClose }: { item: any; onClose: ()
 
   const [preview, setPreview] = useState<string | null>(item.image);
 
-  /** Fetch categories */
+  /** 🔹 Fetch categories */
   const { data: categories = [], isLoading: loadingCategories } = useQuery({
     queryKey: ["categories", session?.user?.id],
     queryFn: async () => {
+      if (!session?.user?.id) return [];
       const { data } = await axios.get("/api/categories", {
-        params: { userId: session?.user?.id },
+        params: { userId: session.user.id },
       });
       return data;
     },
     enabled: !!session?.user?.id,
   });
 
-  /** Update mutation */
+  /** 🔹 Update mutation */
   const updateMutation = useMutation({
     mutationFn: async (values: z.infer<typeof formSchema>) => {
       let imageUrl = preview;
@@ -60,7 +75,7 @@ export default function EditMenuForm({ item, onClose }: { item: any; onClose: ()
         const formData = new FormData();
         formData.append("file", values.image);
         const { data: uploaded } = await axios.post("/api/upload", formData);
-        imageUrl = uploaded?.url;
+        imageUrl = uploaded?.url || null;
       }
 
       await axios.put(`/api/menu-items/${item.id}`, {
@@ -77,8 +92,8 @@ export default function EditMenuForm({ item, onClose }: { item: any; onClose: ()
       queryClient.invalidateQueries({ queryKey: ["menu-items"] });
       onClose();
     },
-    onError: () => {
-      toast.error("Failed to update item");
+    onError: (error: any) => {
+      toast.error(error?.response?.data?.message || "Failed to update item");
     },
   });
 
@@ -89,7 +104,7 @@ export default function EditMenuForm({ item, onClose }: { item: any; onClose: ()
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-        {/* Image */}
+        {/* Image Upload */}
         <FormField
           control={form.control}
           name="image"
@@ -101,7 +116,7 @@ export default function EditMenuForm({ item, onClose }: { item: any; onClose: ()
                   alt="preview"
                   width={200}
                   height={200}
-                  className="rounded-md"
+                  className="rounded-md mb-2"
                 />
               )}
               <FormControl>
@@ -203,8 +218,11 @@ export default function EditMenuForm({ item, onClose }: { item: any; onClose: ()
           )}
         />
 
-        <Button type="submit" disabled={updateMutation.isPending}>
-          {updateMutation.isPending ? "Updating..." : "Update"}
+        <Button
+          type="submit"
+          disabled={updateMutation.status === "pending"}
+        >
+          {updateMutation.status === "pending" ? "Updating..." : "Update"}
         </Button>
       </form>
     </Form>

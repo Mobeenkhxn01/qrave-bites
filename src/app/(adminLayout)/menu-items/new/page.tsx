@@ -62,7 +62,7 @@ export default function NewMenuPage() {
 
   const [preview, setPreview] = useState<string | null>(null);
 
-  /** 🔹 Fetch categories with TanStack Query */
+  /** 🔹 Fetch categories */
   const { data: categories = [], isLoading: loadingCategories } = useQuery({
     queryKey: ["categories", session?.user?.id],
     queryFn: async () => {
@@ -107,7 +107,9 @@ export default function NewMenuPage() {
       router.push("/menu-items");
     },
     onError: (error: any) => {
-      toast.error(error?.response?.data || "Failed to create menu item");
+      toast.error(
+        error?.response?.data?.message || error?.message || "Failed to create menu item"
+      );
     },
   });
 
@@ -261,9 +263,9 @@ export default function NewMenuPage() {
               <Button
                 type="submit"
                 className="bg-[#eb0029] w-full mt-2"
-                disabled={createMenuItem.isPending}
+                disabled={createMenuItem.status === "pending"}
               >
-                {createMenuItem.isPending ? "Submitting..." : "Submit"}
+                {createMenuItem.status === "pending" ? "Submitting..." : "Submit"}
               </Button>
             </div>
           </form>

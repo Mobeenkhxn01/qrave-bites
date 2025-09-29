@@ -28,7 +28,7 @@ import dynamic from "next/dynamic";
 import TitleHeaderPartner from "../titleheader";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
-import toast, { Toaster } from "react-hot-toast";
+import toast from "react-hot-toast";
 
 const LocationMapWithSearch = dynamic(
   () => import("@/components/layout/LocationMapWithSearch"),
@@ -36,15 +36,30 @@ const LocationMapWithSearch = dynamic(
 );
 
 const formSchema = z.object({
-  restaurantname: z.string().min(2, "Restaurant name must be at least 2 characters").max(50, "Restaurant name must be less than 50 characters"),
-  ownername: z.string().min(2, "Owner name must be at least 2 characters").max(50, "Owner name must be less than 50 characters"),
+  restaurantname: z
+    .string()
+    .min(2, "Restaurant name must be at least 2 characters")
+    .max(50, "Restaurant name must be less than 50 characters"),
+  ownername: z
+    .string()
+    .min(2, "Owner name must be at least 2 characters")
+    .max(50, "Owner name must be less than 50 characters"),
   email: z.string().email("Invalid email format"),
   phone: z.string().regex(/^\d{10,15}$/, "Phone number must be 10-15 digits"),
   mobile: z.boolean().default(false).optional(),
-  shop: z.coerce.number().min(1, "Shop number must be at least 1").max(99999, "Shop number too large"),
+  shop: z.coerce
+    .number()
+    .min(1, "Shop number must be at least 1")
+    .max(99999, "Shop number too large"),
   floor: z.string().optional(),
-  area: z.string().min(2, "Area must be at least 2 characters").max(50, "Area must be less than 50 characters"),
-  city: z.string().min(2, "City must be at least 2 characters").max(50, "City must be less than 50 characters"),
+  area: z
+    .string()
+    .min(2, "Area must be at least 2 characters")
+    .max(50, "Area must be less than 50 characters"),
+  city: z
+    .string()
+    .min(2, "City must be at least 2 characters")
+    .max(50, "City must be less than 50 characters"),
   landmark: z.string().optional(),
   latitude: z.number().nullable().optional(),
   longitude: z.number().nullable().optional(),
@@ -82,58 +97,55 @@ export default function NewRestaurantRegister() {
     },
   });
 
-  // Update form email when session loads
+  // Sync email once session is loaded
   useEffect(() => {
-    if (userEmail) {
-      form.setValue("email", userEmail);
-    }
-  }, [userEmail, form]);
+    if (userEmail) form.setValue("email", userEmail);
+  }, [userEmail]); // Removed 'form' from dependencies to avoid infinite loop
 
-  // Load existing restaurant data if available
+  // Load existing restaurant data
   useEffect(() => {
     const loadExistingData = async () => {
       if (!userEmail) return;
-      
+
       try {
-        const response = await axios.get(`/api/restaurant/step1?email=${userEmail}`);
+        const response = await axios.get(
+          `/api/restaurant/step1?email=${userEmail}`
+        );
+
         if (response.data.success) {
           const restaurant = response.data.data.restaurant;
-          
-          // Pre-fill form with existing data
+
           form.setValue("restaurantname", restaurant.restaurantName);
           form.setValue("ownername", restaurant.ownerName);
           form.setValue("phone", restaurant.phone);
-          form.setValue("mobile", restaurant.mobile);
-          form.setValue("shop", restaurant.location.shop);
-          form.setValue("floor", restaurant.location.floor || "");
-          form.setValue("area", restaurant.location.area);
-          form.setValue("city", restaurant.location.city);
-          form.setValue("landmark", restaurant.location.landmark || "");
-          
-          if (restaurant.location.coordinates.latitude && restaurant.location.coordinates.longitude) {
-            setLat(restaurant.location.coordinates.latitude);
-            setLng(restaurant.location.coordinates.longitude);
-            form.setValue("latitude", restaurant.location.coordinates.latitude);
-            form.setValue("longitude", restaurant.location.coordinates.longitude);
+          form.setValue("mobile", restaurant.mobile ?? true);
+          form.setValue("shop", restaurant.shop);
+          form.setValue("floor", restaurant.floor || "");
+          form.setValue("area", restaurant.area);
+          form.setValue("city", restaurant.city);
+          form.setValue("landmark", restaurant.landmark || "");
+
+          if (restaurant.latitude && restaurant.longitude) {
+            setLat(restaurant.latitude);
+            setLng(restaurant.longitude);
+            form.setValue("latitude", restaurant.latitude);
+            form.setValue("longitude", restaurant.longitude);
           }
-          
-          if (restaurant.location.address) {
-            setAddress(restaurant.location.address);
-            form.setValue("address", restaurant.location.address);
+
+          if (restaurant.address) {
+            setAddress(restaurant.address);
+            form.setValue("address", restaurant.address);
           }
-          
-          toast.error("Existing restaurant data loaded");
+
+          toast.success("Existing restaurant data loaded");
         }
       } catch (error) {
-        // Restaurant doesn't exist yet, which is fine
         console.log("No existing restaurant data found");
       }
     };
 
-    if (status === "authenticated") {
-      loadExistingData();
-    }
-  }, [userEmail, status, form]);
+    if (status === "authenticated") loadExistingData();
+  }, [userEmail, status]); // Removed 'form' from dependencies
 
   const handleLocationChange = (lat: number, lng: number, address: string) => {
     setLat(lat);
@@ -143,9 +155,6 @@ export default function NewRestaurantRegister() {
     form.setValue("longitude", lng);
     form.setValue("address", address);
   };
-  const notifySaveSuccess = () => {
-    toast.success("Restaurant information saved successfully!");
-  }
 
   async function onSubmit(values: FormData) {
     if (!userEmail) {
@@ -163,15 +172,16 @@ export default function NewRestaurantRegister() {
 
     startTransition(() => {
       setIsLoading(true);
-      
+
       axios
         .post("/api/restaurant/step1", payload)
         .then((response) => {
           if (response.data.success) {
-            const { isNew, message } = response.data.data;
-            
-            toast.success(message);
-            
+            const { message } = response.data.data;
+
+            toast.success(
+              message || "Restaurant information saved successfully!"
+            );
             router.push("/partner-with-us/add-menu-items");
           } else {
             toast.error("Failed to save restaurant information");
@@ -179,17 +189,18 @@ export default function NewRestaurantRegister() {
         })
         .catch((error) => {
           console.error("Error saving restaurant:", error);
-          
+
           if (error.response?.data?.details) {
-            // Handle validation errors
-            const details = error.response.data.details;
-            details.forEach((detail: { field: string; message: string }) => {
-              toast.error(`${detail.field}: ${detail.message}`);
-            });
+            error.response.data.details.forEach(
+              (detail: { field: string; message: string }) =>
+                toast.error(`${detail.field}: ${detail.message}`)
+            );
           } else if (error.response?.data?.message) {
             toast.error(error.response.data.message);
           } else {
-            toast.error("Failed to save restaurant information. Please try again.");
+            toast.error(
+              "Failed to save restaurant information. Please try again."
+            );
           }
         })
         .finally(() => {
@@ -198,7 +209,6 @@ export default function NewRestaurantRegister() {
     });
   }
 
-  // Show loading state while session is loading
   if (status === "loading") {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -207,7 +217,6 @@ export default function NewRestaurantRegister() {
     );
   }
 
-  // Redirect to login if not authenticated
   if (status === "unauthenticated") {
     router.push("/login");
     return null;
@@ -217,21 +226,18 @@ export default function NewRestaurantRegister() {
     <div className="px-4 md:px-6 lg:px-8">
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-          {/* Mobile/Small Screen Layout - Aside on top */}
+          {/* Header */}
           <div className="block lg:hidden">
             <div className="w-full p-6 flex justify-center items-center mb-8">
               <TitleHeaderPartner activeStep={1} />
             </div>
           </div>
 
-          {/* Main Content Layout */}
           <div className="flex flex-col lg:flex-row justify-between items-start gap-6">
-            {/* Desktop Aside - Left sidebar */}
             <aside className="hidden lg:block w-1/3 p-12 justify-center items-center">
               <TitleHeaderPartner activeStep={1} />
             </aside>
 
-            {/* Main Content Section */}
             <section className="w-full lg:w-2/3 lg:pr-20">
               <h1 className="text-2xl md:text-3xl lg:text-4xl font-semibold mb-6">
                 Restaurant Information
@@ -240,7 +246,9 @@ export default function NewRestaurantRegister() {
               {/* Restaurant Name Card */}
               <Card className="mb-6 lg:mb-10">
                 <CardHeader>
-                  <h2 className="text-xl md:text-2xl font-semibold">Restaurant name</h2>
+                  <h2 className="text-xl md:text-2xl font-semibold">
+                    Restaurant name
+                  </h2>
                   <p className="font-extralight text-cyan-900 text-sm md:text-base">
                     Customers will see this name on QraveBites
                   </p>
@@ -269,7 +277,9 @@ export default function NewRestaurantRegister() {
               {/* Owner Details Card */}
               <Card className="mb-6 lg:mb-10">
                 <CardHeader>
-                  <h2 className="text-xl md:text-2xl font-semibold">Owner details</h2>
+                  <h2 className="text-xl md:text-2xl font-semibold">
+                    Owner details
+                  </h2>
                   <p className="font-extralight text-cyan-900 text-sm md:text-base">
                     QraveBites will use these details for all business
                     communications
@@ -301,15 +311,15 @@ export default function NewRestaurantRegister() {
                     <FormField
                       control={form.control}
                       name="email"
-                      render={({ field }) => (
+                      render={() => (
                         <FormItem>
                           <FormLabel>Email Address</FormLabel>
                           <FormControl>
                             <Input
                               className="h-10 md:h-12"
                               placeholder="Email Address *"
-                              disabled
                               value={userEmail}
+                              disabled
                               readOnly
                             />
                           </FormControl>
@@ -329,7 +339,6 @@ export default function NewRestaurantRegister() {
                         alt="indian-flag"
                         width={24}
                         height={16}
-                        priority={false}
                       />
                       <span className="ml-1">+91</span>
                     </div>
@@ -343,6 +352,7 @@ export default function NewRestaurantRegister() {
                             <FormLabel>Phone Number</FormLabel>
                             <FormControl>
                               <Input
+                                type="tel"
                                 className="h-10 md:h-12 w-full"
                                 placeholder="Phone Number *"
                                 {...field}
@@ -354,7 +364,7 @@ export default function NewRestaurantRegister() {
                       />
                     </div>
                   </div>
-                  
+
                   <div className="w-full flex item-start flex-col justify-center mt-6">
                     <h1 className="text-lg md:text-xl lg:text-2xl font-semibold">
                       Restaurant&apos;s primary contact number
@@ -399,7 +409,7 @@ export default function NewRestaurantRegister() {
                   <LocationMapWithSearch
                     onLocationChange={handleLocationChange}
                   />
-                </CardContent> 
+                </CardContent>
 
                 <CardFooter className="flex flex-col">
                   <div className="w-full flex flex-col md:flex-row gap-4 mb-6">
@@ -411,9 +421,14 @@ export default function NewRestaurantRegister() {
                           <FormItem>
                             <FormControl>
                               <Input
+                                type="number"
                                 className="h-10 md:h-12"
                                 placeholder="Shop Number/ Building Number *"
                                 {...field}
+                                onChange={(e) => {
+                                  const value = e.target.value;
+                                  field.onChange(value ? parseInt(value) : 1);
+                                }}
                               />
                             </FormControl>
                             <FormMessage />
@@ -503,23 +518,19 @@ export default function NewRestaurantRegister() {
                   </div>
                 </CardFooter>
               </Card>
-              
-              <div className="mt-6 flex justify-center md:justify-end item-center">
-                <div className="">
-                  <Button
-                    type="submit"
-                    disabled={isPending || isLoading}
-                    onClick={() => {
-                      notifySaveSuccess();}
-                    }
-                    variant={"outline"}
-                    size={"lg"}
-                    className="rounded-2xl bg-[#4947e0] text-white hover:bg-[#3a38c7] w-full md:w-auto"
-                  >
-                    {isPending || isLoading ? "Processing..." : "Next"}
-                    <Right />
-                  </Button>
-                </div>
+
+              {/* Submit Button */}
+              <div className="mt-6 flex justify-center md:justify-end items-center">
+                <Button
+                  type="submit"
+                  disabled={isPending || isLoading}
+                  variant="outline"
+                  size="lg"
+                  className="rounded-2xl bg-[#4947e0] text-white hover:bg-[#3a38c7] w-full md:w-auto flex items-center justify-center"
+                >
+                  {isPending || isLoading ? "Processing..." : "Next"}
+                  <Right />
+                </Button>
               </div>
             </section>
           </div>

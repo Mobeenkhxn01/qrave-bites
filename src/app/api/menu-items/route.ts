@@ -49,7 +49,7 @@ export async function POST(req: Request) {
         price: parsedPrice,
         user: { connect: { id: userId } },
         category: { connect: { id: categoryId } },
-        restaurantstep1: { connect: { id: restaurant.id } },
+        restaurantStep1: { connect: { id: restaurant.id } },
       },
     });
 

@@ -16,13 +16,12 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import EditMenuForm from "./EditMenuForm"; // We'll create this separately
+import EditMenuForm from "./EditMenuForm"; 
 import { Trash } from "lucide-react";
 
 export default function MenuItemsPage() {
   const { data: session } = useSession();
   const queryClient = useQueryClient();
-
   const [editItem, setEditItem] = useState<any>(null);
 
   /** Fetch menu items */
@@ -38,18 +37,17 @@ export default function MenuItemsPage() {
     enabled: !!session?.user?.id,
   });
 
+  /** Delete mutation */
   const deleteMenuItem = useMutation({
     mutationFn: async (id: string) => {
       await axios.delete(`/api/menu-items`, { params: { id } });
     },
     onSuccess: () => {
       toast.success("Menu item deleted!");
-      queryClient.invalidateQueries({
-        queryKey: ["menu-items", session?.user.id],
-      });
+      queryClient.invalidateQueries({ queryKey: ["menu-items", session?.user?.id] });
     },
     onError: (err: any) => {
-      toast.error(err.response?.data?.error || "Error deleting menu item");
+      toast.error(err?.response?.data?.error || "Error deleting menu item");
     },
   });
 
@@ -63,7 +61,7 @@ export default function MenuItemsPage() {
   }
 
   return (
-    <section className="py-8 relative bottom-0 mb-0 bg-white">
+    <section className="py-8 bg-white">
       <UserTabs />
       <div className="flex flex-col items-center">
         <div className="w-1/2 flex items-center justify-center mt-8 text-center border border-gray-300 p-2 rounded-lg">
@@ -73,37 +71,31 @@ export default function MenuItemsPage() {
           </Link>
         </div>
 
-        <div className="w-1/2">
-          <h2 className="text-sm text-gray-500 mt-8">Edit menu item:</h2>
-          <div className="grid grid-cols-3 gap-2">
+        <div className="w-1/2 mt-8">
+          <h2 className="text-sm text-gray-500">Edit menu item:</h2>
+          <div className="grid grid-cols-3 gap-2 mt-2">
             {items.map((item: any) => (
               <div
                 key={item.id}
                 className="bg-gray-200 rounded-lg p-4 flex flex-col items-center"
               >
-                <div className="relative">
-                  <Image
-                    className="rounded-md"
-                    src={item.image}
-                    alt={item.name}
-                    width={200}
-                    height={200}
-                  />
-                </div>
+                <Image
+                  className="rounded-md"
+                  src={item.image}
+                  alt={item.name}
+                  width={200}
+                  height={200}
+                />
                 <div className="text-center mt-2 font-medium">{item.name}</div>
 
                 <div className="flex gap-2 mt-3">
-                  <Button
-                    size="sm"
-                    variant="secondary"
-                    onClick={() => setEditItem(item)}
-                  >
+                  <Button size="sm" variant="secondary" onClick={() => setEditItem(item)}>
                     Edit
                   </Button>
                   <Button
                     variant="outline"
                     onClick={() => deleteMenuItem.mutate(item.id)}
-                    disabled={deleteMenuItem.isPending}
+                    disabled={deleteMenuItem.status === "pending"}
                   >
                     <Trash />
                   </Button>
@@ -120,9 +112,7 @@ export default function MenuItemsPage() {
           <DialogHeader>
             <DialogTitle>Edit Menu Item</DialogTitle>
           </DialogHeader>
-          {editItem && (
-            <EditMenuForm item={editItem} onClose={() => setEditItem(null)} />
-          )}
+          {editItem && <EditMenuForm item={editItem} onClose={() => setEditItem(null)} />}
         </DialogContent>
       </Dialog>
     </section>

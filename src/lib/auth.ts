@@ -83,17 +83,6 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       return session;
     },
   },
-  //  cookies: {
-  //   sessionToken: {
-  //     name: "__Secure-next-auth.session-token",
-  //     options: {
-  //       httpOnly: true,
-  //       sameSite: "lax",
-  //       path: "/",
-  //       secure: process.env.NODE_ENV === "production",
-  //     },
-  //   },
-  // },
   pages: {
     signIn: "/login",
     error: "/login",

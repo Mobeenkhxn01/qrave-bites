@@ -12,9 +12,9 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { name, description, price, image, categoryId } = await req.json();
+    const { name, description, price, image, categoryId, prepTime, available } = await req.json();
 
-    if (!name || !description || !price || !categoryId) {
+    if (!name || !description || !price || !categoryId || !prepTime || !available) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
     }
 
@@ -47,6 +47,8 @@ export async function POST(req: Request) {
         description,
         image,
         price: parsedPrice,
+        prepTime,
+        available,
         user: { connect: { id: userId } },
         category: { connect: { id: categoryId } },
         restaurantStep1: { connect: { id: restaurant.id } },
@@ -97,9 +99,9 @@ export async function PUT(req: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { id, name, description, price, image, categoryId } = await req.json();
+    const { id, name, description, price, image, categoryId , prepTime, available} = await req.json();
 
-    if (!id || !name || !description || !price || !categoryId) {
+    if (!id || !name || !description || !price || !categoryId || !prepTime || !available) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
     }
 
@@ -137,6 +139,8 @@ export async function PUT(req: Request) {
         price: parsedPrice,
         image,
         categoryId,
+        prepTime,
+        available,
       },
     });
 

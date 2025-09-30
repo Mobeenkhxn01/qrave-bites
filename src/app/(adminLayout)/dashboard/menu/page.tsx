@@ -21,9 +21,11 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
+import AddMenuItemForm from "./AddMenuItemForm"
 import { DashboardHeader } from "@/components/shadcn-components/dashboard-header"
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
 import { AppSidebar } from "@/components/shadcn-components/app-sidebar"
+import AddCategoryItem from "./AddCategoryItem"
 interface MenuItem {
   id: number
   name: string
@@ -123,7 +125,9 @@ export default function MenuPage() {
   const [menuItems, setMenuItems] = useState<MenuItem[]>(initialMenuItems)
   const [searchTerm, setSearchTerm] = useState("")
   const [selectedCategory, setSelectedCategory] = useState("all")
-  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
+  const [isAddCategoryOpen, setIsAddCategoryOpen] = useState(false)
+const [isAddMenuItemOpen, setIsAddMenuItemOpen] = useState(false)
+
 
   const categories = ["all", "Appetizers", "Main Courses", "Desserts", "Drinks"]
 
@@ -164,21 +168,39 @@ export default function MenuPage() {
             <h2 className="text-3xl font-bold tracking-tight">Menu Management</h2>
             <p className="text-muted-foreground">Manage your restaurant menu items and categories</p>
           </div>
-          <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+          <div className="flex gap-2 ">
+             <Dialog open={isAddCategoryOpen} onOpenChange={setIsAddCategoryOpen}>
+            <DialogTrigger asChild>
+              <Button>
+                <PlusIcon className="mr-2 h-4 w-4" />
+                Add Category
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[650px]">
+              <DialogHeader>
+                <DialogTitle>Add New Category Item</DialogTitle>
+                <DialogDescription>Create a new category for Food</DialogDescription>
+              </DialogHeader>
+              <AddCategoryItem onClose={() => setIsAddCategoryOpen(false)} />
+            </DialogContent>
+          </Dialog>
+          <Dialog open={isAddMenuItemOpen} onOpenChange={setIsAddMenuItemOpen}>
             <DialogTrigger asChild>
               <Button>
                 <PlusIcon className="mr-2 h-4 w-4" />
                 Add Menu Item
               </Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-[425px]">
+            <DialogContent className="sm:max-w-[650px]">
               <DialogHeader>
                 <DialogTitle>Add New Menu Item</DialogTitle>
                 <DialogDescription>Create a new item for your menu. Fill in all the details below.</DialogDescription>
               </DialogHeader>
-              <AddMenuItemForm onClose={() => setIsAddDialogOpen(false)} />
+              <AddMenuItemForm onClose={() => setIsAddMenuItemOpen(false)} />
             </DialogContent>
           </Dialog>
+          </div>
+          
         </div>
 
         {/* Stats Cards */}
@@ -432,66 +454,5 @@ function MenuItemListCard({
         </div>
       </CardContent>
     </Card>
-  )
-}
-
-function AddMenuItemForm({ onClose }: { onClose: () => void }) {
-  return (
-    <div className="grid gap-4 py-4">
-      <div className="grid grid-cols-4 items-center gap-4">
-        <Label htmlFor="name" className="text-right">
-          Name
-        </Label>
-        <Input id="name" placeholder="Item name" className="col-span-3" />
-      </div>
-      <div className="grid grid-cols-4 items-center gap-4">
-        <Label htmlFor="price" className="text-right">
-          Price
-        </Label>
-        <Input id="price" placeholder="0.00" type="number" step="0.01" className="col-span-3" />
-      </div>
-      <div className="grid grid-cols-4 items-center gap-4">
-        <Label htmlFor="category" className="text-right">
-          Category
-        </Label>
-        <Select>
-          <SelectTrigger className="col-span-3">
-            <SelectValue placeholder="Select category" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="appetizers">Appetizers</SelectItem>
-            <SelectItem value="main-courses">Main Courses</SelectItem>
-            <SelectItem value="desserts">Desserts</SelectItem>
-            <SelectItem value="drinks">Drinks</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-      <div className="grid grid-cols-4 items-center gap-4">
-        <Label htmlFor="description" className="text-right">
-          Description
-        </Label>
-        <Textarea id="description" placeholder="Item description" className="col-span-3" />
-      </div>
-      <div className="grid grid-cols-4 items-center gap-4">
-        <Label htmlFor="prep-time" className="text-right">
-          Prep Time
-        </Label>
-        <Input id="prep-time" placeholder="Minutes" type="number" className="col-span-3" />
-      </div>
-      <div className="grid grid-cols-4 items-center gap-4">
-        <Label htmlFor="available" className="text-right">
-          Available
-        </Label>
-        <Switch id="available" className="col-span-3" />
-      </div>
-      <DialogFooter>
-        <Button type="button" variant="outline" onClick={onClose}>
-          Cancel
-        </Button>
-        <Button type="submit" onClick={onClose}>
-          Add Item
-        </Button>
-      </DialogFooter>
-    </div>
   )
 }

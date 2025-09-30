@@ -5,7 +5,7 @@ import Trash from "@/components/icons/Trash";
 import UserTabs from "@/components/layout/UserTabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Form, FormControl, FormField, FormItem } from "@/components/ui/form";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Label } from "@/components/ui/label";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -14,6 +14,7 @@ import { useState } from "react";
 import { useSession } from "next-auth/react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
+import { DialogFooter } from "@/components/ui/dialog";
 
 const formSchema = z.object({
   category: z.string().min(2).max(50).trim(),
@@ -27,7 +28,7 @@ function capitalizeWords(str: string) {
     .join(" ");
 }
 
-export default function Categories() {
+export default function AddCategoryItem({ onClose }: { onClose: () => void }) {
   const [editedCategory, setEditedCategory] = useState<{
     id: string;
     userId: string;
@@ -118,87 +119,48 @@ export default function Categories() {
   }
 
   return (
-    <section className="py-8 relative bottom-0 mb-0 bg-white">
-      <UserTabs />
-
-      <div className="w-1/2 mx-auto p-4">
-        <Form {...form}>
-          <form
-            onSubmit={form.handleSubmit(onSubmit)}
-            className="w-full space-y-8"
-          >
-            <div className="flex gap-2">
-              <FormField
-                control={form.control}
-                name="category"
-                render={({ field }) => (
-                  <FormItem className="grow">
-                    <FormControl>
-                      <Input placeholder="Create New Categories" {...field} />
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
-              <Button
+    <div className="grid gap-4 py-4">
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)}>
+          <div className="flex gap-6">
+            <div className="flex flex-col flex-1 gap-4">
+              <div className="grid items-center gap-4">
+                <FormField
+                  control={form.control}
+                  name="category"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-right">Category Name</FormLabel>
+                      <FormControl>
+                        <Input
+                          placeholder="Create a new category"
+                          {...field}
+                          className="col-span-3"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+              <DialogFooter>
+                <Button type="button" variant="outline" onClick={onClose}>
+                  Cancel
+                </Button>
+                 <Button
                 type="submit"
+                onClick={onClose}
                 className="bg-[#eb0029]"
                 disabled={createOrUpdateCategory.isPending}
               >
                 {editedCategory ? "Update" : "Create"}
               </Button>
-              {editedCategory && (
-                <Button
-                  variant="outline"
-                  type="button"
-                  onClick={() => {
-                    setEditedCategory(null);
-                    form.reset();
-                  }}
-                >
-                  Cancel
-                </Button>
-              )}
+              </DialogFooter>
             </div>
-          </form>
-        </Form>
-        <Toaster />
-      </div>
-
-      <div className="w-1/2 mx-auto p-4">
-        <Label>Existing Categories</Label>
-        {isLoading ? (
-          <p className="p-4 text-gray-500">Loading...</p>
-        ) : categories.length > 0 ? (
-          categories.map((category: any) => (
-            <div
-              key={category.id}
-              className="bg-[#F3F4F6] flex justify-between items-center rounded-md p-2 mt-2"
-            >
-              <p className="p-4">{category.name}</p>
-              <div className="flex gap-2">
-                <Button
-                  variant="outline"
-                  onClick={() => {
-                    setEditedCategory(category);
-                    form.setValue("category", category.name);
-                  }}
-                >
-                  Edit
-                </Button>
-                <Button
-                  variant="outline"
-                  onClick={() => deleteCategory.mutate(category.id)}
-                  disabled={deleteCategory.isPending}
-                >
-                  <Trash />
-                </Button>
-              </div>
-            </div>
-          ))
-        ) : (
-          <p className="p-4 text-gray-500">No categories available</p>
-        )}
-      </div>
-    </section>
+          </div>
+        </form>
+      </Form>
+      <Toaster/>
+    </div>
   );
 }

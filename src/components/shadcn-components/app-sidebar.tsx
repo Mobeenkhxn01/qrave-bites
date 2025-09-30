@@ -17,8 +17,9 @@ import {
   IconSearch,
   IconSettings,
   IconUsers,
+  IconCalendar
 } from "@tabler/icons-react"
-
+import { useSession } from "next-auth/react";
 import { NavDocuments } from "@/components/shadcn-components/nav-documents"
 import { NavMain } from "@/components/shadcn-components/nav-main"
 import { NavSecondary } from "@/components/shadcn-components/nav-secondary"
@@ -32,13 +33,9 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar"
+import { IoRestaurant } from "react-icons/io5";
 
 const data = {
-  user: {
-    name: "shadcn",
-    email: "m@example.com",
-    avatar: "/avatars/shadcn.jpg",
-  },
   navMain: [
     {
       title: "Dashboard",
@@ -46,25 +43,35 @@ const data = {
       icon: IconDashboard,
     },
     {
-      title: "Lifecycle",
-      url: "#",
+      title: "Menu",
+      url: "/dashboard/menu",
       icon: IconListDetails,
     },
     {
-      title: "Analytics",
-      url: "#",
+      title: "Live Orders",
+      url: "/dashboard/liveOrder",
       icon: IconChartBar,
     },
     {
-      title: "Projects",
-      url: "#",
+      title: "Inventory",
+      url: "/dashboard/inventory",
       icon: IconFolder,
     },
     {
-      title: "Team",
-      url: "#",
+      title: "Customers",
+      url: "/dashboard/customers",
       icon: IconUsers,
     },
+    {
+      title:"Kitchen Display",
+      url:"/dashboard/kitchen-display",
+      icon: IconCamera,
+    },
+    {
+      title: "Reservations",
+      url: "/dashboard/reservation",
+      icon: IconCalendar,
+    }
   ],
   navClouds: [
     {
@@ -151,6 +158,8 @@ const data = {
 }
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+  
+  
   return (
     <Sidebar collapsible="offcanvas" {...props}>
       <SidebarHeader>
@@ -161,8 +170,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               className="data-[slot=sidebar-menu-button]:!p-1.5"
             >
               <a href="#">
-                <IconInnerShadowTop className="!size-5" />
-                <span className="text-base font-semibold">Acme Inc.</span>
+                <IoRestaurant size={28} className="text-primary-600" />
+                <span className="text-base font-semibold">QraveBites</span>
               </a>
             </SidebarMenuButton>
           </SidebarMenuItem>
@@ -174,7 +183,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <NavSecondary items={data.navSecondary} className="mt-auto" />
       </SidebarContent>
       <SidebarFooter>
-        <NavUser user={data.user} />
+        <NavUser  />
       </SidebarFooter>
     </Sidebar>
   )

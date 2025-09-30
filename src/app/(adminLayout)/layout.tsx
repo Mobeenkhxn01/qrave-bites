@@ -1,45 +1,18 @@
-import type { Metadata } from "next";
-import localFont from "next/font/local";
-import "./globals.css";
-import { AuthProvider } from "@/actions/auth-context";
-import { SessionProvider } from "next-auth/react";
-import ReactQueryProvider from "@/providers/ReactQueryProvider";
-import { CartProvider } from "@/context/CardContext";
+import { auth } from "@/lib/auth";
+import { redirect } from "next/navigation";
 
-const geistSans = localFont({
-  src: "./fonts/GeistVF.woff",
-  variable: "--font-geist-sans",
-  weight: "100 900",
-});
-const geistMono = localFont({
-  src: "./fonts/GeistMonoVF.woff",
-  variable: "--font-geist-mono",
-  weight: "100 900",
-});
-
-export const metadata: Metadata = {
-  title: "Qrave-bites",
-  description: "A QR Code based food ordering website",
-};
-
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  return (
-    <html lang="en">
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
-        <ReactQueryProvider>
-          <CartProvider>
-            <SessionProvider>
-              <AuthProvider>
-                {children}
-              </AuthProvider>
-            </SessionProvider>
-          </CartProvider>
-        </ReactQueryProvider>
-      </body>
-    </html>
-  );
+
+  const session=await auth();
+if(!session){
+  redirect('/');
+}
+if(session.user.role!=='ADMIN'){
+  redirect('/');
+}
+  return  children ;
 }

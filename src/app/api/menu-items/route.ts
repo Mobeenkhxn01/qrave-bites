@@ -14,26 +14,21 @@ export async function POST(req: Request) {
 
     const { name, description, price, image, categoryId, prepTime, available } = await req.json();
 
-    if (!name || !description || !price || !categoryId || !prepTime || !available) {
+    if (!name || !description || !price || !categoryId || !prepTime || available === undefined) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
     }
 
-    // Ensure price is a number
     const parsedPrice = parseFloat(price);
     if (isNaN(parsedPrice)) {
       return NextResponse.json({ error: "Invalid price value" }, { status: 400 });
     }
 
-    // Fetch user's restaurant
     const restaurant = await prisma.restaurantStep1.findFirst({ where: { userId } });
     if (!restaurant) {
       return NextResponse.json({ error: "Restaurant not found for user" }, { status: 404 });
     }
 
-    // Check for duplicate menu item name for this user
-    const conflictMenuItem = await prisma.menuItem.findFirst({
-      where: { name, userId }
-    });
+    const conflictMenuItem = await prisma.menuItem.findFirst({ where: { name, userId } });
     if (conflictMenuItem) {
       return NextResponse.json(
         { error: "Menu item with this name already exists" },
@@ -75,17 +70,11 @@ export async function GET(req: Request) {
       );
     }
 
-    const menuItems = await prisma.menuItem.findMany({
-      where: { userId },
-    });
-
+    const menuItems = await prisma.menuItem.findMany({ where: { userId } });
     return NextResponse.json(menuItems);
   } catch (error) {
     console.error("Error fetching menu items:", error);
-    return NextResponse.json(
-      { error: "Internal Server Error" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
   }
 }
 
@@ -99,9 +88,9 @@ export async function PUT(req: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { id, name, description, price, image, categoryId , prepTime, available} = await req.json();
+    const { id, name, description, price, image, categoryId, prepTime, available } = await req.json();
 
-    if (!id || !name || !description || !price || !categoryId || !prepTime || !available) {
+    if (!id || !name || !description || !price || !categoryId || !prepTime || available === undefined) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
     }
 
@@ -110,19 +99,13 @@ export async function PUT(req: Request) {
       return NextResponse.json({ error: "Invalid price value" }, { status: 400 });
     }
 
-    // Ensure the menu item belongs to this user
     const existingMenuItem = await prisma.menuItem.findFirst({ where: { id, userId } });
     if (!existingMenuItem) {
       return NextResponse.json({ error: "Menu item not found" }, { status: 404 });
     }
 
-    // Check for duplicate name
     const conflictMenuItem = await prisma.menuItem.findFirst({
-      where: { 
-        name,
-        userId,
-        id: { not: id },
-      },
+      where: { name, userId, id: { not: id } },
     });
     if (conflictMenuItem) {
       return NextResponse.json(
@@ -151,6 +134,7 @@ export async function PUT(req: Request) {
   }
 }
 
+// ---------------------- DELETE MENU ITEM ----------------------
 export async function DELETE(req: Request) {
   try {
     const session = await auth();
@@ -164,35 +148,20 @@ export async function DELETE(req: Request) {
     const id = url.searchParams.get("id");
 
     if (!id) {
-      return NextResponse.json(
-        { error: "Missing id query parameter" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Missing id query parameter" }, { status: 400 });
     }
 
-    // 1️⃣ Ensure the menu item belongs to the user
     const existingMenuItem = await prisma.menuItem.findFirst({ where: { id, userId } });
     if (!existingMenuItem) {
       return NextResponse.json({ error: "Menu item not found" }, { status: 404 });
     }
 
-    // 2️⃣ Delete related CartItems first
-    await prisma.cartItem.deleteMany({
-      where: { menuItemId: id },
-    });
-
-    // 3️⃣ Now safely delete the MenuItem
-    await prisma.menuItem.delete({
-      where: { id },
-    });
+    await prisma.cartItem.deleteMany({ where: { menuItemId: id } });
+    await prisma.menuItem.delete({ where: { id } });
 
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error("Error deleting menu item:", error);
-    return NextResponse.json(
-      { error: "Something went wrong" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Something went wrong" }, { status: 500 });
   }
 }
-

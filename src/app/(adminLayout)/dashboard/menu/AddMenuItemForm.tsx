@@ -81,45 +81,47 @@ export default function AddMenuItemForm({ onClose }: { onClose: () => void }) {
     enabled: !!session?.user?.id,
   });
 
-  const createMenuItem = useMutation({
-    mutationFn: async (values: z.infer<typeof formSchema>) => {
-      if (!session?.user?.id) throw new Error("Missing user ID");
+ const createMenuItem = useMutation({
+  mutationFn: async (values: z.infer<typeof formSchema>) => {
+    if (!session?.user?.id) throw new Error("Missing user ID");
 
-      let imageUrl = null;
-      if (values.image) {
-        const formData = new FormData();
-        formData.append("file", values.image);
-        const { data: uploaded } = await axios.post("/api/upload", formData);
-        imageUrl = uploaded?.url || null;
-      }
+    let imageUrl = null;
+    if (values.image) {
+      const formData = new FormData();
+      formData.append("file", values.image);
+      const { data: uploaded } = await axios.post("/api/upload", formData);
+      imageUrl = uploaded?.url || null;
+    }
 
-      const dataToSend = {
-        name: values.name,
-        description: values.description,
-        price: values.price,
-        image: imageUrl,
-        userId: session.user.id,
-        categoryId: values.category,
-        prepTime: values.prepTime,
-        available: values.available ?? true,
-      };
+    const dataToSend = {
+      name: values.name,
+      description: values.description,
+      price: values.price,
+      image: imageUrl,
+      userId: session.user.id,
+      categoryId: values.category,
+      prepTime: values.prepTime,
+      available: values.available ?? true,
+    };
 
-      const res = await axios.post("/api/menu-items", dataToSend);
-      if (res.status !== 201) throw new Error("Failed to create menu item");
-      return res.data;
-    },
-    onSuccess: () => {
-      toast.success("Menu item created successfully!");
-      queryClient.invalidateQueries({ queryKey: ["menu-items"] });
-    },
-    onError: (error: any) => {
-      toast.error(
-        error?.response?.data?.message ||
-          error?.message ||
-          "Failed to create menu item"
-      );
-    },
-  });
+    const res = await axios.post("/api/menu-items", dataToSend);
+    if (res.status !== 201) throw new Error("Failed to create menu item");
+    return res.data;
+  },
+  onSuccess: () => {
+    toast.success("Menu item created successfully!");
+    queryClient.invalidateQueries({ queryKey: ["menu-items"] });
+    onClose(); // ✅ Close the dialog only after success
+  },
+  onError: (error: any) => {
+    toast.error(
+      error?.response?.data?.message ||
+        error?.message ||
+        "Failed to create menu item"
+    );
+  },
+});
+
 
   function onSubmit(values: z.infer<typeof formSchema>) {
     createMenuItem.mutate(values);
@@ -319,7 +321,6 @@ export default function AddMenuItemForm({ onClose }: { onClose: () => void }) {
                   type="submit"
                   className="bg-[#eb0029] w-full mt-2"
                   disabled={createMenuItem.status === "pending"}
-                  onClick={onClose}
                 >
                   {createMenuItem.status === "pending"
                     ? "Adding item..."

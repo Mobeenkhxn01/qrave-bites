@@ -3,19 +3,26 @@
 import { useCartContext } from '@/context/CardContext'
 import { Button } from '@/components/ui/button'
 
-export function AddToCartButton({ menuItemId }: { menuItemId: string }) {
+export function AddToCartButton({
+  menuItemId,
+  available = true, // new prop
+}: {
+  menuItemId: string
+  available?: boolean
+}) {
   const { addToCart, cart } = useCartContext()
 
   const itemInCart = cart?.cartItems?.find(item => item.menuItem.id === menuItemId)
   const quantity = itemInCart?.quantity || 0
 
   return (
-    <div className="flex items-center space-x-2">
+    <div className="flex items-center space-x-2 w-full">
       <Button
         onClick={() => addToCart(menuItemId)}
         className="w-full"
+        disabled={!available} // disable if unavailable
       >
-        Add to Cart {quantity > 0 && `(${quantity})`}
+        {!available ? 'Unavailable' : `Add to Cart${quantity > 0 ? ` (${quantity})` : ''}`}
       </Button>
     </div>
   )

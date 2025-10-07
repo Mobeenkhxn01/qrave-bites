@@ -26,7 +26,7 @@ export default async function CityPage( {
   const step1 = await prisma.restaurantStep1.findMany({
     where: { city },
     include: {
-      RestaurantStep2: true,
+      step2: true,
     },
   });
 
@@ -43,9 +43,9 @@ export default async function CityPage( {
             >
               <CardHeader>
 
-                {item.RestaurantStep2?.restaurantImageUrl ? (
+                {item.step2?.restaurantImageUrl ? (
                   <Image
-                    src={item.RestaurantStep2.restaurantImageUrl}
+                    src={item.step2.restaurantImageUrl}
                     alt="restaurant_image"
                     width={300}
                     height={200}

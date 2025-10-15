@@ -330,3 +330,12 @@ model Notification {
 
   restaurant RestaurantStep1 @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
 }
+
+model Table{
+
+  id        String @id @default(cuid()) @map("_id")
+  number    Int
+  qrCodeUrl String
+  createdAt DateTime @default(now())
+
+}

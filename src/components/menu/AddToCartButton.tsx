@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button'
 
 export function AddToCartButton({
   menuItemId,
-  available = true, // new prop
+  available = true,
 }: {
   menuItemId: string
   available?: boolean
@@ -20,7 +20,7 @@ export function AddToCartButton({
       <Button
         onClick={() => addToCart(menuItemId)}
         className="w-full"
-        disabled={!available} // disable if unavailable
+        disabled={!available}
       >
         {!available ? 'Unavailable' : `Add to Cart${quantity > 0 ? ` (${quantity})` : ''}`}
       </Button>

@@ -51,7 +51,6 @@ const formSchema = z.object({
 });
 
 export default function AddMenuItemForm({ onClose }: { onClose: () => void }) {
-  const router = useRouter();
   const { data: session } = useSession();
   const queryClient = useQueryClient();
   const [preview, setPreview] = useState<string | null>(null);

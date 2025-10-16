@@ -68,14 +68,14 @@ const data = {
       icon: IconCamera,
     },
     {
-      title: "Reservations",
-      url: "/dashboard/reservation",
+      title: "Table Qr Management",
+      url: "/dashboard/qr-codes",
       icon: IconCalendar,
     }
   ],
   navSecondary: [
     {
-      title: "Settings",
+      title: "Qr Code",
       url: "#",
       icon: IconSettings,
     },

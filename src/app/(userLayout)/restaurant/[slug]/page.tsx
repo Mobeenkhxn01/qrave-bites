@@ -17,7 +17,7 @@ export default async function RestaurantPage({
   if (!step1) return notFound();
 
   const [step2, step3, step4] = await Promise.all([
-    prisma.restaurantStep2.findFirst({ where: { userId: step1.userId } }),
+    prisma.restaurantStep2.findFirst({ where: { id:step1.userId } }),
     prisma.restaurantStep3.findFirst({ where: { userId: step1.userId } }),
     prisma.restaurantStep4.findFirst({ where: { userId: step1.userId } }),
   ]);

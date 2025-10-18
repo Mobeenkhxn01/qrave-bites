@@ -13,11 +13,11 @@ import Link from "next/link";
 interface TableQR {
   id: string;
   number: number;
+  scan:number;
   qrCodeUrl: string;
   createdAt: string;
 }
 export default function QRCodeCard({ item }: { item: TableQR }) {
-  const scans = Math.floor(Math.random() * 50) + 10;
   const isActive = Math.random() > 0.2;
 
   return (
@@ -43,7 +43,7 @@ export default function QRCodeCard({ item }: { item: TableQR }) {
           </CardHeader>
           <CardContent className="text-center space-y-3">
             <div className="text-sm text-muted-foreground">
-              {scans} scans today
+              {item.scan} scans today
             </div>
             <div className="flex gap-2 justify-center">
               <Link

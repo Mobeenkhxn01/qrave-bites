@@ -33,6 +33,7 @@ import QRCodeCard from "./QRCodeCard";
 interface tableQR {
   id: string;
   number: number;
+  scan:number; 
   qrCodeUrl: string;
   createdAt: string;
 }

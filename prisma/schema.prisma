@@ -1,4 +1,3 @@
-// prisma/schema.prisma
 datasource db {
   provider = "mongodb"
   url      = env("DATABASE_URL")
@@ -7,10 +6,6 @@ datasource db {
 generator client {
   provider = "prisma-client-js"
 }
-
-//////////////////////
-// ENUMS
-//////////////////////
 
 enum Role {
   USER
@@ -37,9 +32,6 @@ enum NotificationType {
   ORDER_UPDATE
 }
 
-//////////////////////
-// USER & AUTH
-//////////////////////
 
 model User {
   id            String    @id @default(auto()) @map("_id") @db.ObjectId
@@ -125,9 +117,6 @@ model Authenticator {
   @@unique([userId, credentialID])
 }
 
-//////////////////////
-// MENU
-//////////////////////
 
 model Category {
   id   String @id @default(auto()) @map("_id") @db.ObjectId
@@ -161,9 +150,7 @@ model MenuItem {
   OrderItem OrderItem[]
 }
 
-//////////////////////
-// RESTAURANT STEPS
-//////////////////////
+
 
 model RestaurantStep1 {
   id             String   @id @default(auto()) @map("_id") @db.ObjectId
@@ -240,9 +227,6 @@ model RestaurantStep4 {
   updatedAt DateTime @default(now()) @updatedAt
 }
 
-//////////////////////
-// ORDERS
-//////////////////////
 
 model Order {
   id          String      @id @default(auto()) @map("_id") @db.ObjectId
@@ -270,9 +254,7 @@ model OrderItem {
   menuItem MenuItem @relation(fields: [menuItemId], references: [id])
 }
 
-//////////////////////
-// CART
-//////////////////////
+
 
 model Cart {
   id        String     @id @default(auto()) @map("_id") @db.ObjectId
@@ -294,9 +276,6 @@ model CartItem {
   updatedAt  DateTime @updatedAt
 }
 
-//////////////////////
-// USER ADDRESS
-//////////////////////
 
 model UserAddress {
   id            String   @id @default(auto()) @map("_id") @db.ObjectId
@@ -315,9 +294,6 @@ model UserAddress {
   @@unique([email, userId])
 }
 
-//////////////////////
-// NOTIFICATIONS
-//////////////////////
 
 model Notification {
   id           String           @id @default(auto()) @map("_id") @db.ObjectId
@@ -337,5 +313,6 @@ model Table{
   number    Int
   qrCodeUrl String
   createdAt DateTime @default(now())
+  scan      Int @default(0)
 
 }

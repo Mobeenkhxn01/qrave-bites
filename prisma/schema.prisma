@@ -32,7 +32,6 @@ enum NotificationType {
   ORDER_UPDATE
 }
 
-
 model User {
   id            String    @id @default(auto()) @map("_id") @db.ObjectId
   name          String?
@@ -117,7 +116,6 @@ model Authenticator {
   @@unique([userId, credentialID])
 }
 
-
 model Category {
   id   String @id @default(auto()) @map("_id") @db.ObjectId
   name String
@@ -150,8 +148,6 @@ model MenuItem {
   OrderItem OrderItem[]
 }
 
-
-
 model RestaurantStep1 {
   id             String   @id @default(auto()) @map("_id") @db.ObjectId
   restaurantName String
@@ -169,8 +165,8 @@ model RestaurantStep1 {
   longitude      Float?
   address        String?
 
-  userId String @unique @db.ObjectId
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String     @unique @db.ObjectId
+  user   User       @relation(fields: [userId], references: [id], onDelete: Cascade)
   menu   MenuItem[] @relation("RestaurantMenuItems")
 
   step2 RestaurantStep2?
@@ -178,6 +174,7 @@ model RestaurantStep1 {
   createdAt    DateTime       @default(now())
   updatedAt    DateTime       @updatedAt
   Notification Notification[]
+  Table        Table[]
 }
 
 model RestaurantStep2 {
@@ -227,7 +224,6 @@ model RestaurantStep4 {
   updatedAt DateTime @default(now()) @updatedAt
 }
 
-
 model Order {
   id          String      @id @default(auto()) @map("_id") @db.ObjectId
   userId      String?     @db.ObjectId
@@ -254,8 +250,6 @@ model OrderItem {
   menuItem MenuItem @relation(fields: [menuItemId], references: [id])
 }
 
-
-
 model Cart {
   id        String     @id @default(auto()) @map("_id") @db.ObjectId
   userId    String     @db.ObjectId
@@ -276,7 +270,6 @@ model CartItem {
   updatedAt  DateTime @updatedAt
 }
 
-
 model UserAddress {
   id            String   @id @default(auto()) @map("_id") @db.ObjectId
   email         String
@@ -294,7 +287,6 @@ model UserAddress {
   @@unique([email, userId])
 }
 
-
 model Notification {
   id           String           @id @default(auto()) @map("_id") @db.ObjectId
   restaurantId String           @db.ObjectId
@@ -307,12 +299,13 @@ model Notification {
   restaurant RestaurantStep1 @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
 }
 
-model Table{
-
-  id        String @id @default(cuid()) @map("_id")
+model Table {
+  id        String   @id @default(cuid()) @map("_id")
   number    Int
   qrCodeUrl String
   createdAt DateTime @default(now())
-  scan      Int @default(0)
+  scan      Int      @default(0)
 
+  restaurantId String          @db.ObjectId
+  restaurant   RestaurantStep1 @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
 }

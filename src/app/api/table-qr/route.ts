@@ -3,39 +3,34 @@ import { NextResponse } from "next/server";
 
 export async function POST(req: Request) {
   try {
-    const { number, qrCodeUrl } = await req.json();
-    if (typeof number !== "number" || !qrCodeUrl) {
-      return NextResponse.json(
-        { error: "Missing or invalid data" },
-        { status: 400 }
-      );
+    const { number, restaurantId } = await req.json();
+
+    if (!number || !restaurantId) {
+      return NextResponse.json({ error: "Missing required data" }, { status: 400 });
     }
 
+    // create table first
     const table = await prisma.table.create({
       data: {
         number,
-        qrCodeUrl,
+        restaurantId,
+        qrCodeUrl: "",
+      },
+      include: {
+        restaurant: true,
       },
     });
 
-    return NextResponse.json(table);
-  } catch (error) {
-    console.error("❌ Prisma Error:", error);
-    return NextResponse.json({ error: "Failed to save QR" }, { status: 500 });
-  }
-}
+    const qrCodeUrl = `${process.env.NEXT_PUBLIC_APP_URL}/qr/${table.id}`;
 
-export async function GET() {
-  try {
-    const tables = await prisma.table.findMany({
-      orderBy: { createdAt: "desc" },
+    await prisma.table.update({
+      where: { id: table.id },
+      data: { qrCodeUrl },
     });
-    return NextResponse.json(tables);
+
+    return NextResponse.json({ ...table, qrCodeUrl });
   } catch (error) {
-    console.error(error);
-    return NextResponse.json(
-      { error: "Failed to fetch QR codes" },
-      { status: 500 }
-    );
+    console.error("QR Creation Error:", error);
+    return NextResponse.json({ error: "Failed to create QR" }, { status: 500 });
   }
 }

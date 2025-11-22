@@ -1,20 +1,18 @@
 import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
-export default async function QRRedirectPage({
-  params,
-}: {
-  params: Promise<{ id: string }>;
-}) {
-  const qr = await prisma.table.findUnique({
-    where: { id: (await params).id },
+
+export default async function QRRedirectPage({ params }: { params: { id: string } }) {
+  const table = await prisma.table.findUnique({
+    where: { id: params.id },
+    include: { restaurant: true },
   });
 
-  if(!qr){
-    return <div>Qr Code not found</div>;
+  if (!table || !table.restaurant) {
+    return <div>Invalid QR</div>;
   }
   await prisma.table.update({
-    where:{id:(await params).id},
-    data:{scan:{increment:1}},
+    where: { id: params.id },
+    data: { scan: { increment: 1 } },
   });
-   redirect(qr.qrCodeUrl)
+  redirect(`/${table.restaurant.city}/${table.restaurant.slug}/menu?table=${table.number}`);
 }

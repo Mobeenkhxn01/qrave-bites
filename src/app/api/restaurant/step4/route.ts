@@ -16,7 +16,6 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: false, message: "User not found" }, { status: 404 });
     }
 
-    // Save Step 4 agreement
     const existing = await prisma.restaurantStep4.findFirst({ where: { userId: user.id } });
 
     let result;

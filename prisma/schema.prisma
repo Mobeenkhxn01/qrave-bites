@@ -175,6 +175,7 @@ model RestaurantStep1 {
   updatedAt    DateTime       @updatedAt
   Notification Notification[]
   Table        Table[]
+  orders       Order[]
 }
 
 model RestaurantStep2 {
@@ -232,11 +233,19 @@ model Order {
   status      OrderStatus @default(PENDING)
   paid        Boolean     @default(false)
 
+  restaurantId String          @db.ObjectId
+  restaurant   RestaurantStep1 @relation(fields: [restaurantId], references: [id])
+
+  tableId String? @db.ObjectId 
+  table   Table?  @relation(fields: [tableId], references: [id])
+
   items     OrderItem[]
   createdAt DateTime    @default(now())
   updatedAt DateTime    @updatedAt
 
   user User? @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  notifications Notification[]
 }
 
 model OrderItem {
@@ -296,11 +305,15 @@ model Notification {
   payload      Json?
   createdAt    DateTime         @default(now())
 
+  orderId      String?          @db.ObjectId
+  order        Order?           @relation(fields: [orderId], references: [id])
+
   restaurant RestaurantStep1 @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
 }
 
+
 model Table {
-  id        String   @id @default(cuid()) @map("_id")
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
   number    Int
   qrCodeUrl String
   createdAt DateTime @default(now())
@@ -308,4 +321,5 @@ model Table {
 
   restaurantId String          @db.ObjectId
   restaurant   RestaurantStep1 @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  orders       Order[]
 }

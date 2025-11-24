@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 
 export async function POST() {
   try {
-    const restaurantId = "resto_123"; // Test restaurant ID
+    const restaurantId = "resto_123";
     const fakeOrder = {
       id: "order_" + Date.now(),
       tableNumber: 5,

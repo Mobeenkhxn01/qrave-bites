@@ -11,8 +11,6 @@ export async function POST(req: Request) {
         { status: 400 }
       );
     }
-
-    // Check if category already exists for the same user
     const existingCategory = await prisma.category.findFirst({
       where: {
         name: name.toLowerCase(),
@@ -27,7 +25,7 @@ export async function POST(req: Request) {
       );
     }
 
-    // Create new category if it doesn't exist
+
     const category = await prisma.category.create({
       data: {
         name: name.toLowerCase(),
@@ -56,7 +54,6 @@ export async function PUT(req: Request) {
       );
     }
 
-    // Ensure category exists before updating
     const existingCategory = await prisma.category.findUnique({
       where: { id },
     });
@@ -68,7 +65,6 @@ export async function PUT(req: Request) {
       );
     }
 
-    // Check if another category with the same name exists for the user
     const conflictCategory = await prisma.category.findFirst({
       where: {
         name: name.toLowerCase(),

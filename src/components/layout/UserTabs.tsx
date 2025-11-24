@@ -8,7 +8,7 @@ export default function UserTabs() {
   const {data:session}= useSession();
   const path = usePathname();
 
-  if(session?.user.role==="admin"){
+  if(session?.user.role==="ADMIN"){
     return (
     <div className="flex mx-auto gap-4 justify-center flex-wrap mb-6">
       <div className="">

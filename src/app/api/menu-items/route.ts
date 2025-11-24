@@ -2,7 +2,6 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
 
-// ---------------------- CREATE MENU ITEM ----------------------
 export async function POST(req: Request) {
   try {
     const session = await auth();
@@ -57,7 +56,6 @@ export async function POST(req: Request) {
   }
 }
 
-// ---------------------- GET MENU ITEMS ----------------------
 export async function GET(req: Request) {
   try {
     const url = new URL(req.url);
@@ -78,7 +76,6 @@ export async function GET(req: Request) {
   }
 }
 
-// ---------------------- UPDATE MENU ITEM ----------------------
 export async function PUT(req: Request) {
   try {
     const session = await auth();
@@ -134,7 +131,6 @@ export async function PUT(req: Request) {
   }
 }
 
-// ---------------------- DELETE MENU ITEM ----------------------
 export async function DELETE(req: Request) {
   try {
     const session = await auth();

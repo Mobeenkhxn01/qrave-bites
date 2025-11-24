@@ -7,13 +7,14 @@ export default auth((req) => {
     return NextResponse.redirect(new URL("/login", req.url));
   }
   if (
-    req.auth?.user.role !== "admin" &&
-    nextUrl.pathname.startsWith("/admin")
+    req.auth &&
+    req.auth.user.role !== "ADMIN" &&
+    nextUrl.pathname.startsWith("/dashboard")
   ) {
     return NextResponse.redirect(new URL("/unauthorized", req.url));
   }
 });
 
 export const config = {
-  matcher: ["/((?!api|_next/static|_next/image|favicon.ico).*)","/dashboard/:path*", "/admin/:path*"],
-}
+  matcher: ["/dashboard/:path*"],
+};

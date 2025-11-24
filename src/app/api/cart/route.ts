@@ -38,7 +38,6 @@ export async function POST(req: Request) {
   }
 
   try {
-    // Find or create cart for user
     let cart = await prisma.cart.findFirst({
       where: { userId:session.user.id }
     })
@@ -48,8 +47,6 @@ export async function POST(req: Request) {
         data: { userId:session.user.id }
       })
     }
-
-    // Check if item already exists in cart
     const existingCartItem = await prisma.cartItem.findFirst({
       where: {
         cartId: cart.id,
@@ -58,7 +55,6 @@ export async function POST(req: Request) {
     })
 
     if (existingCartItem) {
-      // Increment quantity if item exists
       const updatedCartItem = await prisma.cartItem.update({
         where: { id: existingCartItem.id },
         data: { quantity: existingCartItem.quantity + 1 }
@@ -66,7 +62,6 @@ export async function POST(req: Request) {
 
       return NextResponse.json(updatedCartItem)
     } else {
-      // Add new item to cart
       const newCartItem = await prisma.cartItem.create({
         data: {
           menuItemId,
@@ -91,7 +86,6 @@ export async function POST(req: Request) {
 export async function DELETE(req: Request) {
   const session = await auth();
   
-  // Validate session and user
   if (!session?.user?.id) {
     return NextResponse.json(
       { error: 'Unauthorized - Please log in' }, 
@@ -100,7 +94,6 @@ export async function DELETE(req: Request) {
   }
 
   try {
-    // Validate request body
     const { menuItemId, removeAll } = await req.json();
     
     if (!menuItemId) {
@@ -110,7 +103,6 @@ export async function DELETE(req: Request) {
       );
     }
 
-    // Find user's cart
     const cart = await prisma.cart.findFirst({
       where: { userId: session.user.id },
       include: { cartItems: true }
@@ -123,7 +115,6 @@ export async function DELETE(req: Request) {
       );
     }
 
-    // Find the specific cart item
     const cartItem = await prisma.cartItem.findFirst({
       where: {
         cartId: cart.id,
@@ -141,9 +132,7 @@ export async function DELETE(req: Request) {
       );
     }
 
-    // Handle different removal cases
     if (removeAll) {
-      // Remove all quantities of this item
       await prisma.cartItem.delete({
         where: { id: cartItem.id }
       });
@@ -153,7 +142,6 @@ export async function DELETE(req: Request) {
         remainingItems: cart.cartItems.length - 1
       });
     } else if (cartItem.quantity > 1) {
-      // Decrement quantity
       const updatedCartItem = await prisma.cartItem.update({
         where: { id: cartItem.id },
         data: { quantity: cartItem.quantity - 1 },
@@ -168,7 +156,6 @@ export async function DELETE(req: Request) {
         newQuantity: updatedCartItem.quantity
       });
     } else {
-      // Remove the item completely when quantity is 1
       await prisma.cartItem.delete({
         where: { id: cartItem.id }
       });

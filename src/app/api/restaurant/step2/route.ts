@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
-// GET: Load restaurant step2 data by user email
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
   const email = searchParams.get("email");
@@ -10,10 +9,9 @@ export async function GET(req: Request) {
     return NextResponse.json({ success: false, message: "Email is required" }, { status: 400 });
   }
 
-  // Fetch RestaurantStep1 by user email
   const step1 = await prisma.restaurantStep1.findUnique({
     where: { email },
-    include: { step2: true }, // Updated relation field
+    include: { step2: true }, 
   });
 
   if (!step1 || !step1.step2) {
@@ -26,7 +24,6 @@ export async function GET(req: Request) {
   });
 }
 
-// POST: Create or update RestaurantStep2
 export async function POST(req: Request) {
   try {
     const body = await req.json();
@@ -46,19 +43,17 @@ export async function POST(req: Request) {
       return NextResponse.json({ success: false, message: "User email is required" }, { status: 400 });
     }
 
-    // Fetch RestaurantStep1 for this user
+
     const step1 = await prisma.restaurantStep1.findUnique({ where: { email } });
 
     if (!step1) {
       return NextResponse.json({ success: false, message: "RestaurantStep1 not found" }, { status: 404 });
     }
 
-    // Check if step2 already exists for this step1
     const existing = await prisma.restaurantStep2.findUnique({ where: { step1Id: step1.id } });
 
     let result;
     if (existing) {
-      // Update existing step2
       result = await prisma.restaurantStep2.update({
         where: { id: existing.id },
         data: {
@@ -73,7 +68,6 @@ export async function POST(req: Request) {
         },
       });
     } else {
-      // Create new step2
       result = await prisma.restaurantStep2.create({
         data: {
           cuisine,
@@ -84,7 +78,7 @@ export async function POST(req: Request) {
           days,
           openingTime,
           closingTime,
-          step1Id: step1.id, // Link to RestaurantStep1
+          step1Id: step1.id, 
         },
       });
     }

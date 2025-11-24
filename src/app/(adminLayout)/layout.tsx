@@ -1,18 +1,9 @@
 import { auth } from "@/lib/auth";
-import { redirect } from "next/navigation";
 
-export default async function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+export default async function AdminDashboardLayout({ children }: { children: React.ReactNode }) {
+  const session = await auth();
 
-  const session=await auth();
-if(!session){
-  redirect('/');
-}
-if(session.user.role!=='ADMIN'){
-  redirect('/');
-}
-  return  children ;
+  if (!session || session.user.role !== "ADMIN") return null;
+
+  return <>{children}</>;
 }

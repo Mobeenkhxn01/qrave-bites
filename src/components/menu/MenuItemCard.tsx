@@ -5,7 +5,7 @@ import Image from 'next/image'
 import { AddToCartButton } from './AddToCartButton'
 import { Badge } from '@/components/ui/badge'
 
-export function MenuItemCard({ item }: { item: MenuItem }) {
+export function MenuItemCard({ item,tableNumber }: { item: MenuItem ,tableNumber: number | null}) {
   return (
     <Card className={`overflow-hidden ${!item.available ? 'opacity-60' : ''}`}>
       <CardHeader className="p-0 relative">
@@ -33,7 +33,12 @@ export function MenuItemCard({ item }: { item: MenuItem }) {
       </CardContent>
 
       <CardFooter className="p-4 pt-0">
-        <AddToCartButton menuItemId={item.id} available={item.available} />
+        <AddToCartButton 
+  menuItemId={item.id}
+  tableNumber={tableNumber}
+  available={item.available}
+/>
+
       </CardFooter>
     </Card>
   )

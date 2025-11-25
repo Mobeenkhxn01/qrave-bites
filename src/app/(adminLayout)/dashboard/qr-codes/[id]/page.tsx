@@ -1,8 +1,13 @@
 import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
 
-export default async function QRRedirectPage({ params }: { params: { id: string } }) {
-  const tableId = params.id;
+export default async function QRRedirectPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  const { id } = await params;
+  const tableId = id;
 
   if (!tableId) {
     return <div>Invalid QR</div>;
@@ -17,10 +22,14 @@ export default async function QRRedirectPage({ params }: { params: { id: string 
     return <div>Invalid QR</div>;
   }
 
+  // increment scan count
   await prisma.table.update({
     where: { id: tableId },
     data: { scan: { increment: 1 } },
   });
 
-  redirect(`/city/${table.restaurant.city}/${table.restaurant.slug}?table=${table.number}`);
+  // IMPORTANT: Correct menu redirect
+  redirect(
+    `/city/${table.restaurant.city}/${table.restaurant.slug}/menu?table=${table.number}`
+  );
 }

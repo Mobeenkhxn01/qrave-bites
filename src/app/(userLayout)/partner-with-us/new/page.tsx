@@ -217,10 +217,6 @@ export default function NewRestaurantRegister() {
     );
   }
 
-  if (status === "unauthenticated") {
-    router.push("/login");
-    return null;
-  }
 
   return (
     <div className="px-4 md:px-6 lg:px-8">

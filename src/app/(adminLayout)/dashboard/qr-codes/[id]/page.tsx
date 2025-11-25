@@ -22,5 +22,5 @@ export default async function QRRedirectPage({ params }: { params: { id: string 
     data: { scan: { increment: 1 } },
   });
 
-  redirect(`/${table.restaurant.city}/${table.restaurant.slug}/menu?table=${table.number}`);
+  redirect(`/city/${table.restaurant.city}/${table.restaurant.slug}?table=${table.number}`);
 }

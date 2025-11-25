@@ -3,9 +3,7 @@ import { auth } from "@/lib/auth";
 import { NextResponse } from "next/server";
 import QRCode from "qrcode";
 
-// ---------------------------
-// CREATE TABLE + GENERATE QR
-// ---------------------------
+
 export async function POST(req: Request) {
   try {
     const session = await auth();
@@ -22,7 +20,6 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Table number required" }, { status: 400 });
     }
 
-    // 1️⃣ Find the restaurant of this owner/admin
     const restaurant = await prisma.restaurantStep1.findFirst({
       where: { userId: session.user.id },
     });
@@ -31,7 +28,6 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Restaurant not found" }, { status: 404 });
     }
 
-    // 2️⃣ Create table (unique ObjectId auto-generated)
     const table = await prisma.table.create({
       data: {
         number,
@@ -40,13 +36,11 @@ export async function POST(req: Request) {
       },
     });
 
-    // 3️⃣ Build QR URL on backend
     const qrLink = `${process.env.NEXT_PUBLIC_APP_URL}/dashboard/qr-codes/${table.id}`;
 
-    // 4️⃣ Generate QR image (base64)
+
     const qrCodeUrl = await QRCode.toDataURL(qrLink);
 
-    // 5️⃣ Save QR image URL
     const updatedTable = await prisma.table.update({
       where: { id: table.id },
       data: { qrCodeUrl },
@@ -68,12 +62,10 @@ export async function GET(req: Request) {
       return NextResponse.json([], { status: 200 });
     }
 
-    // ADMIN or OWNER allowed
     if (session.user.role !== "ADMIN" && session.user.role !== "RESTAURANT_OWNER") {
       return NextResponse.json([], { status: 200 });
     }
 
-    // Find restaurant for owner
     const restaurant = await prisma.restaurantStep1.findFirst({
       where: { userId: session.user.id },
     });
@@ -82,7 +74,6 @@ export async function GET(req: Request) {
       return NextResponse.json([], { status: 200 });
     }
 
-    // Fetch tables
     const tables = await prisma.table.findMany({
       where: { restaurantId: restaurant.id },
       orderBy: { number: "asc" },

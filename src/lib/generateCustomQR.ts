@@ -7,7 +7,7 @@ interface GenerateQrOptions {
 }
 
 export async function generateCustomQR({ tableNumber, menuUrl, logoUrl }: GenerateQrOptions) {
-  // 1. Generate QR Code Data URL
+
   const qrCanvas = document.createElement("canvas");
   await QRCode.toCanvas(qrCanvas, menuUrl, {
     margin: 1,
@@ -21,22 +21,20 @@ export async function generateCustomQR({ tableNumber, menuUrl, logoUrl }: Genera
   const qrSize = 300;
   const padding = 40;
   const totalWidth = qrSize + padding * 2;
-  const totalHeight = qrSize + padding * 2 + 60; // extra for logo/text
+  const totalHeight = qrSize + padding * 2 + 60;
 
-  // 2. Create final canvas with background
   const canvas = document.createElement("canvas");
   canvas.width = totalWidth;
   canvas.height = totalHeight;
   const ctx = canvas.getContext("2d")!;
 
-  // Fill background
   ctx.fillStyle = "#ffffff";
   ctx.fillRect(0, 0, totalWidth, totalHeight);
 
-  // 3. Draw QR code in center
+
   ctx.drawImage(qrCanvas, padding, padding);
 
-  // 4. Add Logo (optional)
+
   const logoImg = new Image();
   logoImg.crossOrigin = "anonymous";
   logoImg.src = logoUrl;
@@ -51,13 +49,11 @@ export async function generateCustomQR({ tableNumber, menuUrl, logoUrl }: Genera
     };
   });
 
-  // 5. Add Table Number or Website Text
   ctx.fillStyle = "#000";
   ctx.font = "bold 20px Arial";
   ctx.textAlign = "center";
   ctx.fillText(`Table ${tableNumber}`, totalWidth / 2, totalHeight - 20);
 
-  // 6. Convert canvas to image URL
   const finalImageUrl = canvas.toDataURL("image/png");
   return finalImageUrl;
 }

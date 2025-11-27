@@ -6,26 +6,35 @@ export async function GET(req: NextRequest) {
     const email = new URL(req.url).searchParams.get("email");
 
     if (!email) {
-      return NextResponse.json({ success: false, message: "Email is required" }, { status: 400 });
+      return NextResponse.json(
+        { success: false, message: "Email is required" },
+        { status: 400 }
+      );
     }
 
     const user = await prisma.user.findUnique({
       where: { email },
       include: {
-        restaurantStep3: {
-          orderBy: { createdAt: "desc" },
-          take: 1,
-        },
+        restaurantStep3: true,
       },
     });
 
-    if (!user || !user.restaurantStep3?.length) {
-      return NextResponse.json({ success: false, message: "No Step 3 data found" }, { status: 404 });
+    if (!user?.restaurantStep3?.length) {
+      return NextResponse.json(
+        { success: false, message: "No Step 3 data found" },
+        { status: 404 }
+      );
     }
 
-    return NextResponse.json({ success: true, data: user.restaurantStep3[0] });
+    return NextResponse.json({
+      success: true,
+      data: user.restaurantStep3[0],
+    });
   } catch {
-    return NextResponse.json({ success: false, message: "Failed to fetch Step 3 data" }, { status: 500 });
+    return NextResponse.json(
+      { success: false, message: "Failed to fetch Step 3 data" },
+      { status: 500 }
+    );
   }
 }
 
@@ -45,13 +54,23 @@ export async function POST(req: NextRequest) {
       email,
     } = data;
 
+    if (!email) {
+      return NextResponse.json(
+        { success: false, message: "User email is required" },
+        { status: 400 }
+      );
+    }
+
     const user = await prisma.user.findUnique({
       where: { email },
       select: { id: true },
     });
 
     if (!user) {
-      return NextResponse.json({ success: false, message: "User not found" }, { status: 404 });
+      return NextResponse.json(
+        { success: false, message: "User not found" },
+        { status: 404 }
+      );
     }
 
     const existing = await prisma.restaurantStep3.findFirst({

@@ -30,39 +30,32 @@ import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import toast from "react-hot-toast";
 
+// Lazy loaded map component
 const LocationMapWithSearch = dynamic(
   () => import("@/components/layout/LocationMapWithSearch"),
   { ssr: false }
 );
 
+// Form schema
 const formSchema = z.object({
   restaurantname: z
     .string()
-    .min(2, "Restaurant name must be at least 2 characters")
-    .max(50, "Restaurant name must be less than 50 characters"),
+    .min(2, "Restaurant name must be at least 2 characters"),
   ownername: z
     .string()
-    .min(2, "Owner name must be at least 2 characters")
-    .max(50, "Owner name must be less than 50 characters"),
+    .min(2, "Owner name must be at least 2 characters"),
   email: z.string().email("Invalid email format"),
-  phone: z.string().regex(/^\d{10,15}$/, "Phone number must be 10-15 digits"),
-  mobile: z.boolean().default(false).optional(),
-  shop: z.coerce
-    .number()
-    .min(1, "Shop number must be at least 1")
-    .max(99999, "Shop number too large"),
+  phone: z
+    .string()
+    .regex(/^\d{10,15}$/, "Phone must be 10–15 digits"),
+  mobile: z.boolean().default(true),
+  shop: z.coerce.number().min(1, "Shop number required"),
   floor: z.string().optional(),
-  area: z
-    .string()
-    .min(2, "Area must be at least 2 characters")
-    .max(50, "Area must be less than 50 characters"),
-  city: z
-    .string()
-    .min(2, "City must be at least 2 characters")
-    .max(50, "City must be less than 50 characters"),
+  area: z.string().min(2, "Area name is required"),
+  city: z.string().min(2, "City name is required"),
   landmark: z.string().optional(),
-  latitude: z.number().nullable().optional(),
-  longitude: z.number().nullable().optional(),
+  latitude: z.number().nullable(),
+  longitude: z.number().nullable(),
   address: z.string().optional(),
 });
 
@@ -71,9 +64,12 @@ type FormData = z.infer<typeof formSchema>;
 export default function NewRestaurantRegister() {
   const { data: session, status } = useSession();
   const router = useRouter();
+
   const [isPending, startTransition] = useTransition();
   const [isLoading, setIsLoading] = useState(false);
+
   const userEmail = session?.user?.email || "";
+
   const [lat, setLat] = useState<number | null>(null);
   const [lng, setLng] = useState<number | null>(null);
   const [address, setAddress] = useState<string>("");
@@ -97,68 +93,71 @@ export default function NewRestaurantRegister() {
     },
   });
 
-  // Sync email once session is loaded
+  // Keep email synced after login
   useEffect(() => {
     if (userEmail) form.setValue("email", userEmail);
-  }, [userEmail]); // Removed 'form' from dependencies to avoid infinite loop
+  }, [userEmail]);
 
   // Load existing restaurant data
   useEffect(() => {
-    const loadExistingData = async () => {
-      if (!userEmail) return;
+    if (!userEmail || status !== "authenticated") return;
 
+    const loadExisting = async () => {
       try {
         const response = await axios.get(
           `/api/restaurant/step1?email=${userEmail}`
         );
 
         if (response.data.success) {
-          const restaurant = response.data.data.restaurant;
+          const r = response.data.data.restaurant;
 
-          form.setValue("restaurantname", restaurant.restaurantName);
-          form.setValue("ownername", restaurant.ownerName);
-          form.setValue("phone", restaurant.phone);
-          form.setValue("mobile", restaurant.mobile ?? true);
-          form.setValue("shop", restaurant.shop);
-          form.setValue("floor", restaurant.floor || "");
-          form.setValue("area", restaurant.area);
-          form.setValue("city", restaurant.city);
-          form.setValue("landmark", restaurant.landmark || "");
+          form.reset({
+            restaurantname: r.restaurantName,
+            ownername: r.ownerName,
+            email: userEmail,
+            phone: r.phone,
+            mobile: r.mobile ?? true,
+            shop: r.shop,
+            floor: r.floor || "",
+            area: r.area,
+            city: r.city,
+            landmark: r.landmark || "",
+            latitude: r.latitude,
+            longitude: r.longitude,
+            address: r.address,
+          });
 
-          if (restaurant.latitude && restaurant.longitude) {
-            setLat(restaurant.latitude);
-            setLng(restaurant.longitude);
-            form.setValue("latitude", restaurant.latitude);
-            form.setValue("longitude", restaurant.longitude);
+          if (r.latitude && r.longitude) {
+            setLat(r.latitude);
+            setLng(r.longitude);
           }
 
-          if (restaurant.address) {
-            setAddress(restaurant.address);
-            form.setValue("address", restaurant.address);
-          }
+          if (r.address) setAddress(r.address);
 
-          toast.success("Existing restaurant data loaded");
+          toast.success("Existing restaurant details loaded");
         }
-      } catch (error) {
-        console.log("No existing restaurant data found");
+      } catch {
+        console.log("No previous step1 data");
       }
     };
 
-    if (status === "authenticated") loadExistingData();
-  }, [userEmail, status]); // Removed 'form' from dependencies
+    loadExisting();
+  }, [userEmail, status]);
 
-  const handleLocationChange = (lat: number, lng: number, address: string) => {
-    setLat(lat);
-    setLng(lng);
-    setAddress(address);
-    form.setValue("latitude", lat);
-    form.setValue("longitude", lng);
-    form.setValue("address", address);
+  // Map updates latitude, longitude, address
+  const handleLocationChange = (la: number, lo: number, adr: string) => {
+    setLat(la);
+    setLng(lo);
+    setAddress(adr);
+
+    form.setValue("latitude", la);
+    form.setValue("longitude", lo);
+    form.setValue("address", adr);
   };
 
   async function onSubmit(values: FormData) {
-    if (!userEmail) {
-      toast.error("User email not found. Please login.");
+    if (!lat || !lng) {
+      toast.error("Please select your restaurant location on the map");
       return;
     }
 
@@ -172,96 +171,84 @@ export default function NewRestaurantRegister() {
 
     startTransition(() => {
       setIsLoading(true);
+      toast.loading("Saving restaurant details...", { id: "saving" });
 
       axios
         .post("/api/restaurant/step1", payload)
-        .then((response) => {
-          if (response.data.success) {
-            const { message } = response.data.data;
+        .then((res) => {
+          toast.dismiss("saving");
 
-            toast.success(
-              message || "Restaurant information saved successfully!"
-            );
+          if (res.data.success) {
+            toast.success("Restaurant details saved");
             router.push("/partner-with-us/add-menu-items");
           } else {
-            toast.error("Failed to save restaurant information");
+            toast.error(res.data.message || "Failed to save");
           }
         })
-        .catch((error) => {
-          console.error("Error saving restaurant:", error);
+        .catch((err) => {
+          toast.dismiss("saving");
 
-          if (error.response?.data?.details) {
-            error.response.data.details.forEach(
-              (detail: { field: string; message: string }) =>
-                toast.error(`${detail.field}: ${detail.message}`)
-            );
-          } else if (error.response?.data?.message) {
-            toast.error(error.response.data.message);
-          } else {
-            toast.error(
-              "Failed to save restaurant information. Please try again."
-            );
-          }
+          const msg =
+            err.response?.data?.message ||
+            err.response?.data?.error ||
+            "Error saving restaurant";
+          toast.error(msg);
         })
-        .finally(() => {
-          setIsLoading(false);
-        });
+        .finally(() => setIsLoading(false));
     });
   }
 
   if (status === "loading") {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-lg">Loading...</div>
+      <div className="min-h-screen flex items-center justify-center text-lg">
+        Loading...
       </div>
     );
   }
 
-
   return (
-    <div className="px-4 md:px-6 lg:px-8">
+    <div className="px-4 md:px-6 lg:px-8 pb-10">
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-          {/* Header */}
+        <form
+          onSubmit={form.handleSubmit(onSubmit)}
+          className="space-y-8 max-w-6xl mx-auto"
+        >
+          {/* Mobile header */}
           <div className="block lg:hidden">
-            <div className="w-full p-6 flex justify-center items-center mb-8">
+            <div className="w-full p-6 flex justify-center mb-6">
               <TitleHeaderPartner activeStep={1} />
             </div>
           </div>
 
-          <div className="flex flex-col lg:flex-row justify-between items-start gap-6">
-            <aside className="hidden lg:block w-1/3 p-12 justify-center items-center">
+          <div className="flex flex-col lg:flex-row gap-6">
+            {/* Sidebar (Desktop) */}
+            <aside className="hidden lg:block w-1/3 p-8">
               <TitleHeaderPartner activeStep={1} />
             </aside>
 
-            <section className="w-full lg:w-2/3 lg:pr-20">
-              <h1 className="text-2xl md:text-3xl lg:text-4xl font-semibold mb-6">
+            {/* Main form */}
+            <section className="w-full lg:w-2/3 lg:pr-16">
+
+              {/* Title */}
+              <h1 className="text-3xl md:text-4xl font-semibold mb-4">
                 Restaurant Information
               </h1>
 
               {/* Restaurant Name Card */}
-              <Card className="mb-6 lg:mb-10">
+              <Card className="mb-6">
                 <CardHeader>
-                  <h2 className="text-xl md:text-2xl font-semibold">
-                    Restaurant name
-                  </h2>
-                  <p className="font-extralight text-cyan-900 text-sm md:text-base">
-                    Customers will see this name on QraveBites
-                  </p>
+                  <h2 className="text-xl md:text-2xl font-semibold">Restaurant Name</h2>
                 </CardHeader>
-                <CardContent className="grid gap-1.5">
+
+                <CardContent>
                   <FormField
                     control={form.control}
                     name="restaurantname"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Restaurant name</FormLabel>
+                        <FormLabel>Name</FormLabel>
                         <FormControl>
-                          <Input
-                            className="h-10 md:h-12"
-                            placeholder="Restaurant Name*"
-                            {...field}
-                          />
+                          <Input placeholder="Restaurant name" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -270,32 +257,49 @@ export default function NewRestaurantRegister() {
                 </CardContent>
               </Card>
 
-              {/* Owner Details Card */}
-              <Card className="mb-6 lg:mb-10">
+              {/* Owner details */}
+              <Card className="mb-6">
                 <CardHeader>
-                  <h2 className="text-xl md:text-2xl font-semibold">
-                    Owner details
-                  </h2>
-                  <p className="font-extralight text-cyan-900 text-sm md:text-base">
-                    QraveBites will use these details for all business
-                    communications
-                  </p>
+                  <h2 className="text-xl md:text-2xl font-semibold">Owner Details</h2>
                 </CardHeader>
 
-                <CardContent className="flex flex-col md:flex-row gap-4">
-                  <div className="w-full md:w-1/2 grid items-center gap-1.5">
+                <CardContent className="grid md:grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="ownername"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Owner Name</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Owner Name" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormItem>
+                    <FormLabel>Email</FormLabel>
+                    <FormControl>
+                      <Input value={userEmail} disabled readOnly />
+                    </FormControl>
+                  </FormItem>
+                </CardContent>
+
+                <CardContent>
+                  <div className="flex gap-2">
+                    <div className="border px-3 flex items-center rounded-md">
+                      +91
+                    </div>
+
                     <FormField
                       control={form.control}
-                      name="ownername"
+                      name="phone"
                       render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Full name</FormLabel>
+                        <FormItem className="flex-1">
+                          <FormLabel>Phone Number</FormLabel>
                           <FormControl>
-                            <Input
-                              className="h-10 md:h-12"
-                              placeholder="Full Name*"
-                              {...field}
-                            />
+                            <Input placeholder="10–15 digits" {...field} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -303,228 +307,129 @@ export default function NewRestaurantRegister() {
                     />
                   </div>
 
-                  <div className="w-full md:w-1/2 grid items-center gap-1.5">
+                  <div className="mt-4">
                     <FormField
                       control={form.control}
-                      name="email"
-                      render={() => (
-                        <FormItem>
-                          <FormLabel>Email Address</FormLabel>
+                      name="mobile"
+                      render={({ field }) => (
+                        <FormItem className="flex gap-2 items-center border p-3 rounded-xl">
                           <FormControl>
-                            <Input
-                              className="h-10 md:h-12"
-                              placeholder="Email Address *"
-                              value={userEmail}
-                              disabled
-                              readOnly
+                            <Checkbox
+                              checked={field.value}
+                              onCheckedChange={field.onChange}
                             />
                           </FormControl>
-                          <FormMessage />
+                          <FormLabel>This is same as owner mobile number</FormLabel>
                         </FormItem>
                       )}
                     />
                   </div>
                 </CardContent>
-
-                <CardFooter className="flex flex-col">
-                  <div className="w-full flex flex-col sm:flex-row items-end gap-2">
-                    <div className="w-full sm:w-1/12 flex items-center justify-center border rounded-md px-2 py-3">
-                      <Image
-                        className="w-6 h-auto"
-                        src="/india-flag.webp"
-                        alt="indian-flag"
-                        width={24}
-                        height={16}
-                      />
-                      <span className="ml-1">+91</span>
-                    </div>
-
-                    <div className="w-full sm:w-11/12 flex flex-col items-start gap-1.5">
-                      <FormField
-                        control={form.control}
-                        name="phone"
-                        render={({ field }) => (
-                          <FormItem className="w-full">
-                            <FormLabel>Phone Number</FormLabel>
-                            <FormControl>
-                              <Input
-                                type="tel"
-                                className="h-10 md:h-12 w-full"
-                                placeholder="Phone Number *"
-                                {...field}
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
-                  </div>
-
-                  <div className="w-full flex item-start flex-col justify-center mt-6">
-                    <h1 className="text-lg md:text-xl lg:text-2xl font-semibold">
-                      Restaurant&apos;s primary contact number
-                    </h1>
-                    <p className="font-extralight text-cyan-900 text-sm md:text-base">
-                      Customers may call on this number for order support
-                    </p>
-                    <div className="flex font-extralight items-center space-x-2 rounded-2xl mt-2">
-                      <FormField
-                        control={form.control}
-                        name="mobile"
-                        render={({ field }) => (
-                          <FormItem className="w-full flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
-                            <FormControl>
-                              <Checkbox
-                                checked={field.value}
-                                onCheckedChange={field.onChange}
-                              />
-                            </FormControl>
-                            <div className="space-y-1 leading-none">
-                              <FormLabel className="text-sm md:text-base">
-                                This is same as owner mobile number
-                              </FormLabel>
-                            </div>
-                          </FormItem>
-                        )}
-                      />
-                    </div>
-                  </div>
-                </CardFooter>
               </Card>
 
-              {/* Location Card */}
+              {/* Location */}
               <Card>
                 <CardHeader>
                   <h2 className="text-xl md:text-2xl font-semibold">
-                    Add your restaurant&apos;s location
+                    Restaurant Location
                   </h2>
                 </CardHeader>
 
-                <CardContent className="w-full">
-                  <LocationMapWithSearch
-                    onLocationChange={handleLocationChange}
-                  />
+                <CardContent>
+                  <LocationMapWithSearch onLocationChange={handleLocationChange} />
                 </CardContent>
 
-                <CardFooter className="flex flex-col">
-                  <div className="w-full flex flex-col md:flex-row gap-4 mb-6">
-                    <div className="w-full md:w-1/2 grid items-center gap-1.5">
-                      <FormField
-                        control={form.control}
-                        name="shop"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormControl>
-                              <Input
-                                type="number"
-                                className="h-10 md:h-12"
-                                placeholder="Shop Number/ Building Number *"
-                                {...field}
-                                onChange={(e) => {
-                                  const value = e.target.value;
-                                  field.onChange(value ? parseInt(value) : 1);
-                                }}
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
+                <CardFooter className="grid gap-4">
 
-                    <div className="w-full md:w-1/2 grid items-center gap-1.5">
-                      <FormField
-                        control={form.control}
-                        name="floor"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormControl>
-                              <Input
-                                className="h-10 md:h-12"
-                                placeholder="Floor / Tower number (Optional)"
-                                {...field}
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
-                  </div>
-
-                  <div className="w-full flex flex-col md:flex-row gap-4">
-                    <div className="w-full md:w-1/2 grid items-center gap-1.5">
-                      <FormField
-                        control={form.control}
-                        name="area"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormControl>
-                              <Input
-                                className="h-10 md:h-12"
-                                placeholder="Area/ sector/ Locality *"
-                                {...field}
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
-
-                    <div className="w-full md:w-1/2 grid items-center gap-1.5">
-                      <FormField
-                        control={form.control}
-                        name="city"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormControl>
-                              <Input
-                                className="h-10 md:h-12"
-                                placeholder="City *"
-                                {...field}
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
-                  </div>
-
-                  <div className="w-full flex gap-4 mt-6">
+                  <div className="grid md:grid-cols-2 gap-4">
                     <FormField
                       control={form.control}
-                      name="landmark"
+                      name="shop"
                       render={({ field }) => (
-                        <FormItem className="w-full">
+                        <FormItem>
+                          <FormLabel>Shop / Building No.</FormLabel>
                           <FormControl>
                             <Input
-                              type="text"
-                              className="h-10 md:h-12"
-                              placeholder="Add any nearby landmark (optional)"
+                              type="number"
                               {...field}
+                              onChange={(e) =>
+                                field.onChange(Number(e.target.value) || 1)
+                              }
                             />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
                       )}
                     />
+
+                    <FormField
+                      control={form.control}
+                      name="floor"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Floor / Tower (optional)</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Floor / Tower" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
                   </div>
+
+                  <div className="grid md:grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="area"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Area / Locality</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Area / Locality" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="city"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>City</FormLabel>
+                          <FormControl>
+                            <Input placeholder="City" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+
+                  <FormField
+                    control={form.control}
+                    name="landmark"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Landmark (optional)</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Near XYZ" {...field} />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
                 </CardFooter>
               </Card>
 
-              {/* Submit Button */}
-              <div className="mt-6 flex justify-center md:justify-end items-center">
+              {/* Submit */}
+              <div className="mt-6 flex justify-end">
                 <Button
                   type="submit"
                   disabled={isPending || isLoading}
-                  variant="outline"
-                  size="lg"
-                  className="rounded-2xl bg-[#4947e0] text-white hover:bg-[#3a38c7] w-full md:w-auto flex items-center justify-center"
+                  className="bg-[#4947e0] text-white px-6 py-3 rounded-xl hover:bg-[#3a38c7]"
                 >
-                  {isPending || isLoading ? "Processing..." : "Next"}
+                  {isLoading ? "Saving..." : "Next"}
                   <Right />
                 </Button>
               </div>

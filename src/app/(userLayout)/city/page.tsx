@@ -1,28 +1,41 @@
-// /app/page.tsx
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
+import ToastClient from "./toast-client";
 
 export default async function HomePage() {
   const cities = await prisma.restaurantStep1.findMany({
     distinct: ["city"],
     select: { city: true },
+    orderBy: { city: "asc" },
   });
 
+  const noCities = cities.length === 0;
+
   return (
-    <main className="max-w-4xl mx-auto py-10">
+    <main className="max-w-5xl mx-auto py-10 px-4">
+      <ToastClient noCities={noCities} />
+
       <h1 className="text-3xl font-bold mb-6">Available Cities</h1>
-      <ul className="space-y-4">
-        {cities.map((item, i) => (
-          <li key={i}>
+
+      {noCities ? (
+        <p className="text-gray-500 text-lg">No cities available.</p>
+      ) : (
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+          {cities.map((item, index) => (
             <Link
+              key={index}
               href={`/city/${encodeURIComponent(item.city)}`}
-              className="text-blue-600 hover:underline"
+              className="
+                bg-white border rounded-lg p-4 text-center shadow-sm
+                hover:shadow-md transition
+                text-gray-800 font-medium
+              "
             >
               {item.city}
             </Link>
-          </li>
-        ))}
-      </ul>
+          ))}
+        </div>
+      )}
     </main>
   );
 }

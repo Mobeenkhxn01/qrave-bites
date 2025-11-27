@@ -58,11 +58,6 @@ const data = {
       icon: IconFolder,
     },
     {
-      title: "Customers",
-      url: "/dashboard/customers",
-      icon: IconUsers,
-    },
-    {
       title:"Kitchen Display",
       url:"/dashboard/kitchen-display",
       icon: IconCamera,
@@ -75,18 +70,18 @@ const data = {
   ],
   navSecondary: [
     {
-      title: "Qr Code",
-      url: "#",
+      title: "Settings",
+      url: "/dashboard/settings",
       icon: IconSettings,
     },
     {
       title: "Get Help",
-      url: "#",
+      url: "/dashboard/help",
       icon: IconHelp,
     },
     {
       title: "Search",
-      url: "#",
+      url: "/dashboard/search",
       icon: IconSearch,
     },
   ],
@@ -97,8 +92,8 @@ const data = {
       icon: IconDatabase,
     },
     {
-      name: "Settings",
-      url: "dashboard/settings",
+      name: "Management",
+      url: "dashboard/management",
       icon: IconReport,
     },
     {

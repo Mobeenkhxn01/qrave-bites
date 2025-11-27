@@ -1,26 +1,27 @@
-import { NextRequest,NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
 export async function GET(request: NextRequest) {
+  const url = new URL(request.url);
+  const id = url.searchParams.get("id");
 
-    const url = new URL(request.url);
+  if (!id) {
+    return NextResponse.json(
+      { error: "MenuItem ID is required" },
+      { status: 400 }
+    );
+  }
 
-    const id = url.searchParams.get('id');
+  const menuItem = await prisma.menuItem.findUnique({
+    where: { id },
+  });
 
-    if (!id) {
-        return NextResponse.json({ error: 'Categories ID is required' }, { status: 400 });
-    }
+  if (!menuItem) {
+    return NextResponse.json(
+      { error: "MenuItem not found" },
+      { status: 404 }
+    );
+  }
 
-    const menuItem = await prisma.menuItem.findUnique({
-        where: {
-            id: String(id),
-        },
-    });
-
-    if (!menuItem) {
-        return NextResponse.json({ error: 'Catergor not found' }, { status: 404 });
-    }
-
-    return NextResponse.json({ menuItem}, { status: 200 });
-
+  return NextResponse.json({ menuItem }, { status: 200 });
 }

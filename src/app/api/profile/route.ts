@@ -29,24 +29,22 @@ export async function PUT(req: Request) {
     });
 
     await prisma.userAddress.upsert({
-  where: {
-    email_userId: {
-      email: user.email,
-      userId: user.id,
-    },
-  },
-  update: { ...otherUserInfo },
-  create: {
-    email: user.email,
-    userId: user.id,
-    ...otherUserInfo,
-  },
-});
-
+      where: {
+        email_userId: {
+          email: user.email,
+          userId: user.id,
+        },
+      },
+      update: otherUserInfo,
+      create: {
+        email: user.email,
+        userId: user.id,
+        ...otherUserInfo,
+      },
+    });
 
     return NextResponse.json({ success: true, message: "Profile updated successfully" });
-  } catch (error) {
-    console.error("PUT /api/profile error:", error);
+  } catch {
     return NextResponse.json({ error: "Server error" }, { status: 500 });
   }
 }
@@ -60,9 +58,7 @@ export async function GET() {
 
     const user = await prisma.user.findUnique({
       where: { email: session.user.email },
-      include: {
-        userAddresses: true,
-      },
+      include: { userAddresses: true },
     });
 
     if (!user) {
@@ -70,8 +66,7 @@ export async function GET() {
     }
 
     return NextResponse.json(user);
-  } catch (error) {
-    console.error("GET /api/profile error:", error);
+  } catch {
     return NextResponse.json({ error: "Server error" }, { status: 500 });
   }
 }

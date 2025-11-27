@@ -11,47 +11,50 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { name, description, price, image, categoryId, prepTime, available } = await req.json();
+    const data = await req.json();
+    const { name, description, price, image, categoryId, prepTime, available } = data;
 
-    if (!name || !description || !price || !categoryId || !prepTime || available === undefined) {
+    if (!name || !description || price === undefined || !categoryId || prepTime === undefined || available === undefined) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
     }
 
     const parsedPrice = parseFloat(price);
-    if (isNaN(parsedPrice)) {
-      return NextResponse.json({ error: "Invalid price value" }, { status: 400 });
+    if (isNaN(parsedPrice) || parsedPrice < 0) {
+      return NextResponse.json({ error: "Invalid price" }, { status: 400 });
     }
 
-    const restaurant = await prisma.restaurantStep1.findFirst({ where: { userId } });
+    const restaurant = await prisma.restaurantStep1.findFirst({
+      where: { userId }
+    });
+
     if (!restaurant) {
-      return NextResponse.json({ error: "Restaurant not found for user" }, { status: 404 });
+      return NextResponse.json({ error: "Restaurant not found" }, { status: 404 });
     }
 
-    const conflictMenuItem = await prisma.menuItem.findFirst({ where: { name, userId } });
-    if (conflictMenuItem) {
-      return NextResponse.json(
-        { error: "Menu item with this name already exists" },
-        { status: 400 }
-      );
+    const conflict = await prisma.menuItem.findFirst({
+      where: { name: name.toLowerCase(), userId }
+    });
+
+    if (conflict) {
+      return NextResponse.json({ error: "Menu item already exists" }, { status: 400 });
     }
 
     const menuItem = await prisma.menuItem.create({
       data: {
-        name,
+        name: name.toLowerCase(),
         description,
         image,
         price: parsedPrice,
         prepTime,
         available,
-        user: { connect: { id: userId } },
-        category: { connect: { id: categoryId } },
-        restaurantStep1: { connect: { id: restaurant.id } },
-      },
+        userId,
+        categoryId,
+        restaurantId: restaurant.id
+      }
     });
 
     return NextResponse.json(menuItem, { status: 201 });
   } catch (error) {
-    console.error("Error creating menu item:", error);
     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
   }
 }
@@ -62,16 +65,15 @@ export async function GET(req: Request) {
     const userId = url.searchParams.get("userId");
 
     if (!userId) {
-      return NextResponse.json(
-        { error: "Missing userId query parameter" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Missing userId" }, { status: 400 });
     }
 
-    const menuItems = await prisma.menuItem.findMany({ where: { userId } });
-    return NextResponse.json(menuItems);
+    const items = await prisma.menuItem.findMany({
+      where: { userId }
+    });
+
+    return NextResponse.json(items);
   } catch (error) {
-    console.error("Error fetching menu items:", error);
     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
   }
 }
@@ -85,49 +87,50 @@ export async function PUT(req: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { id, name, description, price, image, categoryId, prepTime, available } = await req.json();
+    const data = await req.json();
+    const { id, name, description, price, image, categoryId, prepTime, available } = data;
 
-    if (!id || !name || !description || !price || !categoryId || !prepTime || available === undefined) {
+    if (!id || !name || !description || price === undefined || !categoryId || prepTime === undefined || available === undefined) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
     }
 
     const parsedPrice = parseFloat(price);
-    if (isNaN(parsedPrice)) {
-      return NextResponse.json({ error: "Invalid price value" }, { status: 400 });
+    if (isNaN(parsedPrice) || parsedPrice < 0) {
+      return NextResponse.json({ error: "Invalid price" }, { status: 400 });
     }
 
-    const existingMenuItem = await prisma.menuItem.findFirst({ where: { id, userId } });
-    if (!existingMenuItem) {
+    const existing = await prisma.menuItem.findFirst({
+      where: { id, userId }
+    });
+
+    if (!existing) {
       return NextResponse.json({ error: "Menu item not found" }, { status: 404 });
     }
 
-    const conflictMenuItem = await prisma.menuItem.findFirst({
-      where: { name, userId, id: { not: id } },
+    const conflict = await prisma.menuItem.findFirst({
+      where: { name: name.toLowerCase(), userId, id: { not: id } }
     });
-    if (conflictMenuItem) {
-      return NextResponse.json(
-        { error: "Menu item with this name already exists" },
-        { status: 400 }
-      );
+
+    if (conflict) {
+      return NextResponse.json({ error: "Menu item already exists" }, { status: 400 });
     }
 
-    const updatedMenuItem = await prisma.menuItem.update({
+    const updated = await prisma.menuItem.update({
       where: { id },
       data: {
-        name,
+        name: name.toLowerCase(),
         description,
         price: parsedPrice,
         image,
         categoryId,
         prepTime,
-        available,
-      },
+        available
+      }
     });
 
-    return NextResponse.json(updatedMenuItem, { status: 200 });
+    return NextResponse.json(updated);
   } catch (error) {
-    console.error("Error updating menu item:", error);
-    return NextResponse.json({ error: "Something went wrong" }, { status: 500 });
+    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
   }
 }
 
@@ -144,11 +147,14 @@ export async function DELETE(req: Request) {
     const id = url.searchParams.get("id");
 
     if (!id) {
-      return NextResponse.json({ error: "Missing id query parameter" }, { status: 400 });
+      return NextResponse.json({ error: "Missing id" }, { status: 400 });
     }
 
-    const existingMenuItem = await prisma.menuItem.findFirst({ where: { id, userId } });
-    if (!existingMenuItem) {
+    const existing = await prisma.menuItem.findFirst({
+      where: { id, userId }
+    });
+
+    if (!existing) {
       return NextResponse.json({ error: "Menu item not found" }, { status: 404 });
     }
 
@@ -157,7 +163,6 @@ export async function DELETE(req: Request) {
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("Error deleting menu item:", error);
-    return NextResponse.json({ error: "Something went wrong" }, { status: 500 });
+    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
   }
 }

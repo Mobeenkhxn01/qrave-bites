@@ -1,354 +1,339 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from "react"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { DashboardHeader } from "@/components/shadcn-components/dashboard-header"
-import { ClockIcon, CheckCircleIcon, AlertTriangleIcon, ChefHatIcon } from "lucide-react"
-import { cn } from "@/lib/utils"
-import { AppSidebar } from "@/components/shadcn-components/app-sidebar"
-import {
-  SidebarInset,
-    SidebarProvider,
-} from "@/components/ui/sidebar"
+import React, { useEffect } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import axios from "axios";
+import toast, { Toaster } from "react-hot-toast";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
+import { Input } from "@/components/ui/input";
+import { PlusIcon, ClockIcon, ChefHatIcon } from "lucide-react";
+import { AppSidebar } from "@/components/shadcn-components/app-sidebar";
+import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
+import { DashboardHeader } from "@/components/shadcn-components/dashboard-header";
+import { cn } from "@/lib/utils";
+import Pusher from "pusher-js";
 
-interface KitchenOrder {
-  id: string
-  table: number
-  items: Array<{
-    name: string
-    quantity: number
-    notes?: string
-    status: "pending" | "preparing" | "ready"
-  }>
-  orderTime: string
-  estimatedTime: number
-  priority: "low" | "medium" | "high"
-  status: "new" | "preparing" | "ready" | "served"
-}
+type OrderItemDTO = {
+  id: string;
+  menuItemId: string;
+  quantity: number;
+  price: number;
+  status?: "pending" | "preparing" | "ready";
+  menuItem?: {
+    id: string;
+    name: string;
+  } | null;
+};
 
-const mockOrders: KitchenOrder[] = [
-  {
-    id: "ORD-8901",
-    table: 7,
-    items: [
-      { name: "Margherita Pizza", quantity: 2, status: "preparing" },
-      { name: "Caesar Salad", quantity: 1, notes: "No croutons", status: "ready" },
-    ],
-    orderTime: "12:45 PM",
-    estimatedTime: 8,
-    priority: "high",
-    status: "preparing",
-  },
-  {
-    id: "ORD-8902",
-    table: 3,
-    items: [
-      { name: "Beef Burger", quantity: 1, notes: "Medium rare", status: "pending" },
-      { name: "French Fries", quantity: 1, status: "pending" },
-    ],
-    orderTime: "12:50 PM",
-    estimatedTime: 12,
-    priority: "medium",
-    status: "new",
-  },
-  {
-    id: "ORD-8903",
-    table: 11,
-    items: [
-      { name: "Pasta Carbonara", quantity: 1, status: "ready" },
-      { name: "Garlic Bread", quantity: 1, status: "ready" },
-    ],
-    orderTime: "12:35 PM",
-    estimatedTime: 0,
-    priority: "high",
-    status: "ready",
-  },
-]
+type KitchenOrder = {
+  id: string;
+  orderNumber: number;
+  tableNumber: number | null;
+  status: "PENDING" | "CONFIRMED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED";
+  paid: boolean;
+  totalAmount: number;
+  createdAt: string;
+  items: OrderItemDTO[];
+};
 
 export default function KitchenPage() {
-  const [orders, setOrders] = useState<KitchenOrder[]>(mockOrders)
-  const [currentTime, setCurrentTime] = useState(new Date())
+  const queryClient = useQueryClient();
+
+  const { data: orders = [], isLoading } = useQuery<KitchenOrder[]>({
+    queryKey: ["kitchenOrders"],
+    queryFn: async () => {
+      const res = await axios.get("/api/kitchen/orders");
+      return res.data.orders as KitchenOrder[];
+    },
+    refetchInterval: false,
+  });
 
   useEffect(() => {
-    const timer = setInterval(() => {
-      setCurrentTime(new Date())
-    }, 1000)
-    return () => clearInterval(timer)
-  }, [])
+    const pusherKey: string = process.env.NEXT_PUBLIC_PUSHER_KEY ?? "";
+    const pusherCluster: string = process.env.NEXT_PUBLIC_PUSHER_CLUSTER ?? "";
 
-  const updateOrderStatus = (orderId: string, newStatus: KitchenOrder["status"]) => {
-    setOrders(orders.map((order) => (order.id === orderId ? { ...order, status: newStatus } : order)))
-  }
+    if (!pusherKey || !pusherCluster) {
+      console.error("Pusher client env variables missing.");
+    }
+    const pusher = new Pusher(pusherKey, {
+      cluster: pusherCluster,
+    });
 
-  const updateItemStatus = (orderId: string, itemIndex: number, newStatus: "pending" | "preparing" | "ready") => {
-    setOrders(
-      orders.map((order) =>
-        order.id === orderId
-          ? {
-              ...order,
-              items: order.items.map((item, index) => (index === itemIndex ? { ...item, status: newStatus } : item)),
-            }
-          : order,
-      ),
-    )
-  }
+    // subscribe to a generic channel - server triggers `restaurant-{restaurantId}` events
+    // we'll listen on channel provided by server in event payload (server also triggers restaurant-specific channels)
+    const channel = pusher.subscribe("kitchen-global");
+    channel.bind("orders-updated", (payload: any) => {
+      queryClient.invalidateQueries({ queryKey: ["kitchenOrders"] });
+    });
 
-  const getPriorityColor = (priority: string) => {
+    // also subscribe to restaurant-specific channel if server returns restaurantId in a bootstrap call
+    // fallback: server triggers kitchen-global for fallback
+
+    return () => {
+      channel.unbind_all();
+      channel.unsubscribe();
+      pusher.disconnect();
+    };
+  }, [queryClient]);
+
+  const updateOrderStatusMutation = useMutation({
+    mutationFn: async (payload: {
+      id: string;
+      status: KitchenOrder["status"];
+    }) => {
+      const res = await axios.put(`/api/kitchen/orders/${payload.id}`, {
+        status: payload.status,
+      });
+      return res.data;
+    },
+    onSuccess: () => {
+      toast.success("Order status updated");
+      queryClient.invalidateQueries({ queryKey: ["kitchenOrders"] });
+    },
+    onError: (err: any) => {
+      toast.error(err?.response?.data?.error || "Failed to update order");
+    },
+  });
+
+  const updateItemStatusMutation = useMutation({
+    mutationFn: async (payload: {
+      id: string;
+      status: "pending" | "preparing" | "ready";
+    }) => {
+      const res = await axios.put(`/api/kitchen/items/${payload.id}`, {
+        status: payload.status,
+      });
+      return res.data;
+    },
+    onSuccess: () => {
+      toast.success("Item status updated");
+      queryClient.invalidateQueries({ queryKey: ["kitchenOrders"] });
+    },
+    onError: (err: any) => {
+      toast.error(err?.response?.data?.error || "Failed to update item");
+    },
+  });
+
+  function getPriorityColor(priority: "low" | "medium" | "high") {
     switch (priority) {
       case "high":
-        return "bg-red-100 border-red-200 text-red-800"
+        return "bg-red-100 border-red-200 text-red-800";
       case "medium":
-        return "bg-yellow-100 border-yellow-200 text-yellow-800"
-      case "low":
-        return "bg-green-100 border-green-200 text-green-800"
+        return "bg-yellow-100 border-yellow-200 text-yellow-800";
       default:
-        return "bg-gray-100 border-gray-200 text-gray-800"
+        return "bg-green-100 border-green-200 text-green-800";
     }
   }
 
-  const getStatusColor = (status: string) => {
+  function getStatusColor(status: KitchenOrder["status"]) {
     switch (status) {
-      case "new":
-        return "border-blue-500 bg-blue-50"
-      case "preparing":
-        return "border-orange-500 bg-orange-50"
-      case "ready":
-        return "border-green-500 bg-green-50"
+      case "PENDING":
+        return "border-blue-500 bg-blue-50";
+      case "IN_PROGRESS":
+        return "border-orange-500 bg-orange-50";
+      case "COMPLETED":
+        return "border-green-500 bg-green-50";
+      case "CANCELLED":
+        return "border-red-300 bg-red-50";
+      case "CONFIRMED":
+        return "border-indigo-200 bg-indigo-50";
       default:
-        return "border-gray-300 bg-white"
+        return "border-gray-300 bg-white";
     }
   }
 
-  const newOrders = orders.filter((order) => order.status === "new")
-  const preparingOrders = orders.filter((order) => order.status === "preparing")
-  const readyOrders = orders.filter((order) => order.status === "ready")
+  const newOrders = (orders || []).filter(
+    (o) => o.status === "PENDING" || o.status === "CONFIRMED"
+  );
+  const preparingOrders = (orders || []).filter(
+    (o) => o.status === "IN_PROGRESS"
+  );
+  const readyOrders = (orders || []).filter((o) => o.status === "COMPLETED");
 
   return (
     <div className="flex flex-col">
-     
-     <SidebarProvider
+      <SidebarProvider
         style={
-            {
+          {
             "--sidebar-width": "calc(var(--spacing) * 72)",
             "--header-height": "calc(var(--spacing) * 12)",
-            } as React.CSSProperties
+          } as React.CSSProperties
         }
-    >
+      >
         <AppSidebar variant="inset" />
         <SidebarInset>
-      <DashboardHeader />
-      <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-3xl font-bold tracking-tight flex items-center gap-2">
-              <ChefHatIcon className="h-8 w-8" />
-              Kitchen Display System
-            </h2>
-            <p className="text-muted-foreground">
-              Current time: {currentTime.toLocaleTimeString()} • {orders.length} active orders
-            </p>
-          </div>
-          <div className="flex items-center gap-4">
-            <Card className="p-3">
-              <div className="text-sm text-muted-foreground">Average Prep Time</div>
-              <div className="text-2xl font-bold">12.5 min</div>
-            </Card>
-          </div>
-        </div>
-
-        <Tabs defaultValue="board" className="space-y-4">
-          <TabsList>
-            <TabsTrigger value="board">Kitchen Board</TabsTrigger>
-            <TabsTrigger value="queue">Order Queue</TabsTrigger>
-            <TabsTrigger value="analytics">Kitchen Analytics</TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="board" className="space-y-4">
-            <div className="grid gap-6 md:grid-cols-3">
-              {/* New Orders */}
-              <div className="space-y-4">
-                <div className="flex items-center gap-2">
-                  <h3 className="text-lg font-semibold">New Orders</h3>
-                  <Badge variant="secondary">{newOrders.length}</Badge>
-                </div>
-                {newOrders.map((order) => (
-                  <KitchenOrderCard
-                    key={order.id}
-                    order={order}
-                    onUpdateStatus={updateOrderStatus}
-                    onUpdateItem={updateItemStatus}
-                    getPriorityColor={getPriorityColor}
-                    getStatusColor={getStatusColor}
-                  />
-                ))}
+          <DashboardHeader />
+          <Toaster />
+          <div className="flex-1 p-4 md:p-8 pt-6 space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-3xl font-bold tracking-tight flex items-center gap-2">
+                  <ChefHatIcon className="h-8 w-8" />
+                  Kitchen Display System
+                </h2>
+                <p className="text-muted-foreground">
+                  Active orders: {orders?.length ?? 0}
+                </p>
               </div>
 
-              {/* Preparing Orders */}
-              <div className="space-y-4">
-                <div className="flex items-center gap-2">
-                  <h3 className="text-lg font-semibold">Preparing</h3>
-                  <Badge variant="secondary">{preparingOrders.length}</Badge>
-                </div>
-                {preparingOrders.map((order) => (
-                  <KitchenOrderCard
-                    key={order.id}
-                    order={order}
-                    onUpdateStatus={updateOrderStatus}
-                    onUpdateItem={updateItemStatus}
-                    getPriorityColor={getPriorityColor}
-                    getStatusColor={getStatusColor}
-                  />
-                ))}
-              </div>
-
-              {/* Ready Orders */}
-              <div className="space-y-4">
-                <div className="flex items-center gap-2">
-                  <h3 className="text-lg font-semibold">Ready for Service</h3>
-                  <Badge variant="secondary">{readyOrders.length}</Badge>
-                </div>
-                {readyOrders.map((order) => (
-                  <KitchenOrderCard
-                    key={order.id}
-                    order={order}
-                    onUpdateStatus={updateOrderStatus}
-                    onUpdateItem={updateItemStatus}
-                    getPriorityColor={getPriorityColor}
-                    getStatusColor={getStatusColor}
-                  />
-                ))}
-              </div>
-            </div>
-          </TabsContent>
-
-          <TabsContent value="queue" className="space-y-4">
-            <div className="space-y-4">
-              {orders.map((order) => (
-                <Card key={order.id} className={cn("p-4", getStatusColor(order.status))}>
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center gap-2">
-                      <Badge variant="outline">Table {order.table}</Badge>
-                      <Badge className={getPriorityColor(order.priority)}>{order.priority} priority</Badge>
-                      <span className="text-sm text-muted-foreground">{order.orderTime}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <ClockIcon className="h-4 w-4" />
-                      <span className="text-sm font-medium">{order.estimatedTime} min</span>
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    {order.items.map((item, index) => (
-                      <div key={index} className="flex items-center justify-between p-2 bg-white rounded border">
-                        <div>
-                          <span className="font-medium">
-                            {item.quantity}× {item.name}
-                          </span>
-                          {item.notes && <div className="text-sm text-muted-foreground">Note: {item.notes}</div>}
-                        </div>
-                        <Badge variant={item.status === "ready" ? "default" : "secondary"}>{item.status}</Badge>
-                      </div>
-                    ))}
+              <div className="flex items-center gap-2">
+                <Card className="p-3">
+                  <div className="text-sm text-muted-foreground">Orders</div>
+                  <div className="text-2xl font-bold">
+                    {orders?.length ?? 0}
                   </div>
                 </Card>
-              ))}
+              </div>
             </div>
-          </TabsContent>
 
-          <TabsContent value="analytics" className="space-y-4">
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Orders Today</CardTitle>
-                  <ChefHatIcon className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">89</div>
-                  <p className="text-xs text-muted-foreground">+12% from yesterday</p>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Avg Prep Time</CardTitle>
-                  <ClockIcon className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">12.5 min</div>
-                  <p className="text-xs text-muted-foreground">-2.3 min from target</p>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Order Accuracy</CardTitle>
-                  <CheckCircleIcon className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">98.5%</div>
-                  <p className="text-xs text-muted-foreground">+0.5% from yesterday</p>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Rush Orders</CardTitle>
-                  <AlertTriangleIcon className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">3</div>
-                  <p className="text-xs text-muted-foreground">Orders over 20 min</p>
-                </CardContent>
-              </Card>
+            <div className="grid gap-6 md:grid-cols-3">
+              <div>
+                <div className="flex items-center gap-2 mb-2">
+                  <h3 className="text-lg font-semibold">New</h3>
+                  <Badge>{newOrders.length}</Badge>
+                </div>
+                <div className="space-y-4">
+                  {newOrders.map((order) => (
+                    <KitchenOrderCard
+                      key={order.id}
+                      order={order}
+                      onUpdateOrderStatus={(s) =>
+                        updateOrderStatusMutation.mutate({
+                          id: order.id,
+                          status: s,
+                        })
+                      }
+                      onUpdateItemStatus={(itemId, s) =>
+                        updateItemStatusMutation.mutate({
+                          id: itemId,
+                          status: s,
+                        })
+                      }
+                      getPriorityColor={() => ""}
+                      getStatusColor={getStatusColor}
+                    />
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <div className="flex items-center gap-2 mb-2">
+                  <h3 className="text-lg font-semibold">Preparing</h3>
+                  <Badge>{preparingOrders.length}</Badge>
+                </div>
+                <div className="space-y-4">
+                  {preparingOrders.map((order) => (
+                    <KitchenOrderCard
+                      key={order.id}
+                      order={order}
+                      onUpdateOrderStatus={(s) =>
+                        updateOrderStatusMutation.mutate({
+                          id: order.id,
+                          status: s,
+                        })
+                      }
+                      onUpdateItemStatus={(itemId, s) =>
+                        updateItemStatusMutation.mutate({
+                          id: itemId,
+                          status: s,
+                        })
+                      }
+                      getPriorityColor={() => ""}
+                      getStatusColor={getStatusColor}
+                    />
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <div className="flex items-center gap-2 mb-2">
+                  <h3 className="text-lg font-semibold">Ready</h3>
+                  <Badge>{readyOrders.length}</Badge>
+                </div>
+                <div className="space-y-4">
+                  {readyOrders.map((order) => (
+                    <KitchenOrderCard
+                      key={order.id}
+                      order={order}
+                      onUpdateOrderStatus={(s) =>
+                        updateOrderStatusMutation.mutate({
+                          id: order.id,
+                          status: s,
+                        })
+                      }
+                      onUpdateItemStatus={(itemId, s) =>
+                        updateItemStatusMutation.mutate({
+                          id: itemId,
+                          status: s,
+                        })
+                      }
+                      getPriorityColor={() => ""}
+                      getStatusColor={getStatusColor}
+                    />
+                  ))}
+                </div>
+              </div>
             </div>
-          </TabsContent>
-        </Tabs>
-      </div>
+          </div>
         </SidebarInset>
-    </SidebarProvider>
+      </SidebarProvider>
     </div>
-  )
+  );
 }
 
 function KitchenOrderCard({
   order,
-  onUpdateStatus,
-  onUpdateItem,
+  onUpdateOrderStatus,
+  onUpdateItemStatus,
   getPriorityColor,
   getStatusColor,
 }: {
-  order: KitchenOrder
-  onUpdateStatus: (orderId: string, status: KitchenOrder["status"]) => void
-  onUpdateItem: (orderId: string, itemIndex: number, status: "pending" | "preparing" | "ready") => void
-  getPriorityColor: (priority: string) => string
-  getStatusColor: (status: string) => string
+  order: KitchenOrder;
+  onUpdateOrderStatus: (status: KitchenOrder["status"]) => void;
+  onUpdateItemStatus: (
+    itemId: string,
+    status: "pending" | "preparing" | "ready"
+  ) => void;
+  getPriorityColor: (p: "low" | "medium" | "high") => string;
+  getStatusColor: (s: KitchenOrder["status"]) => string;
 }) {
   return (
     <Card className={cn("p-4", getStatusColor(order.status))}>
       <div className="flex items-center justify-between mb-3">
-        <div className="flex items-center gap-2">
-          <Badge variant="outline">Table {order.table}</Badge>
-          <Badge className={getPriorityColor(order.priority)}>{order.priority}</Badge>
+        <div>
+          <div className="font-semibold">Order #{order.orderNumber}</div>
+          <div className="text-sm text-muted-foreground">
+            Table {order.tableNumber ?? "—"}
+          </div>
         </div>
-        <div className="flex items-center gap-1 text-sm">
-          <ClockIcon className="h-3 w-3" />
-          {order.estimatedTime}m
+
+        <div className="text-right">
+          <div className="text-sm">₹{order.totalAmount.toFixed(2)}</div>
+          <div className="text-xs text-muted-foreground">
+            {new Date(order.createdAt).toLocaleTimeString()}
+          </div>
         </div>
       </div>
 
       <div className="space-y-2 mb-4">
-        {order.items.map((item, index) => (
-          <div key={index} className="flex items-center justify-between p-2 bg-white rounded border">
+        {order.items.map((item) => (
+          <div
+            key={item.id}
+            className="flex items-center justify-between p-2 bg-white rounded border"
+          >
             <div className="flex-1">
               <div className="font-medium">
-                {item.quantity}× {item.name}
+                {item.quantity}× {item.menuItem?.name ?? "Item"}
               </div>
-              {item.notes && <div className="text-xs text-muted-foreground">Note: {item.notes}</div>}
             </div>
             <div className="flex gap-1">
               <Button
                 size="sm"
                 variant={item.status === "preparing" ? "default" : "outline"}
-                onClick={() => onUpdateItem(order.id, index, "preparing")}
+                onClick={() => onUpdateItemStatus(item.id, "preparing")}
                 className="text-xs px-2 py-1"
               >
                 Prep
@@ -356,7 +341,7 @@ function KitchenOrderCard({
               <Button
                 size="sm"
                 variant={item.status === "ready" ? "default" : "outline"}
-                onClick={() => onUpdateItem(order.id, index, "ready")}
+                onClick={() => onUpdateItemStatus(item.id, "ready")}
                 className="text-xs px-2 py-1"
               >
                 Ready
@@ -367,26 +352,35 @@ function KitchenOrderCard({
       </div>
 
       <div className="flex gap-2">
-        {order.status === "new" && (
-          <Button size="sm" onClick={() => onUpdateStatus(order.id, "preparing")} className="flex-1">
+        {order.status === "PENDING" && (
+          <Button
+            size="sm"
+            onClick={() => onUpdateOrderStatus("IN_PROGRESS")}
+            className="flex-1"
+          >
             Start Preparing
           </Button>
         )}
-        {order.status === "preparing" && (
-          <Button size="sm" onClick={() => onUpdateStatus(order.id, "ready")} className="flex-1">
+        {order.status === "IN_PROGRESS" && (
+          <Button
+            size="sm"
+            onClick={() => onUpdateOrderStatus("COMPLETED")}
+            className="flex-1"
+          >
             Mark Ready
           </Button>
         )}
-        {order.status === "ready" && (
-          <Button size="sm" variant="outline" onClick={() => onUpdateStatus(order.id, "served")} className="flex-1">
-            Served
+        {order.status === "COMPLETED" && (
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => onUpdateOrderStatus("COMPLETED")}
+            className="flex-1"
+          >
+            Completed
           </Button>
         )}
       </div>
-
-      <div className="text-xs text-muted-foreground mt-2">
-        Order #{order.id} • {order.orderTime}
-      </div>
     </Card>
-  )
+  );
 }

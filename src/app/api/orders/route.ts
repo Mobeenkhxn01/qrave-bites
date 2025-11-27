@@ -11,58 +11,80 @@ export const GET = async (req: Request) => {
     });
   }
 
-  const email = session.user.email;
-  const role = session.user.role;
   const url = new URL(req.url);
   const orderId = url.searchParams.get("_id");
+  const role = session.user.role;
+  const userId = session.user.id;
 
   try {
-    if (role === "ADMIN" ) {
+    if (role === "ADMIN") {
       if (orderId) {
         const order = await prisma.order.findUnique({
           where: { id: orderId },
+          include: {
+            items: { include: { menuItem: true } },
+            restaurant: true,
+          },
         });
 
         if (!order) {
-          return new Response(JSON.stringify({ error: "Order not found" }), {
-            status: 404,
-            headers: { "Content-Type": "application/json" },
-          });
+          return new Response(JSON.stringify({ error: "Order not found" }), { status: 404 });
         }
 
-        return new Response(JSON.stringify(order), {
-          status: 200,
-          headers: { "Content-Type": "application/json" },
-        });
+        return new Response(JSON.stringify(order), { status: 200 });
       }
 
-      const orders = await prisma.order.findMany();
-      return new Response(JSON.stringify(orders), {
-        status: 200,
-        headers: { "Content-Type": "application/json" },
+      const orders = await prisma.order.findMany({
+        orderBy: { createdAt: "desc" },
+        include: {
+          items: { include: { menuItem: true } },
+          restaurant: true,
+        },
       });
+
+      return new Response(JSON.stringify(orders), { status: 200 });
     }
 
-    if (email) {
-      const userOrders = await prisma.order.findMany({
-        where: { userId: email },
-      });
-
-      return new Response(JSON.stringify(userOrders), {
-        status: 200,
-        headers: { "Content-Type": "application/json" },
-      });
-    }
-
-    return new Response(JSON.stringify([]), {
-      status: 200,
-      headers: { "Content-Type": "application/json" },
+    const restaurant = await prisma.restaurantStep1.findUnique({
+      where: { userId },
     });
+
+    if (!restaurant) {
+      return new Response(JSON.stringify([]), { status: 200 });
+    }
+
+    const restaurantId = restaurant.id;
+
+    if (orderId) {
+      const order = await prisma.order.findFirst({
+        where: { id: orderId, restaurantId },
+        include: {
+          items: { include: { menuItem: true } },
+          restaurant: true,
+        },
+      });
+
+      if (!order) {
+        return new Response(JSON.stringify({ error: "Order not found" }), { status: 404 });
+      }
+
+      return new Response(JSON.stringify(order), { status: 200 });
+    }
+
+    const orders = await prisma.order.findMany({
+      where: { restaurantId },
+      orderBy: { createdAt: "desc" },
+      include: {
+        items: { include: { menuItem: true } },
+        restaurant: true,
+      },
+    });
+
+    return new Response(JSON.stringify(orders), { status: 200 });
   } catch (error) {
-    console.error("Error fetching orders:", error);
     return new Response(
-      JSON.stringify({ error: "Something went wrong", details: error }),
-      { status: 500, headers: { "Content-Type": "application/json" } }
+      JSON.stringify({ error: "Something went wrong" }),
+      { status: 500 }
     );
   }
 };

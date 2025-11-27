@@ -62,139 +62,110 @@ export default function NewRestaurantRegister() {
     resolver: zodResolver(formSchema),
     defaultValues: {
       cuisine: [],
-      days: [
-        "monday",
-        "tuesday",
-        "wednesday",
-        "thursday",
-        "friday",
-        "saturday",
-      ],
+      days: ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday"],
       openingTime: "09:00",
       closingTime: "22:00",
     },
   });
 
-  /** Prefill existing data */
+  // Load Step2 existing data
   useEffect(() => {
     if (!userEmail || status !== "authenticated") return;
 
     const loadExistingData = async () => {
       try {
-        const { data } = await axios.get(
-          `/api/restaurant/step2?email=${userEmail}`
-        );
-        if (data.success && data.data.restaurant) {
-          const r = data.data.restaurant;
+        const { data } = await axios.get(`/api/restaurant/step2?email=${userEmail}`);
+
+        if (data.success && data.data) {
+          const r = data.data;
+
           form.setValue("cuisine", r.cuisine || []);
-          form.setValue(
-            "days",
-            r.days || [
-              "monday",
-              "tuesday",
-              "wednesday",
-              "thursday",
-              "friday",
-              "saturday",
-            ]
-          );
+          form.setValue("days", r.days || []);
           form.setValue("openingTime", r.openingTime || "09:00");
           form.setValue("closingTime", r.closingTime || "22:00");
-          toast.success("Existing restaurant data loaded");
+
+          toast.success("Existing details loaded");
         }
       } catch (err) {
-        console.log("No existing step2 data found");
+        console.log("Step2 no previous data");
       }
     };
 
     loadExistingData();
   }, [userEmail, status, form]);
 
-  /** Helper to upload a single image */
-  async function uploadImage(file: File, type: string): Promise<string | null> {
+  async function uploadImage(file: File, label: string) {
     const formData = new FormData();
     formData.append("file", file);
 
     try {
-      const { data } = await axios.post("/api/upload", formData);
-      return data.url;
-    } catch (err) {
-      console.error(`Upload ${type} error:`, err);
-      toast.error(`Failed to upload ${type} image`);
+      const res = await axios.post("/api/upload", formData);
+      return res.data.url;
+    } catch {
+      toast.error(`Failed to upload ${label}`);
       return null;
     }
   }
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     if (!userEmail) {
-      toast.error("User email not found. Please login.");
+      toast.error("No user found. Please login.");
       return;
     }
 
-    startTransition(() => {
-      setIsLoading(true);
+    setIsLoading(true);
 
-      Promise.all([
-        values.restaurantImage
-          ? uploadImage(values.restaurantImage, "restaurant")
-          : Promise.resolve(null),
-        values.foodImage
-          ? uploadImage(values.foodImage, "food")
-          : Promise.resolve(null),
-        values.deliveryImage
-          ? uploadImage(values.deliveryImage, "delivery")
-          : Promise.resolve(null),
-        values.restaurantProfileImage
-          ? uploadImage(values.restaurantProfileImage, "profile")
-          : Promise.resolve(null),
-      ])
-        .then(
-          ([
-            restaurantImageUrl,
-            foodImageUrl,
-            deliveryImageUrl,
-            restaurantProfileUrl,
-          ]) => {
-            const payload = {
-              ...values,
-              email: userEmail,
-              ...(restaurantImageUrl && { restaurantImageUrl }),
-              ...(foodImageUrl && { foodImageUrl }),
-              ...(deliveryImageUrl && { deliveryImageUrl }),
-              ...(restaurantProfileUrl && { restaurantProfileUrl }),
-            };
-            return axios.post("/api/restaurant/step2", payload);
-          }
-        )
-        .then((res) => {
-          if (res.data.success) {
-            toast.success(
-              res.data.message || "Restaurant details saved successfully"
-            );
-            router.push("/partner-with-us/restaurant-documents");
-          } else {
-            toast.error(
-              res.data.message || "Failed to save restaurant details"
-            );
-          }
-        })
-        .catch((err: any) => {
-          console.error(err);
-          toast.error(err.response?.data?.message || "Something went wrong");
-        })
-        .finally(() => setIsLoading(false));
+    startTransition(async () => {
+      toast.loading("Saving restaurant details...", { id: "save" });
+
+      const [
+        restaurantImageUrl,
+        foodImageUrl,
+        deliveryImageUrl,
+        restaurantProfileUrl,
+      ] = await Promise.all([
+        values.restaurantImage ? uploadImage(values.restaurantImage, "Restaurant Photo") : null,
+        values.foodImage ? uploadImage(values.foodImage, "Food Photo") : null,
+        values.deliveryImage ? uploadImage(values.deliveryImage, "Delivery Photo") : null,
+        values.restaurantProfileImage ? uploadImage(values.restaurantProfileImage, "Profile Photo") : null,
+      ]);
+
+      const payload = {
+        ...values,
+        email: userEmail,
+        ...(restaurantImageUrl && { restaurantImageUrl }),
+        ...(foodImageUrl && { foodImageUrl }),
+        ...(deliveryImageUrl && { deliveryImageUrl }),
+        ...(restaurantProfileUrl && { restaurantProfileUrl }),
+      };
+
+      try {
+        const res = await axios.post("/api/restaurant/step2", payload);
+        toast.dismiss("save");
+
+        if (res.data.success) {
+          toast.success("Details saved");
+          router.push("/partner-with-us/restaurant-documents");
+        } else {
+          toast.error(res.data.message || "Failed to save details");
+        }
+      } catch (error: any) {
+        toast.dismiss("save");
+        toast.error(error.response?.data?.message || "Something went wrong");
+      } finally {
+        setIsLoading(false);
+      }
     });
   }
 
-  /** Redirect if unauthenticated */
   useEffect(() => {
     if (status === "unauthenticated") router.push("/login");
-  }, [status, router]);
+  }, [status]);
 
   if (status === "loading") {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div>Loading...</div>
+      <div className="flex items-center justify-center min-h-screen text-lg">
+        Loading...
       </div>
     );
   }
@@ -203,34 +174,30 @@ export default function NewRestaurantRegister() {
     <div className="px-4 md:px-6 lg:px-8">
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-          {/* Mobile Aside */}
-          <div className="block lg:hidden">
-            <div className="w-full p-6 flex justify-center items-center mb-8">
-              <TitleHeaderPartner activeStep={2} />
-            </div>
+
+          {/* Mobile Stepper */}
+          <div className="block lg:hidden mb-6">
+            <TitleHeaderPartner activeStep={2} />
           </div>
 
-          <div className="flex flex-col lg:flex-row justify-between items-start gap-6">
-            <aside className="hidden lg:block w-1/3 p-12 justify-center items-center">
+          <div className="flex flex-col lg:flex-row gap-6">
+
+            {/* Desktop left panel */}
+            <aside className="hidden lg:block w-1/3 p-6">
               <TitleHeaderPartner activeStep={2} />
             </aside>
 
-            <section className="w-full lg:w-2/3 lg:pr-20">
-              <h1 className="text-2xl md:text-3xl lg:text-4xl font-semibold mb-6">
-                Menu and Details
-              </h1>
+            <section className="w-full lg:w-2/3">
 
-              {/* Images Card */}
-              <Card className="mb-6 lg:mb-10">
+              <h1 className="text-2xl md:text-3xl font-bold mb-4">Menu & Details</h1>
+
+              {/* Images */}
+              <Card className="mb-6">
                 <CardHeader>
-                  <h2 className="text-xl md:text-2xl font-semibold">
-                    Restaurant Images
-                  </h2>
-                  <p className="font-extralight text-cyan-900 text-sm md:text-base">
-                    Add high-quality images to showcase your restaurant
-                  </p>
+                  <h2 className="text-xl font-semibold">Restaurant Images</h2>
+                  <p className="text-sm text-gray-500">Upload 4 images</p>
                 </CardHeader>
-                <CardContent className="grid gap-6">
+                <CardContent className="grid gap-5">
                   {(
                     [
                       "restaurantImage",
@@ -238,23 +205,21 @@ export default function NewRestaurantRegister() {
                       "deliveryImage",
                       "restaurantProfileImage",
                     ] as const
-                  ).map((fieldName) => (
+                  ).map((field) => (
                     <FormField
-                      key={fieldName}
+                      key={field}
                       control={form.control}
-                      name={fieldName}
-                      render={({ field }) => (
+                      name={field}
+                      render={({ field: f }) => (
                         <FormItem>
-                          <FormLabel className="capitalize">
-                            {fieldName
-                              .replace(/([A-Z])/g, " $1")
-                              .replace(/^./, (str) => str.toUpperCase())}
+                          <FormLabel>
+                            {field.replace(/([A-Z])/g, " $1").replace(/^./, (s) => s.toUpperCase())}
                           </FormLabel>
                           <FormControl>
                             <ImageInput
-                              name={fieldName}
-                              id={fieldName}
-                              onChange={(file) => field.onChange(file)}
+                              name={field}
+                              id={field}
+                              onChange={(file) => f.onChange(file)}
                               maxSizeMB={5}
                             />
                           </FormControl>
@@ -267,14 +232,9 @@ export default function NewRestaurantRegister() {
               </Card>
 
               {/* Cuisine */}
-              <Card className="mb-6 lg:mb-10">
+              <Card className="mb-6">
                 <CardHeader>
-                  <h2 className="text-xl md:text-2xl font-semibold">
-                    Select Cuisines
-                  </h2>
-                  <p className="font-extralight text-cyan-900 text-sm md:text-base">
-                    Choose up to 3 cuisines that best represent your restaurant
-                  </p>
+                  <h2 className="text-xl font-semibold">Select Cuisines</h2>
                 </CardHeader>
                 <CardContent>
                   <FormField
@@ -288,7 +248,6 @@ export default function NewRestaurantRegister() {
                             selectedIds={field.value}
                             onChange={field.onChange}
                             maxSelections={3}
-                            searchPlaceholder="Search cuisine..."
                           />
                         </FormControl>
                         <FormMessage />
@@ -298,47 +257,36 @@ export default function NewRestaurantRegister() {
                 </CardContent>
               </Card>
 
-              {/* Operating Hours */}
+              {/* Working Hours */}
               <Card>
                 <CardHeader>
-                  <h2 className="text-xl md:text-2xl font-semibold">
-                    Operating Hours
-                  </h2>
-                  <p className="font-extralight text-cyan-900 text-sm md:text-base">
-                    Set your restaurant's opening and closing times
-                  </p>
+                  <h2 className="text-xl font-semibold">Working Hours</h2>
                 </CardHeader>
                 <CardContent className="space-y-6">
-                  <div className="flex flex-col md:flex-row gap-4">
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <FormField
                       control={form.control}
                       name="openingTime"
                       render={({ field }) => (
-                        <FormItem className="flex-1">
+                        <FormItem>
                           <FormLabel>Opening Time</FormLabel>
                           <FormControl>
-                            <Input
-                              type="time"
-                              {...field}
-                              className="h-10 md:h-12"
-                            />
+                            <Input type="time" {...field} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
                       )}
                     />
+
                     <FormField
                       control={form.control}
                       name="closingTime"
                       render={({ field }) => (
-                        <FormItem className="flex-1">
+                        <FormItem>
                           <FormLabel>Closing Time</FormLabel>
                           <FormControl>
-                            <Input
-                              type="time"
-                              {...field}
-                              className="h-10 md:h-12"
-                            />
+                            <Input type="time" {...field} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -354,29 +302,25 @@ export default function NewRestaurantRegister() {
                         <FormLabel>Working Days</FormLabel>
                         <div className="flex flex-wrap gap-2">
                           {days.map((day) => (
-                            <FormItem
+                            <div
                               key={day.id}
-                              className={`flex items-center border rounded-2xl p-2 space-x-2 cursor-pointer ${
+                              className={`flex items-center gap-2 border px-3 py-2 rounded-xl cursor-pointer ${
                                 field.value.includes(day.id)
                                   ? "border-blue-500 bg-blue-50"
                                   : "border-gray-200"
                               }`}
                             >
-                              <FormControl>
-                                <Checkbox
-                                  checked={field.value.includes(day.id)}
-                                  onCheckedChange={(checked) => {
-                                    const updated = checked
-                                      ? [...field.value, day.id]
-                                      : field.value.filter((d) => d !== day.id);
-                                    field.onChange(updated);
-                                  }}
-                                />
-                              </FormControl>
-                              <FormLabel className="cursor-pointer">
-                                {day.label}
-                              </FormLabel>
-                            </FormItem>
+                              <Checkbox
+                                checked={field.value.includes(day.id)}
+                                onCheckedChange={(checked) => {
+                                  const list = checked
+                                    ? [...field.value, day.id]
+                                    : field.value.filter((d) => d !== day.id);
+                                  field.onChange(list);
+                                }}
+                              />
+                              <span>{day.label}</span>
+                            </div>
                           ))}
                         </div>
                         <FormMessage />
@@ -386,15 +330,13 @@ export default function NewRestaurantRegister() {
                 </CardContent>
               </Card>
 
-              <div className="mt-6 flex justify-center md:justify-end">
+              <div className="mt-6 flex justify-end">
                 <Button
                   type="submit"
                   disabled={isPending || isLoading}
-                  variant="outline"
-                  size="lg"
-                  className="rounded-2xl bg-[#4947e0] text-white hover:bg-[#3a38c7] w-full md:w-auto"
+                  className="rounded-xl bg-[#4947e0] text-white px-6 py-3 hover:bg-[#3a38c7]"
                 >
-                  {isPending || isLoading ? "Processing..." : "Next"}
+                  {isLoading ? "Saving..." : "Next"}
                   <Right />
                 </Button>
               </div>

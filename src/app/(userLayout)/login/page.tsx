@@ -18,16 +18,18 @@ import {
 import { Input } from "@/components/ui/input";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import { toast } from "react-hot-toast";
 
 const formSchema = z.object({
   email: z.string().email({ message: "Invalid email address" }),
-  password: z.string().min(8, { message: "Password must be at least 8 characters" }),
+  password: z
+    .string()
+    .min(8, { message: "Password must be at least 8 characters" }),
 });
 
 export default function LoginPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
   const form = useForm({
     resolver: zodResolver(formSchema),
@@ -38,30 +40,42 @@ export default function LoginPage() {
   });
 
   async function onSubmit(values: { email: string; password: string }) {
-    setLoading(true);
-    setError(null);
+    try {
+      setLoading(true);
 
-    // Authenticate using NextAuth credentials provider
-    const result = await signIn("credentials", {
-      redirect: false,
-      email: values.email,
-      password: values.password,
-    });
+      const result = await signIn("credentials", {
+        redirect: false,
+        email: values.email,
+        password: values.password,
+      });
 
-    if (result?.error) {
-      setError("Invalid email or password");
-    } else {
-      router.push("/");
+      if (result?.error) {
+        toast.error("Invalid email or password");
+      } else {
+        toast.success("Login successful!");
+        router.push("/");
+      }
+    } catch {
+      toast.error("Something went wrong. Try again.");
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   }
 
   return (
-    <section className="max-w-sm mx-auto p-4 mt-5 shadow-xs rounded-lg bg-[#f9f9f9]">
-      <h1 className="text-center text-[#eb0029] text-4xl mb-4">Login</h1>
-      {error && <p className="text-red-500 text-center">{error}</p>}
+    <section
+      className="
+        max-w-md mx-auto mt-10 p-6
+        rounded-xl shadow-md bg-white
+        w-[90%] sm:w-full
+      "
+    >
+      <h1 className="text-center text-[#eb0029] text-3xl font-bold mb-6">
+        Login
+      </h1>
+
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
           <FormField
             control={form.control}
             name="email"
@@ -75,6 +89,7 @@ export default function LoginPage() {
               </FormItem>
             )}
           />
+
           <FormField
             control={form.control}
             name="password"
@@ -82,22 +97,31 @@ export default function LoginPage() {
               <FormItem>
                 <FormLabel>Password</FormLabel>
                 <FormControl>
-                  <Input type="password" placeholder="Enter your password" {...field} />
+                  <Input
+                    type="password"
+                    placeholder="Enter your password"
+                    {...field}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
             )}
           />
-          <Button className="w-full bg-[#eb0029]" type="submit" disabled={loading}>
-            {loading ? "Logging in..." : "Submit"}
+
+          <Button
+            className="w-full bg-[#eb0029]"
+            type="submit"
+            disabled={loading}
+          >
+            {loading ? "Logging in..." : "Login"}
           </Button>
         </form>
       </Form>
 
-      {/* Social Login Section */}
-      <div className="my-4 text-center text-gray-500">or login with provider</div>
+      <div className="my-4 text-center text-gray-500">or</div>
+
       <Button
-        className="w-full flex flex-row gap-4"
+        className="w-full flex items-center gap-3 border py-2"
         variant="outline"
         onClick={() => signIn("google", { callbackUrl: "/" })}
       >
@@ -105,9 +129,12 @@ export default function LoginPage() {
         Login with Google
       </Button>
 
-      <div className="text-center my-4 text-gray-500 border-t pt-4">
-        Create new account? <Link href="/register">here &raquo;</Link>
-      </div>
+      <p className="mt-6 text-center text-gray-600 text-sm">
+        Don’t have an account?{" "}
+        <Link href="/register" className="text-[#eb0029] font-medium">
+          Register here →
+        </Link>
+      </p>
     </section>
   );
 }

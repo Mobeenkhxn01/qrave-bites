@@ -11,8 +11,8 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       return NextResponse.json({ error: "No file provided" }, { status: 400 });
     }
 
-    const s3Client = new S3Client({
-      region: "ap-southeast-2",
+    const s3 = new S3Client({
+      region: process.env.AWS_REGION!,
       credentials: {
         accessKeyId: process.env.AWS_ACCESS_KEY!,
         secretAccessKey: process.env.AWS_SECRET_KEY!,
@@ -20,7 +20,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     });
 
     const ext = file.name.split(".").pop();
-    const newFileName = `${uniqid()}.${ext}`;
+    const newName = `${uniqid()}.${ext}`;
 
     const chunks: Uint8Array[] = [];
     const reader = file.stream().getReader();
@@ -29,23 +29,25 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       if (done) break;
       chunks.push(value);
     }
+
     const buffer = Buffer.concat(chunks);
 
-    const bucket = "qr-food-ordering";
-    await s3Client.send(
+    const bucket = process.env.AWS_BUCKET_NAME!;
+
+    await s3.send(
       new PutObjectCommand({
         Bucket: bucket,
-        Key: newFileName,
-        ACL: "public-read",
+        Key: newName,
         ContentType: file.type,
         Body: buffer,
+        ACL: "public-read",
       })
     );
 
-    const link = `https://${bucket}.s3.ap-southeast-2.amazonaws.com/${newFileName}`;
-    return NextResponse.json({ url: link });
-  } catch (error) {
-    console.error("File upload error:", error);
-    return NextResponse.json({ error: "File upload failed" }, { status: 500 });
+    const url = `https://${bucket}.s3.${process.env.AWS_REGION}.amazonaws.com/${newName}`;
+
+    return NextResponse.json({ url });
+  } catch (err) {
+    return NextResponse.json({ error: "Upload failed" }, { status: 500 });
   }
 }

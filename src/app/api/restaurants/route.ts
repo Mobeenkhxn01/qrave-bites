@@ -15,8 +15,7 @@ export async function GET() {
     });
 
     return NextResponse.json({ success: true, restaurants });
-  } catch (error) {
-    console.error("Error fetching restaurants:", error);
+  } catch {
     return NextResponse.json(
       { success: false, message: "Internal server error" },
       { status: 500 }

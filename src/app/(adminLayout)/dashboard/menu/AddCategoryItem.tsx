@@ -1,12 +1,16 @@
 "use client";
 
 import toast, { Toaster } from "react-hot-toast";
-import Trash from "@/components/icons/Trash";
-import UserTabs from "@/components/layout/UserTabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Label } from "@/components/ui/label";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage
+} from "@/components/ui/form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -20,11 +24,10 @@ const formSchema = z.object({
   category: z.string().min(2).max(50).trim(),
 });
 
-// Capitalize first letter of each word but keep spaces
 function capitalizeWords(str: string) {
   return str
     .split(/\s+/)
-    .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
     .join(" ");
 }
 
@@ -43,8 +46,7 @@ export default function AddCategoryItem({ onClose }: { onClose: () => void }) {
     defaultValues: { category: "" },
   });
 
-
-  const { data: categories = [], isLoading } = useQuery({
+  const { data: categories = [] } = useQuery({
     queryKey: ["categories", session?.user.id],
     queryFn: async () => {
       if (!session?.user.id) return [];
@@ -56,111 +58,89 @@ export default function AddCategoryItem({ onClose }: { onClose: () => void }) {
     enabled: !!session?.user.id,
   });
 
-  /** --------------------
-   *  Mutations
-   ---------------------*/
   const createOrUpdateCategory = useMutation({
     mutationFn: async (values: z.infer<typeof formSchema>) => {
-      if (!session?.user.id) throw new Error("User not authenticated");
+      if (!session?.user.id) throw new Error("Unauthorized");
 
-      // Capitalize words before saving
       const formattedCategory = capitalizeWords(values.category);
 
-      // Check if category already exists (case-insensitive)
-      const categoryExists = categories.some(
-        (category: any) =>
-          category.name.toLowerCase() === formattedCategory.toLowerCase() &&
-          category.userId === session.user.id &&
-          (!editedCategory || category.id !== editedCategory.id)
+      const exists = categories.some(
+        (c: any) =>
+          c.name.toLowerCase() === formattedCategory.toLowerCase() &&
+          c.userId === session.user.id &&
+          (!editedCategory || c.id !== editedCategory.id)
       );
-      if (categoryExists) {
-        throw new Error("Category already exists!");
-      }
+      if (exists) throw new Error("Category already exists");
 
       const payload = editedCategory
         ? { id: editedCategory.id, name: formattedCategory }
         : { name: formattedCategory, userId: session.user.id };
 
-      if (editedCategory) {
-        await axios.put("/api/categories", payload);
-      } else {
-        await axios.post("/api/categories", payload);
-      }
+      if (editedCategory) await axios.put("/api/categories", payload);
+      else await axios.post("/api/categories", payload);
     },
     onSuccess: () => {
-      toast.success(editedCategory ? "Category updated!" : "Category created!");
-      setEditedCategory(null);
+      toast.success(editedCategory ? "Category updated" : "Category created");
       form.reset();
+      setEditedCategory(null);
       queryClient.invalidateQueries({ queryKey: ["categories", session?.user.id] });
+      onClose();
     },
-    onError: (err: any) => {
-      toast.error(err.response?.data?.error || err.message || "Error processing request");
-    },
+    onError: (err: any) => toast.error(err?.response?.data?.error || err.message),
   });
 
-  const deleteCategory = useMutation({
-    mutationFn: async (id: string) => {
-      await axios.delete(`/api/categories`, { params: { id } });
-    },
-    onSuccess: () => {
-      toast.success("Category deleted!");
-      queryClient.invalidateQueries({ queryKey: ["categories", session?.user.id] });
-    },
-    onError: (err: any) => {
-      toast.error(err.response?.data?.error || "Error deleting category");
-    },
-  });
-
-  /** --------------------
-   *  Submit Handler
-   ---------------------*/
   function onSubmit(values: z.infer<typeof formSchema>) {
     createOrUpdateCategory.mutate(values);
   }
 
   return (
-    <div className="grid gap-4 py-4">
+    <div className="w-full">
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)}>
-          <div className="flex gap-6">
-            <div className="flex flex-col flex-1 gap-4">
-              <div className="grid items-center gap-4">
-                <FormField
-                  control={form.control}
-                  name="category"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="text-right">Category Name</FormLabel>
-                      <FormControl>
-                        <Input
-                          placeholder="Create a new category"
-                          {...field}
-                          className="col-span-3"
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-              <DialogFooter>
-                <Button type="button" variant="outline" onClick={onClose}>
-                  Cancel
-                </Button>
-                 <Button
-                type="submit"
-                onClick={onClose}
-                className="bg-[#eb0029]"
-                disabled={createOrUpdateCategory.isPending}
-              >
-                {editedCategory ? "Update" : "Create"}
-              </Button>
-              </DialogFooter>
-            </div>
+        <form
+          onSubmit={form.handleSubmit(onSubmit)}
+          className="space-y-6 p-2 md:p-4"
+        >
+          <div className="grid gap-4">
+            <FormField
+              control={form.control}
+              name="category"
+              render={({ field }) => (
+                <FormItem className="w-full">
+                  <FormLabel>Category Name</FormLabel>
+                  <FormControl>
+                    <Input
+                      placeholder="Enter a category"
+                      {...field}
+                      className="w-full"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
           </div>
+
+          <DialogFooter className="flex flex-col sm:flex-row gap-2 sm:justify-end">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={onClose}
+              className="w-full sm:w-auto"
+            >
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              disabled={createOrUpdateCategory.isPending}
+              className="bg-[#eb0029] w-full sm:w-auto"
+            >
+              {editedCategory ? "Update" : "Create"}
+            </Button>
+          </DialogFooter>
         </form>
       </Form>
-      <Toaster/>
+
+      <Toaster />
     </div>
   );
 }

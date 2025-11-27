@@ -1,52 +1,56 @@
 import { prisma } from "@/lib/prisma";
 import { MenuItemCard } from "@/components/menu/MenuItemCard";
 import { notFound } from "next/navigation";
+import ToastClient from "./toast-client"; // 🔥 client-only wrapper
 
 export const revalidate = 60;
 
 export default async function RestaurantPage({
   params,
-  searchParams
+  searchParams,
 }: {
   params: Promise<{ city: string; slug: string }>;
   searchParams: { table?: string };
 }) {
-  // Wait for params (because Next.js now wraps them in a Promise)
-  const data = await params;
+  const resolved = await params;
 
-  const city = decodeURIComponent(data.city);
-  const slug = decodeURIComponent(data.slug);
+  const city = decodeURIComponent(resolved.city);
+  const slug = decodeURIComponent(resolved.slug);
 
-  // 🔥 NEW: Extract table number from search params
-  const tableNumber = searchParams.table
-    ? Number(searchParams.table)
-    : null;
+  let tableNumber: number | null = null;
 
-  // Fetch restaurant info
+  if (searchParams.table) {
+    const num = Number(searchParams.table);
+    tableNumber = isNaN(num) ? null : num;
+  }
+
   const restaurant = await prisma.restaurantStep1.findUnique({
     where: { slug },
   });
 
-  if (!restaurant || decodeURIComponent(restaurant.city) !== city) {
+  if (!restaurant) {
     return notFound();
   }
 
-  // Fetch menu items
+  if (decodeURIComponent(restaurant.city) !== city) {
+    return notFound();
+  }
+
   const menuItems = await prisma.menuItem.findMany({
     where: { restaurantId: restaurant.id },
   });
 
+  const hasMenu = menuItems.length > 0;
+
   return (
     <div className="max-w-5xl mx-auto py-10 px-4 space-y-6">
 
-      {/* Restaurant Header */}
       <div>
         <h1 className="text-4xl font-bold">{restaurant.restaurantName}</h1>
         <p className="text-gray-600">
           {restaurant.area}, {restaurant.city}
         </p>
 
-        {/* 🔥 Show table info if scanned from QR */}
         {tableNumber !== null && (
           <p className="mt-2 text-green-600 font-semibold">
             Ordering for Table #{tableNumber}
@@ -54,20 +58,29 @@ export default async function RestaurantPage({
         )}
       </div>
 
-      {/* Menu Section */}
       <div>
         <h2 className="text-2xl font-semibold mb-4">Menu</h2>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-          {menuItems.map((item) => (
-            <MenuItemCard
-              key={item.id}
-              item={item}
-              tableNumber={tableNumber}     // 🔥 pass table number here
-            />
-          ))}
-        </div>
+        {!hasMenu ? (
+          <p className="text-gray-500">No menu items available.</p>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+            {menuItems.map((item) => (
+              <MenuItemCard
+                key={item.id}
+                item={item}
+                tableNumber={tableNumber}
+              />
+            ))}
+          </div>
+        )}
       </div>
+
+      <ToastClient
+        restaurantMissing={!restaurant}
+        menuMissing={!hasMenu}
+        tableInvalid={searchParams.table ? tableNumber === null : false}
+      />
     </div>
   );
 }

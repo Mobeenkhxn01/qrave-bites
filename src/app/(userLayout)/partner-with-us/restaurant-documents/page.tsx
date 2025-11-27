@@ -4,11 +4,10 @@ import { useState, useEffect, useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { useRouter } from "next/navigation";
-import { useSession } from "next-auth/react";
 import axios from "axios";
 import toast from "react-hot-toast";
-
+import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
 import {
   Card,
   CardContent,
@@ -25,42 +24,41 @@ import {
 import { Input } from "@/components/ui/input";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
+import { ImageInput } from "@/components/ui/image-input";
 import Right from "@/components/icons/Right";
 import TitleHeaderPartner from "../titleheader";
 
-// Step 3 Zod schema - matches API expectations
 const formSchema = z
   .object({
     fullName: z
       .string()
       .min(2, "Full name must be at least 2 characters")
-      .max(100, "Full name must be less than 100 characters")
-      .regex(/^[A-Za-z\s]+$/, "Name can only contain letters and spaces"),
+      .max(100),
     panNumber: z
       .string()
       .length(10, "PAN number must be exactly 10 characters")
-      .regex(/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/, "Invalid PAN format (e.g., ABCDE1234F)"),
+      .regex(/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/),
     restaurantAddress: z
       .string()
-      .min(5, "Address must be at least 5 characters")
-      .max(500, "Address must be less than 500 characters"),
+      .min(5)
+      .max(500),
     accountNumber: z
       .string()
-      .min(9, "Account number must be at least 9 digits")
-      .max(18, "Account number must be less than 18 digits")
-      .regex(/^\d+$/, "Account number must contain only digits"),
+      .min(9)
+      .max(18)
+      .regex(/^\d+$/),
     confirmAccountNumber: z
       .string()
-      .min(9, "Account number must be at least 9 digits")
-      .max(18, "Account number must be less than 18 digits"),
+      .min(9)
+      .max(18),
     ifscCode: z
       .string()
-      .length(11, "IFSC code must be exactly 11 characters")
-      .regex(/^[A-Z]{4}0[A-Z0-9]{6}$/, "Invalid IFSC format (e.g., SBIN0001234)"),
-    panImage: z.string().url("Invalid image URL").optional().or(z.literal("")),
+      .length(11)
+      .regex(/^[A-Z]{4}0[A-Z0-9]{6}$/),
+    panImage: z.instanceof(File).optional(),
     upiId: z
       .string()
-      .regex(/^[a-zA-Z0-9.\-_]{2,256}@[a-zA-Z]{2,20}$/, "Invalid UPI ID format")
+      .regex(/^[a-zA-Z0-9.\-_]{2,256}@[a-zA-Z]{2,20}$/)
       .optional()
       .or(z.literal("")),
     accountType: z.enum(["SAVINGS", "CURRENT"]),
@@ -77,7 +75,6 @@ export default function Step3Documents() {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [loading, setLoading] = useState(false);
-
   const userEmail = session?.user?.email || "";
 
   const form = useForm<FormData>({
@@ -89,50 +86,61 @@ export default function Step3Documents() {
       accountNumber: "",
       confirmAccountNumber: "",
       ifscCode: "",
-      panImage: "",
       upiId: "",
       accountType: undefined,
     },
   });
 
-  // Load existing Step 3 data if any
   useEffect(() => {
-    const loadData = async () => {
-      if (!userEmail) return;
+    if (!userEmail) return;
+    const load = async () => {
       try {
         const res = await axios.get(`/api/restaurant/step3?email=${userEmail}`);
         if (res.data.success) {
-          const data = res.data.data;
-          form.setValue("fullName", data.fullName);
-          form.setValue("panNumber", data.panNumber);
-          form.setValue("restaurantAddress", data.restaurantAddress);
-          form.setValue("accountNumber", data.accountNumber);
-          form.setValue("confirmAccountNumber", data.accountNumber);
-          form.setValue("ifscCode", data.ifscCode);
-          form.setValue("panImage", data.panImage || "");
-          form.setValue("upiId", data.upiId || "");
-          form.setValue("accountType", data.accountType);
+          const d = res.data.data;
+          form.setValue("fullName", d.fullName);
+          form.setValue("panNumber", d.panNumber);
+          form.setValue("restaurantAddress", d.restaurantAddress);
+          form.setValue("accountNumber", d.accountNumber);
+          form.setValue("confirmAccountNumber", d.accountNumber);
+          form.setValue("ifscCode", d.ifscCode);
+          form.setValue("upiId", d.upiId || "");
+          form.setValue("accountType", d.accountType);
           toast.success("Existing Step 3 data loaded");
         }
-      } catch (err) {
-        console.log("No existing Step 3 data found");
-      }
+      } catch {}
     };
+    if (status === "authenticated") load();
+  }, [status, userEmail]);
 
-    if (status === "authenticated") loadData();
-  }, [userEmail, status]); // Removed form from dependencies
+  async function uploadImage(file: File): Promise<string | null> {
+    const fd = new FormData();
+    fd.append("file", file);
+    try {
+      const res = await axios.post("/api/upload", fd);
+      return res.data.url;
+    } catch {
+      toast.error("Image upload failed");
+      return null;
+    }
+  }
 
   const onSubmit = async (values: FormData) => {
     if (!userEmail) {
-      toast.error("User email not found. Please login.");
+      toast.error("User email not found");
       return;
+    }
+
+    let panImageUrl = null;
+    if (values.panImage) {
+      panImageUrl = await uploadImage(values.panImage);
+      if (!panImageUrl) return;
     }
 
     const payload = {
       ...values,
       email: userEmail,
-      // Convert empty strings to null for optional fields
-      panImage: values.panImage || null,
+      panImage: panImageUrl || null,
       upiId: values.upiId || null,
     };
 
@@ -142,37 +150,27 @@ export default function Step3Documents() {
         .post("/api/restaurant/step3", payload)
         .then((res) => {
           if (res.data.success) {
-            toast.success(res.data.message || "Step 3 saved successfully!");
+            toast.success(res.data.message || "Step 3 saved successfully");
             router.push("/partner-with-us/partner-contract");
           } else {
-            toast.error(res.data.message || "Failed to save Step 3");
+            toast.error(res.data.message);
           }
         })
         .catch((err) => {
-          console.error("Error saving Step 3:", err);
-          
           if (err.response?.data?.errors) {
-            err.response.data.errors.forEach(
-              (error: { field: string; message: string }) =>
-                toast.error(`${error.field}: ${error.message}`)
+            err.response.data.errors.forEach((e: any) =>
+              toast.error(`${e.field}: ${e.message}`)
             );
-          } else if (err.response?.data?.message) {
-            toast.error(err.response.data.message);
           } else {
-            toast.error("Something went wrong. Please try again.");
+            toast.error("Something went wrong");
           }
         })
         .finally(() => setLoading(false));
     });
   };
 
-  if (status === "loading") {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-lg">Loading...</div>
-      </div>
-    );
-  }
+  if (status === "loading")
+    return <div className="flex justify-center p-10">Loading...</div>;
 
   if (status === "unauthenticated") {
     router.push("/login");
@@ -184,7 +182,7 @@ export default function Step3Documents() {
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
           <div className="block lg:hidden">
-            <div className="w-full p-6 flex justify-center items-center mb-8">
+            <div className="w-full p-6 flex justify-center mb-8">
               <TitleHeaderPartner activeStep={3} />
             </div>
           </div>
@@ -195,17 +193,11 @@ export default function Step3Documents() {
             </aside>
 
             <section className="w-full lg:w-2/3 lg:pr-20 space-y-6">
-              <h1 className="text-2xl md:text-3xl lg:text-4xl font-semibold mb-6">
-                Restaurant Documents
-              </h1>
+              <h1 className="text-2xl md:text-3xl lg:text-4xl font-semibold">Restaurant Documents</h1>
 
-              {/* Owner Details */}
               <Card>
                 <CardHeader>
                   <h2 className="text-xl font-semibold">Owner Details</h2>
-                  <p className="text-sm text-gray-600">
-                    Full name as per official documents
-                  </p>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <FormField
@@ -215,11 +207,7 @@ export default function Step3Documents() {
                       <FormItem>
                         <FormLabel>Owner Full Name *</FormLabel>
                         <FormControl>
-                          <Input
-                            placeholder="John Doe"
-                            className="h-10 md:h-12"
-                            {...field}
-                          />
+                          <Input {...field} className="h-10 md:h-12" />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -232,11 +220,7 @@ export default function Step3Documents() {
                       <FormItem>
                         <FormLabel>Restaurant Address *</FormLabel>
                         <FormControl>
-                          <Input
-                            placeholder="123 Main St, City, State, Pincode"
-                            className="h-10 md:h-12"
-                            {...field}
-                          />
+                          <Input {...field} className="h-10 md:h-12" />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -245,13 +229,9 @@ export default function Step3Documents() {
                 </CardContent>
               </Card>
 
-              {/* PAN Details */}
               <Card>
                 <CardHeader>
                   <h2 className="text-xl font-semibold">PAN Card Details</h2>
-                  <p className="text-sm text-gray-600">
-                    Required for business verification
-                  </p>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <FormField
@@ -262,13 +242,10 @@ export default function Step3Documents() {
                         <FormLabel>PAN Number *</FormLabel>
                         <FormControl>
                           <Input
-                            placeholder="ABCDE1234F"
-                            className="h-10 md:h-12 uppercase"
-                            maxLength={10}
                             {...field}
-                            onChange={(e) =>
-                              field.onChange(e.target.value.toUpperCase())
-                            }
+                            maxLength={10}
+                            className="h-10 md:h-12 uppercase"
+                            onChange={(e) => field.onChange(e.target.value.toUpperCase())}
                           />
                         </FormControl>
                         <FormMessage />
@@ -280,32 +257,25 @@ export default function Step3Documents() {
                     name="panImage"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>PAN Card Image URL (Optional)</FormLabel>
+                        <FormLabel>PAN Card Image *</FormLabel>
                         <FormControl>
-                          <Input
-                            type="url"
-                            placeholder="https://example.com/pan-image.jpg"
-                            className="h-10 md:h-12"
-                            {...field}
+                          <ImageInput
+                            id="panImage"
+                            name="panImage"
+                            onChange={(file) => field.onChange(file)}
+                            maxSizeMB={5}
                           />
                         </FormControl>
                         <FormMessage />
-                        <p className="text-xs text-gray-500">
-                          Upload your PAN image to a service and paste the URL here
-                        </p>
                       </FormItem>
                     )}
                   />
                 </CardContent>
               </Card>
 
-              {/* Bank Details */}
               <Card>
                 <CardHeader>
                   <h2 className="text-xl font-semibold">Bank Account Details</h2>
-                  <p className="text-sm text-gray-600">
-                    For receiving payments from customers
-                  </p>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <FormField
@@ -314,13 +284,10 @@ export default function Step3Documents() {
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Account Type *</FormLabel>
-                        <Select
-                          onValueChange={field.onChange}
-                          value={field.value}
-                        >
+                        <Select onValueChange={field.onChange} value={field.value}>
                           <FormControl>
                             <SelectTrigger className="h-10 md:h-12">
-                              <SelectValue placeholder="Select Account Type" />
+                              <SelectValue placeholder="Select account type" />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
@@ -340,12 +307,7 @@ export default function Step3Documents() {
                       <FormItem>
                         <FormLabel>Account Number *</FormLabel>
                         <FormControl>
-                          <Input
-                            type="text"
-                            placeholder="123456789012"
-                            className="h-10 md:h-12"
-                            {...field}
-                          />
+                          <Input {...field} className="h-10 md:h-12" />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -359,12 +321,7 @@ export default function Step3Documents() {
                       <FormItem>
                         <FormLabel>Confirm Account Number *</FormLabel>
                         <FormControl>
-                          <Input
-                            type="text"
-                            placeholder="Re-enter account number"
-                            className="h-10 md:h-12"
-                            {...field}
-                          />
+                          <Input {...field} className="h-10 md:h-12" />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -379,13 +336,10 @@ export default function Step3Documents() {
                         <FormLabel>IFSC Code *</FormLabel>
                         <FormControl>
                           <Input
-                            placeholder="SBIN0001234"
-                            className="h-10 md:h-12 uppercase"
-                            maxLength={11}
                             {...field}
-                            onChange={(e) =>
-                              field.onChange(e.target.value.toUpperCase())
-                            }
+                            maxLength={11}
+                            className="h-10 md:h-12 uppercase"
+                            onChange={(e) => field.onChange(e.target.value.toUpperCase())}
                           />
                         </FormControl>
                         <FormMessage />
@@ -400,11 +354,7 @@ export default function Step3Documents() {
                       <FormItem>
                         <FormLabel>UPI ID (Optional)</FormLabel>
                         <FormControl>
-                          <Input
-                            placeholder="username@bank"
-                            className="h-10 md:h-12"
-                            {...field}
-                          />
+                          <Input {...field} className="h-10 md:h-12" />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -416,9 +366,9 @@ export default function Step3Documents() {
               <div className="flex justify-center md:justify-end">
                 <Button
                   type="submit"
+                  size="lg"
                   disabled={loading || isPending}
                   className="rounded-2xl bg-[#4947e0] text-white hover:bg-[#3a38c7] w-full md:w-auto flex items-center justify-center"
-                  size="lg"
                 >
                   {loading || isPending ? "Processing..." : "Next"}
                   <Right className="ml-2" />

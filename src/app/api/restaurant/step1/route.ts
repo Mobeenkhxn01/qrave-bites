@@ -28,7 +28,10 @@ export async function POST(req: NextRequest) {
     });
 
     if (!user) {
-      return NextResponse.json({ success: false, message: "User not found" }, { status: 404 });
+      return NextResponse.json(
+        { success: false, message: "User not found" },
+        { status: 404 }
+      );
     }
 
     let baseSlug = slugify(restaurantname, { lower: true, strict: true });
@@ -92,7 +95,9 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      message: existing ? "Restaurant updated successfully" : "Restaurant created successfully",
+      message: existing
+        ? "Restaurant updated successfully"
+        : "Restaurant created successfully",
       data: result,
     });
   } catch {
@@ -108,7 +113,10 @@ export async function GET(req: NextRequest) {
     const email = new URL(req.url).searchParams.get("email");
 
     if (!email) {
-      return NextResponse.json({ success: false, message: "Email is required" }, { status: 400 });
+      return NextResponse.json(
+        { success: false, message: "Email is required" },
+        { status: 400 }
+      );
     }
 
     const restaurant = await prisma.restaurantStep1.findUnique({
@@ -119,7 +127,10 @@ export async function GET(req: NextRequest) {
     });
 
     if (!restaurant) {
-      return NextResponse.json({ success: false, message: "Restaurant not found" }, { status: 404 });
+      return NextResponse.json(
+        { success: false, message: "Restaurant not found" },
+        { status: 404 }
+      );
     }
 
     return NextResponse.json({

@@ -14,30 +14,34 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
         status,
         paid: typeof paid === "boolean" ? paid : undefined,
       },
-      include: { items: true },
+      include: {
+        items: {
+          include: { menuItem: true },
+        },
+        restaurant: true,
+      },
     });
 
-    if (order.tableId) {
-      await pusherServer.trigger(
-        `table-${order.tableId}`,
-        "order-update",
-        { order }
-      );
-    }
+    const restaurantId = order.restaurantId;
 
     await prisma.notification.create({
       data: {
-        restaurantId: order.tableId ? (await prisma.table.findUnique({ where: { id: order.tableId } }))?.restaurantId! : "",
-        message: `Order ${order.id} status changed to ${status}`,
+        restaurantId,
+        message: `Order ${order.orderNumber} status changed to ${status}`,
         type: "ORDER_UPDATE",
         orderId: order.id,
         payload: { status },
       },
-    }).catch(() => undefined);
+    });
+
+    await pusherServer.trigger(
+      `restaurant-${restaurantId}`,
+      "order-update",
+      { order }
+    );
 
     return NextResponse.json({ order });
   } catch (error) {
-    console.error("update order error:", error);
     return NextResponse.json({ error: String(error) }, { status: 500 });
   }
 }

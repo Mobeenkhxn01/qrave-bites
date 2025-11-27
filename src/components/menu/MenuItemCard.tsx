@@ -1,25 +1,42 @@
 'use client'
+
 import { MenuItem } from '@prisma/client'
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card'
 import Image from 'next/image'
 import { AddToCartButton } from './AddToCartButton'
 import { Badge } from '@/components/ui/badge'
+import toast from 'react-hot-toast'
 
-export function MenuItemCard({ item,tableNumber }: { item: MenuItem ,tableNumber: number | null}) {
+export function MenuItemCard({
+  item,
+  tableNumber
+}: {
+  item: MenuItem
+  tableNumber: number | null
+}) {
+  const handleClickUnavailable = () => {
+    toast.error("This item is currently unavailable")
+  }
+
   return (
-    <Card className={`overflow-hidden ${!item.available ? 'opacity-60' : ''}`}>
+    <Card
+      className={`overflow-hidden transition-all rounded-xl shadow-sm hover:shadow-md ${
+        !item.available ? 'opacity-60' : ''
+      }`}
+    >
       <CardHeader className="p-0 relative">
         <Image
-          src={item.image || ""}
+          src={item.image || "/placeholder-food.jpg"}
           alt={item.name}
-          width={300}
-          height={200}
-          className="w-full h-48 object-cover"
+          width={500}
+          height={350}
+          className="w-full h-48 sm:h-56 object-cover"
         />
+
         {!item.available && (
           <Badge
             variant="destructive"
-            className="absolute top-2 right-2 text-xs"
+            className="absolute top-2 right-2 text-xs font-semibold"
           >
             Unavailable
           </Badge>
@@ -28,17 +45,30 @@ export function MenuItemCard({ item,tableNumber }: { item: MenuItem ,tableNumber
 
       <CardContent className="p-4">
         <h3 className="font-bold text-lg">{item.name}</h3>
-        <p className="text-gray-600 text-sm mt-1">{item.description}</p>
-        <p className="font-bold mt-2">${item.price.toFixed(2)}</p>
+        <p className="text-gray-600 text-sm mt-1 line-clamp-2">
+          {item.description}
+        </p>
+
+        <p className="font-bold mt-3 text-[#eb0029] text-lg">
+          ₹{item.price.toFixed(2)}
+        </p>
       </CardContent>
 
       <CardFooter className="p-4 pt-0">
-        <AddToCartButton 
-  menuItemId={item.id}
-  tableNumber={tableNumber}
-  available={item.available}
-/>
-
+        {item.available ? (
+          <AddToCartButton
+            menuItemId={item.id}
+            tableNumber={tableNumber}
+            available={item.available}
+          />
+        ) : (
+          <button
+            onClick={handleClickUnavailable}
+            className="w-full bg-gray-300 text-gray-600 py-2 rounded-lg cursor-not-allowed"
+          >
+            Not Available
+          </button>
+        )}
       </CardFooter>
     </Card>
   )

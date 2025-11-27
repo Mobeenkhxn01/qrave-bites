@@ -1,110 +1,111 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
-import { Progress } from "@/components/ui/progress"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { DashboardHeader } from "@/components/shadcn-components/dashboard-header"
-import { PackageIcon, AlertTriangleIcon, TrendingDownIcon, PlusIcon } from "lucide-react"
-import {
-  SidebarInset,
-  SidebarProvider,
-} from "@/components/ui/sidebar"
-import { AppSidebar } from "@/components/shadcn-components/app-sidebar"
+"use client";
 
-interface InventoryItem {
-  id: string
-  name: string
-  category: string
-  currentStock: number
-  minStock: number
-  maxStock: number
-  unit: string
-  cost: number
-  supplier: string
-  lastRestocked: string
-  status: "in-stock" | "low-stock" | "out-of-stock"
-}
+import React, { useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import axios from "axios";
+import toast, { Toaster } from "react-hot-toast";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
+import { Input } from "@/components/ui/input";
+import InventoryForm from "./InventoryForm";
+import { PlusIcon } from "lucide-react";
 
-const inventoryItems: InventoryItem[] = [
-  {
-    id: "1",
-    name: "Tomatoes",
-    category: "Vegetables",
-    currentStock: 5,
-    minStock: 10,
-    maxStock: 50,
-    unit: "kg",
-    cost: 3.5,
-    supplier: "Fresh Farm Co.",
-    lastRestocked: "2 days ago",
-    status: "low-stock",
-  },
-  {
-    id: "2",
-    name: "Mozzarella Cheese",
-    category: "Dairy",
-    currentStock: 25,
-    minStock: 15,
-    maxStock: 40,
-    unit: "kg",
-    cost: 12.0,
-    supplier: "Dairy Direct",
-    lastRestocked: "1 day ago",
-    status: "in-stock",
-  },
-  {
-    id: "3",
-    name: "Ground Beef",
-    category: "Meat",
-    currentStock: 0,
-    minStock: 8,
-    maxStock: 30,
-    unit: "kg",
-    cost: 18.5,
-    supplier: "Prime Meats",
-    lastRestocked: "5 days ago",
-    status: "out-of-stock",
-  },
-  {
-    id: "4",
-    name: "Pizza Dough",
-    category: "Bakery",
-    currentStock: 45,
-    minStock: 20,
-    maxStock: 60,
-    unit: "pieces",
-    cost: 0.75,
-    supplier: "Local Bakery",
-    lastRestocked: "Today",
-    status: "in-stock",
-  },
-]
+import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
+import { AppSidebar } from "@/components/shadcn-components/app-sidebar";
+import { DashboardHeader } from "@/components/shadcn-components/dashboard-header";
 
-export default function InventoryPage() {
-  const lowStockItems = inventoryItems.filter((item) => item.status === "low-stock").length
-  const outOfStockItems = inventoryItems.filter((item) => item.status === "out-of-stock").length
-  const totalValue = inventoryItems.reduce((sum, item) => sum + item.currentStock * item.cost, 0)
+type InventoryItem = {
+  id: string;
+  name: string;
+  category: string;
+  currentStock: number;
+  minStock: number;
+  maxStock: number;
+  unit: string;
+  cost: number;
+  supplier?: string;
+  lastRestocked: string;
+};
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "in-stock":
-        return "text-green-600 bg-green-100 border-green-200"
-      case "low-stock":
-        return "text-orange-600 bg-orange-100 border-orange-200"
-      case "out-of-stock":
-        return "text-red-600 bg-red-100 border-red-200"
-      default:
-        return "text-gray-600 bg-gray-100 border-gray-200"
+export default function InventoryPageClient() {
+  const queryClient = useQueryClient();
+
+  const [q, setQ] = useState("");
+  const [openForm, setOpenForm] = useState(false);
+  const [editItem, setEditItem] = useState<InventoryItem | null>(null);
+
+  const { data, isLoading } = useQuery({
+    queryKey: ["inventory", q],
+    queryFn: async () => {
+      const res = await axios.get("/api/inventory", { params: q ? { q } : {} });
+      return res.data.items as InventoryItem[];
+    },
+  });
+
+  const createMutation = useMutation({
+    mutationFn: async (payload: any) => {
+      const res = await axios.post("/api/inventory", payload);
+      return res.data.item;
+    },
+    onSuccess: () => {
+      toast.success("Item created");
+      queryClient.invalidateQueries({ queryKey: ["inventory"] });
+      setOpenForm(false);
+    },
+    onError: (err: any) => {
+      toast.error(err?.response?.data?.message || "Failed to create item");
+    },
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: async ({ id, payload }: any) => {
+      const res = await axios.put(`/api/inventory/${id}`, payload);
+      return res.data.item;
+    },
+    onSuccess: () => {
+      toast.success("Item updated");
+      queryClient.invalidateQueries({ queryKey: ["inventory"] });
+      setEditItem(null);
+      setOpenForm(false);
+    },
+    onError: (err: any) =>
+      toast.error(err?.response?.data?.message || "Failed to update"),
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      await axios.delete(`/api/inventory/${id}`);
+    },
+    onSuccess: () => {
+      toast.success("Item deleted");
+      queryClient.invalidateQueries({ queryKey: ["inventory"] });
+    },
+    onError: (err: any) =>
+      toast.error(err?.response?.data?.message || "Delete failed"),
+  });
+
+  const handleAdd = () => {
+    setEditItem(null);
+    setOpenForm(true);
+  };
+
+  const handleEdit = (item: InventoryItem) => {
+    setEditItem(item);
+    setOpenForm(true);
+  };
+
+  const handleCreateOrUpdate = (values: any) => {
+    if (editItem) {
+      updateMutation.mutate({ id: editItem.id, payload: values });
+    } else {
+      createMutation.mutate(values);
     }
-  }
-
-  const getStockPercentage = (current: number, max: number) => {
-    return Math.min((current / max) * 100, 100)
-  }
+  };
 
   return (
-    <div className="flex flex-col">
-        <SidebarProvider
+    <SidebarProvider
       style={
         {
           "--sidebar-width": "calc(var(--spacing) * 72)",
@@ -114,223 +115,149 @@ export default function InventoryPage() {
     >
       <AppSidebar variant="inset" />
       <SidebarInset>
-      <DashboardHeader />
-      <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-3xl font-bold tracking-tight">Inventory Management</h2>
-            <p className="text-muted-foreground">Track and manage your restaurant inventory</p>
-          </div>
-          <div className="flex gap-2">
-            <Button variant="outline">
-              <PackageIcon className="mr-2 h-4 w-4" />
-              Restock Alert
-            </Button>
-            <Button>
-              <PlusIcon className="mr-2 h-4 w-4" />
+        <DashboardHeader />
+        <Toaster />
+
+        {/* Page Wrapper should be inside SidebarInset */}
+        <div className="p-4">
+
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
+            <div className="flex items-center gap-2 w-full md:w-1/2">
+              <Input
+                placeholder="Search name or supplier..."
+                value={q}
+                onChange={(e) => setQ(e.target.value)}
+              />
+            </div>
+
+            <Button onClick={handleAdd} className="flex items-center gap-2">
+              <PlusIcon className="w-4 h-4" />
               Add Item
             </Button>
           </div>
+
+          {isLoading ? (
+            <div>Loading...</div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {data?.length ? (
+                data.map((item) => (
+                  <Card key={item.id}>
+                    <CardHeader className="flex justify-between items-start">
+                      <div>
+                        <CardTitle className="text-lg font-semibold">
+                          {item.name}
+                        </CardTitle>
+                        <div className="text-sm text-muted-foreground">
+                          {item.category}
+                        </div>
+                      </div>
+                      <Badge
+                        className={
+                          item.currentStock === 0
+                            ? "text-red-600 bg-red-50"
+                            : item.currentStock <= item.minStock
+                            ? "text-orange-600 bg-orange-50"
+                            : "text-green-600 bg-green-50"
+                        }
+                      >
+                        {item.currentStock === 0
+                          ? "Out"
+                          : item.currentStock <= item.minStock
+                          ? "Low"
+                          : "In stock"}
+                      </Badge>
+                    </CardHeader>
+
+                    <CardContent>
+                      <div className="mb-4">
+                        <div className="flex justify-between text-sm">
+                          <span>Current</span>
+                          <span>
+                            {item.currentStock} {item.unit}
+                          </span>
+                        </div>
+
+                        <div className="flex justify-between text-sm">
+                          <span>Min</span>
+                          <span>
+                            {item.minStock} {item.unit}
+                          </span>
+                        </div>
+
+                        <div className="flex justify-between text-sm">
+                          <span>Max</span>
+                          <span>
+                            {item.maxStock} {item.unit}
+                          </span>
+                        </div>
+
+                        <Progress
+                          value={Math.min(
+                            (item.currentStock / Math.max(1, item.maxStock)) *
+                              100,
+                            100
+                          )}
+                          className="mt-2"
+                        />
+                      </div>
+
+                      <div className="text-sm">
+                        <div>
+                          <strong>Cost:</strong> ${item.cost}
+                        </div>
+                        <div>
+                          <strong>Supplier:</strong> {item.supplier || "N/A"}
+                        </div>
+                        <div>
+                          <strong>Last restocked:</strong>{" "}
+                          {new Date(item.lastRestocked).toLocaleString()}
+                        </div>
+                      </div>
+
+                      <div className="flex gap-2 mt-4">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleEdit(item)}
+                        >
+                          Edit
+                        </Button>
+
+                        <Button
+                          size="sm"
+                          onClick={() => {
+                            if (!confirm("Delete this item?")) return;
+                            deleteMutation.mutate(item.id);
+                          }}
+                        >
+                          Delete
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))
+              ) : (
+                <div className="col-span-full text-center py-16">
+                  No inventory items found
+                </div>
+              )}
+            </div>
+          )}
+
+          {openForm && (
+            <InventoryForm
+              initialData={editItem}
+              onClose={() => {
+                setOpenForm(false);
+                setEditItem(null);
+              }}
+              onSave={handleCreateOrUpdate}
+            />
+          )}
+
         </div>
-
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Inventory Value</CardTitle>
-              <PackageIcon className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">${totalValue.toFixed(2)}</div>
-              <p className="text-xs text-muted-foreground">Current stock value</p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Low Stock Items</CardTitle>
-              <AlertTriangleIcon className="h-4 w-4 text-orange-500" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-orange-600">{lowStockItems}</div>
-              <p className="text-xs text-muted-foreground">Items need restocking</p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Out of Stock</CardTitle>
-              <TrendingDownIcon className="h-4 w-4 text-red-500" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-red-600">{outOfStockItems}</div>
-              <p className="text-xs text-muted-foreground">Items unavailable</p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Items</CardTitle>
-              <PackageIcon className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{inventoryItems.length}</div>
-              <p className="text-xs text-muted-foreground">Items in inventory</p>
-            </CardContent>
-          </Card>
-        </div>
-
-        <Tabs defaultValue="all" className="space-y-4">
-          <TabsList>
-            <TabsTrigger value="all">All Items</TabsTrigger>
-            <TabsTrigger value="low-stock">Low Stock</TabsTrigger>
-            <TabsTrigger value="out-of-stock">Out of Stock</TabsTrigger>
-            <TabsTrigger value="categories">Categories</TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="all" className="space-y-4">
-            <div className="grid gap-4">
-              {inventoryItems.map((item) => (
-                <InventoryItemCard
-                  key={item.id}
-                  item={item}
-                  getStatusColor={getStatusColor}
-                  getStockPercentage={getStockPercentage}
-                />
-              ))}
-            </div>
-          </TabsContent>
-
-          <TabsContent value="low-stock" className="space-y-4">
-            <div className="grid gap-4">
-              {inventoryItems
-                .filter((item) => item.status === "low-stock")
-                .map((item) => (
-                  <InventoryItemCard
-                    key={item.id}
-                    item={item}
-                    getStatusColor={getStatusColor}
-                    getStockPercentage={getStockPercentage}
-                  />
-                ))}
-            </div>
-          </TabsContent>
-
-          <TabsContent value="out-of-stock" className="space-y-4">
-            <div className="grid gap-4">
-              {inventoryItems
-                .filter((item) => item.status === "out-of-stock")
-                .map((item) => (
-                  <InventoryItemCard
-                    key={item.id}
-                    item={item}
-                    getStatusColor={getStatusColor}
-                    getStockPercentage={getStockPercentage}
-                  />
-                ))}
-            </div>
-          </TabsContent>
-
-          <TabsContent value="categories" className="space-y-4">
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-              {["Vegetables", "Dairy", "Meat", "Bakery"].map((category) => (
-                <Card key={category}>
-                  <CardHeader>
-                    <CardTitle className="text-lg">{category}</CardTitle>
-                    <CardDescription>
-                      {inventoryItems.filter((item) => item.category === category).length} items
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-2">
-                      {inventoryItems
-                        .filter((item) => item.category === category)
-                        .map((item) => (
-                          <div key={item.id} className="flex items-center justify-between">
-                            <span className="text-sm">{item.name}</span>
-                            <Badge className={getStatusColor(item.status)}>{item.status.replace("-", " ")}</Badge>
-                          </div>
-                        ))}
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </TabsContent>
-        </Tabs>
-      </div>
-        </SidebarInset>
-        </SidebarProvider>
-    </div>
-  )
-}
-
-function InventoryItemCard({
-  item,
-  getStatusColor,
-  getStockPercentage,
-}: {
-  item: InventoryItem
-  getStatusColor: (status: string) => string
-  getStockPercentage: (current: number, max: number) => number
-}) {
-  return (
-    <Card>
-      <CardContent className="p-6">
-        <div className="flex items-center justify-between mb-4">
-          <div>
-            <h3 className="font-semibold text-lg">{item.name}</h3>
-            <p className="text-sm text-muted-foreground">{item.category}</p>
-          </div>
-          <Badge className={getStatusColor(item.status)}>{item.status.replace("-", " ")}</Badge>
-        </div>
-
-        <div className="grid gap-4 md:grid-cols-2">
-          <div className="space-y-2">
-            <div className="flex justify-between text-sm">
-              <span>Current Stock:</span>
-              <span className="font-medium">
-                {item.currentStock} {item.unit}
-              </span>
-            </div>
-            <div className="flex justify-between text-sm">
-              <span>Min Stock:</span>
-              <span>
-                {item.minStock} {item.unit}
-              </span>
-            </div>
-            <div className="flex justify-between text-sm">
-              <span>Max Stock:</span>
-              <span>
-                {item.maxStock} {item.unit}
-              </span>
-            </div>
-            <Progress value={getStockPercentage(item.currentStock, item.maxStock)} className="mt-2" />
-          </div>
-
-          <div className="space-y-2">
-            <div className="flex justify-between text-sm">
-              <span>Cost per unit:</span>
-              <span className="font-medium">${item.cost}</span>
-            </div>
-            <div className="flex justify-between text-sm">
-              <span>Supplier:</span>
-              <span>{item.supplier}</span>
-            </div>
-            <div className="flex justify-between text-sm">
-              <span>Last restocked:</span>
-              <span>{item.lastRestocked}</span>
-            </div>
-            <div className="flex justify-between text-sm">
-              <span>Total value:</span>
-              <span className="font-medium">${(item.currentStock * item.cost).toFixed(2)}</span>
-            </div>
-          </div>
-        </div>
-
-        <div className="flex gap-2 mt-4">
-          <Button size="sm" variant="outline">
-            Edit
-          </Button>
-          <Button size="sm">Restock</Button>
-        </div>
-      </CardContent>
-    </Card>
-  )
+      </SidebarInset>
+    </SidebarProvider>
+  );
 }

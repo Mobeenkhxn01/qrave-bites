@@ -3,30 +3,23 @@ import { auth } from "@/lib/auth";
 import { NextResponse } from "next/server";
 import QRCode from "qrcode";
 
-
 export async function POST(req: Request) {
   try {
     const session = await auth();
-    if (!session) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     if (session.user.role !== "ADMIN" && session.user.role !== "RESTAURANT_OWNER") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const { number } = await req.json();
-    if (!number) {
-      return NextResponse.json({ error: "Table number required" }, { status: 400 });
-    }
+    if (!number) return NextResponse.json({ error: "Table number required" }, { status: 400 });
 
     const restaurant = await prisma.restaurantStep1.findFirst({
       where: { userId: session.user.id },
     });
 
-    if (!restaurant) {
-      return NextResponse.json({ error: "Restaurant not found" }, { status: 404 });
-    }
+    if (!restaurant) return NextResponse.json({ error: "Restaurant not found" }, { status: 404 });
 
     const table = await prisma.table.create({
       data: {
@@ -36,8 +29,7 @@ export async function POST(req: Request) {
       },
     });
 
-    const qrLink = `${process.env.NEXT_PUBLIC_APP_URL}/dashboard/qr-codes/${table.id}`;
-
+    const qrLink = `${process.env.NEXT_PUBLIC_URL}/city/${restaurant.city}/${restaurant.slug}?table=${number}`;
 
     const qrCodeUrl = await QRCode.toDataURL(qrLink);
 
@@ -47,20 +39,15 @@ export async function POST(req: Request) {
     });
 
     return NextResponse.json(updatedTable, { status: 201 });
-
-  } catch (error) {
-    console.error("TABLE CREATE ERROR", error);
+  } catch {
     return NextResponse.json({ error: "Server Error" }, { status: 500 });
   }
 }
 
-
 export async function GET(req: Request) {
   try {
     const session = await auth();
-    if (!session) {
-      return NextResponse.json([], { status: 200 });
-    }
+    if (!session) return NextResponse.json([], { status: 200 });
 
     if (session.user.role !== "ADMIN" && session.user.role !== "RESTAURANT_OWNER") {
       return NextResponse.json([], { status: 200 });
@@ -70,9 +57,7 @@ export async function GET(req: Request) {
       where: { userId: session.user.id },
     });
 
-    if (!restaurant) {
-      return NextResponse.json([], { status: 200 });
-    }
+    if (!restaurant) return NextResponse.json([], { status: 200 });
 
     const tables = await prisma.table.findMany({
       where: { restaurantId: restaurant.id },
@@ -80,9 +65,7 @@ export async function GET(req: Request) {
     });
 
     return NextResponse.json(tables, { status: 200 });
-
-  } catch (error) {
-    console.error("GET TABLE ERROR:", error);
+  } catch {
     return NextResponse.json([], { status: 500 });
   }
 }

@@ -6,24 +6,30 @@ import { pusherServer } from "@/lib/pusher";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
+export const config = {
+  api: {
+    bodyParser: false,
+  },
+};
+
 export async function POST(req: Request) {
+  const body = await req.text();
+  const signature = req.headers.get("stripe-signature");
+
   const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
     apiVersion: "2025-02-24.acacia",
   });
 
-  const signature = req.headers.get("stripe-signature");
-  if (!signature) return NextResponse.json({ error: "Missing signature" }, { status: 400 });
-
-  const body = await req.text();
-
   let event;
+
   try {
     event = stripe.webhooks.constructEvent(
       body,
-      signature,
+      signature!,
       process.env.STRIPE_WEBHOOK_SECRET!
     );
   } catch (err: any) {
+    console.error("Webhook Error:", err.message);
     return new NextResponse(`Webhook Error: ${err.message}`, { status: 400 });
   }
 
@@ -34,13 +40,16 @@ export async function POST(req: Request) {
     const tableNumber = Number(session.metadata.tableNumber);
     const cartId = session.metadata.cartId;
 
+    console.log("🔥 Webhook fired for table:", tableNumber);
+
     const cart = await prisma.cart.findUnique({
       where: { id: cartId },
       include: { cartItems: { include: { menuItem: true } } },
     });
 
     if (!cart) {
-      return NextResponse.json({ error: "Cart not found" }, { status: 400 });
+      console.error("❌ Cart not found");
+      return new NextResponse("Cart not found", { status: 400 });
     }
 
     const lastOrder = await prisma.order.findFirst({
@@ -54,7 +63,7 @@ export async function POST(req: Request) {
       data: {
         restaurantId,
         tableNumber,
-        totalAmount: (session.amount_total || 0) / 100,
+        totalAmount: (session.amount_total ?? 0) / 100,
         paid: true,
         status: "PENDING",
         orderNumber,
@@ -69,6 +78,9 @@ export async function POST(req: Request) {
       include: { items: true },
     });
 
+    console.log("✅ Order created:", order.id);
+
+    // Notify dashboard
     await pusherServer.trigger(`restaurant-${restaurantId}`, "new-order", {
       orderId: order.id,
       orderNumber,
@@ -77,7 +89,11 @@ export async function POST(req: Request) {
       items: order.items,
     });
 
+    // Clear cart
+    await prisma.cartItem.deleteMany({ where: { cartId } });
     await prisma.cart.delete({ where: { id: cartId } });
+
+    console.log("🧹 Cart cleared for table:", tableNumber);
   }
 
   return NextResponse.json({ received: true });

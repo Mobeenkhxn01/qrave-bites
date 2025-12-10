@@ -1,7 +1,8 @@
 import { prisma } from "@/lib/prisma";
 import { MenuItemCard } from "@/components/menu/MenuItemCard";
 import { notFound } from "next/navigation";
-import ToastClient from "./toast-client"; // 🔥 client-only wrapper
+import ToastClient from "./toast-client";
+import CartDialog from "@/app/(userLayout)/cart/CartDialog";
 
 export const revalidate = 60;
 
@@ -10,17 +11,20 @@ export default async function RestaurantPage({
   searchParams,
 }: {
   params: Promise<{ city: string; slug: string }>;
-  searchParams: { table?: string };
+  searchParams: Promise<{ table?: string }>;
 }) {
-  const resolved = await params;
+  // ⭐ FIX — must await both params and searchParams
+  const resolvedParams = await params;
+  const sp = await searchParams;
 
-  const city = decodeURIComponent(resolved.city);
-  const slug = decodeURIComponent(resolved.slug);
+  const city = decodeURIComponent(resolvedParams.city);
+  const slug = decodeURIComponent(resolvedParams.slug);
 
+  const tableParam = sp.table;
   let tableNumber: number | null = null;
 
-  if (searchParams.table) {
-    const num = Number(searchParams.table);
+  if (tableParam !== undefined) {
+    const num = Number(tableParam);
     tableNumber = isNaN(num) ? null : num;
   }
 
@@ -28,13 +32,9 @@ export default async function RestaurantPage({
     where: { slug },
   });
 
-  if (!restaurant) {
-    return notFound();
-  }
+  if (!restaurant) return notFound();
 
-  if (decodeURIComponent(restaurant.city) !== city) {
-    return notFound();
-  }
+  if (decodeURIComponent(restaurant.city) !== city) return notFound();
 
   const menuItems = await prisma.menuItem.findMany({
     where: { restaurantId: restaurant.id },
@@ -44,7 +44,6 @@ export default async function RestaurantPage({
 
   return (
     <div className="max-w-5xl mx-auto py-10 px-4 space-y-6">
-
       <div>
         <h1 className="text-4xl font-bold">{restaurant.restaurantName}</h1>
         <p className="text-gray-600">
@@ -76,10 +75,14 @@ export default async function RestaurantPage({
         )}
       </div>
 
+      {/* Floating Cart Trigger Button */}
+      <CartDialog />
+
+      {/* Toast messages */}
       <ToastClient
         restaurantMissing={!restaurant}
         menuMissing={!hasMenu}
-        tableInvalid={searchParams.table ? tableNumber === null : false}
+        tableInvalid={tableParam ? tableNumber === null : false}
       />
     </div>
   );

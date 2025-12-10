@@ -24,8 +24,6 @@ const createMarkerIcon = () =>
     shadowSize: [41, 41],
   });
 
-const GEOAPIFY_API_KEY = process.env.NEXT_PUBLIC_GEOAPIFY_API_KEY;
-
 interface LocationMapWithSearchProps {
   onLocationChange: (lat: number, lng: number, address: string) => void;
   initialPosition?: [number, number];
@@ -43,23 +41,30 @@ export default function LocationMapWithSearch({
   const [error, setError] = useState<string | null>(null);
   const mapRef = useRef<L.Map | null>(null);
 
-  // -------------------------------
-  // Reverse Geocode
-  // -------------------------------
   const reverseGeocode = useCallback(
     async (lat: number, lng: number) => {
-      if (!lat || !lng) return setAddress('');
+      if (lat === undefined || lng === undefined || isNaN(lat) || isNaN(lng)) {
+        setAddress('');
+        return;
+      }
+
       try {
         const res = await fetch(
-          `https://api.geoapify.com/v1/geocode/reverse?lat=${lat}&lon=${lng}&apiKey=${GEOAPIFY_API_KEY}`
+          `https://api.geoapify.com/v1/geocode/reverse?lat=${lat}&lon=${lng}&apiKey=${process.env.NEXT_PUBLIC_GEOAPIFY_API_KEY}`
         );
-        if (!res.ok) throw new Error('Reverse geocoding failed');
+
+        if (!res.ok) {
+          const text = await res.text();
+          throw new Error(text);
+        }
+
         const data = await res.json();
-        const addr = data.features?.[0]?.properties?.formatted || '';
+        const addr = data?.features?.[0]?.properties?.formatted || '';
+
         setAddress(addr);
         onLocationChange(lat, lng, addr);
       } catch (err) {
-        console.error('Reverse geocoding error:', err);
+        console.error('Reverse Geocoding Error:', err);
         setAddress('');
         onLocationChange(lat, lng, '');
       }
@@ -67,24 +72,29 @@ export default function LocationMapWithSearch({
     [onLocationChange]
   );
 
-  // -------------------------------
-  // Search by address
-  // -------------------------------
   const handleSearch = useCallback(async () => {
     if (!address.trim()) {
       setError('Please enter an address');
       return;
     }
+
     setIsSearching(true);
     setError(null);
+
     try {
       const res = await fetch(
         `https://api.geoapify.com/v1/geocode/search?text=${encodeURIComponent(
           address
-        )}&apiKey=${GEOAPIFY_API_KEY}`
+        )}&apiKey=${process.env.NEXT_PUBLIC_GEOAPIFY_API_KEY}`
       );
-      if (!res.ok) throw new Error('Geocoding failed');
+
+      if (!res.ok) {
+        const msg = await res.text();
+        throw new Error(msg);
+      }
+
       const data = await res.json();
+
       if (data.features && data.features.length > 0) {
         const { lat, lon } = data.features[0].properties;
         const newPosition: [number, number] = [lat, lon];
@@ -94,17 +104,14 @@ export default function LocationMapWithSearch({
       } else {
         setError('Address not found');
       }
-    } catch (err: unknown) {
-      setError('Failed to search location. Please try again.');
-      console.error('Geocoding error:', err);
+    } catch (err) {
+      console.error('Search Error:', err);
+      setError('Failed to search location');
     } finally {
       setIsSearching(false);
     }
   }, [address, onLocationChange]);
 
-  // -------------------------------
-  // Map Click Handler
-  // -------------------------------
   const MapClickHandler = () => {
     useMapEvents({
       click: async (e) => {
@@ -116,42 +123,45 @@ export default function LocationMapWithSearch({
     return null;
   };
 
-  // -------------------------------
-  // Draggable Marker
-  // -------------------------------
   const DraggableMarker = () => {
     const markerRef = useRef<L.Marker>(null);
     const map = useMap();
     mapRef.current = map;
 
-    const eventHandlers = {
-      dragend: async () => {
-        const marker = markerRef.current;
-        if (marker) {
-          const latlng = marker.getLatLng();
-          setPosition([latlng.lat, latlng.lng]);
-          await reverseGeocode(latlng.lat, latlng.lng);
-        }
-      },
-    };
-
-    return <Marker draggable eventHandlers={eventHandlers} position={position} icon={createMarkerIcon()} ref={markerRef} />;
+    return (
+      <Marker
+        draggable
+        position={position}
+        icon={createMarkerIcon()}
+        ref={markerRef}
+        eventHandlers={{
+          dragend: async () => {
+            const marker = markerRef.current;
+            if (!marker) return;
+            const { lat, lng } = marker.getLatLng();
+            setPosition([lat, lng]);
+            await reverseGeocode(lat, lng);
+          },
+        }}
+      />
+    );
   };
 
-  // -------------------------------
-  // Handle Initial Position / Address
-  // -------------------------------
   useEffect(() => {
     if (
       initialPosition &&
-      initialPosition[0] &&
-      initialPosition[1] &&
-      (initialPosition[0] !== position[0] || initialPosition[1] !== position[1])
+      initialPosition[0] !== position[0] &&
+      initialPosition[1] !== position[1]
     ) {
       setPosition(initialPosition);
+
       if (initialAddress) {
         setAddress(initialAddress);
-        onLocationChange(initialPosition[0], initialPosition[1], initialAddress);
+        onLocationChange(
+          initialPosition[0],
+          initialPosition[1],
+          initialAddress
+        );
       } else {
         reverseGeocode(initialPosition[0], initialPosition[1]);
       }
@@ -160,12 +170,11 @@ export default function LocationMapWithSearch({
 
   return (
     <div className="space-y-4">
-      {/* Address Input */}
       <div className="relative">
         <input
           className="border p-2 rounded w-full mb-1 pr-10"
           type="text"
-          placeholder="Search address (e.g., MG Road, Bangalore)"
+          placeholder="Search address"
           value={address}
           onChange={(e) => {
             setAddress(e.target.value);
@@ -177,53 +186,48 @@ export default function LocationMapWithSearch({
         <button
           onClick={handleSearch}
           disabled={isSearching}
-          className="absolute right-2 top-2 text-gray-500 hover:text-gray-700"
-          aria-label="Search location"
+          className="absolute right-2 top-2"
         >
-          {isSearching ? <span className="animate-spin">↻</span> : <span>🔍</span>}
+          {isSearching ? '...' : '🔍'}
         </button>
       </div>
 
-      {/* Use Current Location */}
       <button
         onClick={() => {
           if (!navigator.geolocation) {
-            setError("Geolocation is not supported by your browser.");
+            setError('Geolocation not supported');
             return;
           }
+
           setIsSearching(true);
           setError(null);
+
           navigator.geolocation.getCurrentPosition(
             async (pos) => {
               const { latitude, longitude } = pos.coords;
-              if (!latitude || !longitude) {
-                setError("Invalid coordinates from browser");
-                setIsSearching(false);
-                return;
-              }
-              const newPosition: [number, number] = [latitude, longitude];
+              const newPosition: [number, number] = [
+                latitude,
+                longitude,
+              ];
               setPosition(newPosition);
               mapRef.current?.flyTo(newPosition, 16);
               await reverseGeocode(latitude, longitude);
               setIsSearching(false);
             },
-            (err) => {
-              console.error(err);
-              setError("Failed to get current location.");
+            () => {
+              setError('Failed to get location');
               setIsSearching(false);
             }
           );
         }}
         disabled={isSearching}
-        className="mt-2 px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600"
+        className="px-3 py-1 bg-blue-500 text-white rounded"
       >
         Use Current Location
       </button>
 
-      {/* Error Message */}
       {error && <p className="text-red-500 text-sm">{error}</p>}
 
-      {/* Map */}
       <div className="border rounded overflow-hidden">
         <MapContainer
           center={position}

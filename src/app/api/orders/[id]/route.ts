@@ -2,9 +2,15 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { pusherServer } from "@/lib/pusher";
 
-export async function PATCH(req: Request, { params }: { params: { id: string } }) {
+type RouteParams = Promise<{ id: string }>;
+
+export async function PATCH(
+  req: Request,
+  { params }: { params: RouteParams }
+) {
   try {
-    const orderId = params.id;
+    const { id: orderId } = await params; // ✅ FIX HERE
+
     const body = await req.json();
     const { status, paid } = body;
 
@@ -42,6 +48,9 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
 
     return NextResponse.json({ order });
   } catch (error) {
-    return NextResponse.json({ error: String(error) }, { status: 500 });
+    return NextResponse.json(
+      { error: String(error) },
+      { status: 500 }
+    );
   }
 }

@@ -1,20 +1,36 @@
-'use client'
+"use client";
 
-import { createContext, useContext } from 'react'
-import { useCart } from '@/hooks/useCart'
+import React, { createContext, useContext } from "react";
+import { useSearchParams } from "next/navigation";
+import { useCart } from "@/hooks/useCart";
 
-const CartContext = createContext<ReturnType<typeof useCart> | null>(null)
+// ✅ Correct context type
+type CartContextType = ReturnType<typeof useCart>;
+
+// ✅ Create context
+const CartContext = createContext<CartContextType | null>(null);
 
 export function CartProvider({ children }: { children: React.ReactNode }) {
-  const cart = useCart()
+  // ✅ Read tableNumber only here (client-safe)
+  const searchParams = useSearchParams();
+  const tableNumber = Number(searchParams.get("table")) || null;
 
-  return <CartContext.Provider value={cart}>{children}</CartContext.Provider>
+  // ✅ Pass tableNumber to useCart (FIXES YOUR ERROR)
+  const cart = useCart(tableNumber);
+
+  return (
+    <CartContext.Provider value={cart}>
+      {children}
+    </CartContext.Provider>
+  );
 }
 
 export function useCartContext() {
-  const context = useContext(CartContext)
+  const context = useContext(CartContext);
+
   if (!context) {
-    throw new Error('useCartContext must be used within a CartProvider')
+    throw new Error("useCartContext must be used within a CartProvider");
   }
-  return context
+
+  return context;
 }

@@ -1,6 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
-import { useSearchParams } from "next/navigation";
 
 interface CartItem {
   id: string;
@@ -22,15 +21,9 @@ interface Cart {
   cartItems: CartItem[];
 }
 
-
-export const useCart = () => {
+export const useCart = (tableNumber: number | null) => {
   const queryClient = useQueryClient();
-  const searchParams = useSearchParams();
-const tableNumber = Number(searchParams.get("table")) || null;
 
-  // --------------------------
-  // GET CART
-  // --------------------------
   const { data: cart, isLoading } = useQuery<Cart>({
     queryKey: ["cart", tableNumber],
     queryFn: async () => {
@@ -43,9 +36,6 @@ const tableNumber = Number(searchParams.get("table")) || null;
     },
   });
 
-  // --------------------------
-  // ADD TO CART
-  // --------------------------
   const addToCartMutation = useMutation({
     mutationFn: async (menuItemId: string) => {
       const url = tableNumber
@@ -60,9 +50,6 @@ const tableNumber = Number(searchParams.get("table")) || null;
     },
   });
 
-  // --------------------------
-  // REMOVE FROM CART (decrease or delete)
-  // --------------------------
   const removeFromCartMutation = useMutation({
     mutationFn: async (menuItemId: string) => {
       const url = tableNumber
@@ -77,9 +64,6 @@ const tableNumber = Number(searchParams.get("table")) || null;
     },
   });
 
-  // --------------------------
-  // CLEAR CART
-  // --------------------------
   const clearCartMutation = useMutation({
     mutationFn: async () => {
       const url = tableNumber
@@ -94,9 +78,6 @@ const tableNumber = Number(searchParams.get("table")) || null;
     },
   });
 
-  // --------------------------
-  // CART SUMMARY
-  // --------------------------
   const totalItems =
     cart?.cartItems?.reduce((sum, item) => sum + item.quantity, 0) || 0;
 
@@ -109,13 +90,10 @@ const tableNumber = Number(searchParams.get("table")) || null;
   return {
     cart,
     isLoading,
-
-    // Auto-attach table number
     addToCart: (menuItemId: string) => addToCartMutation.mutate(menuItemId),
     removeFromCart: (menuItemId: string) =>
       removeFromCartMutation.mutate(menuItemId),
     clearCart: () => clearCartMutation.mutate(),
-
     totalItems,
     totalPrice,
   };

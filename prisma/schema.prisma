@@ -240,7 +240,7 @@ model Order {
   totalAmount Float       @default(0)
   status      OrderStatus @default(PENDING)
   paid        Boolean     @default(false)
-  stripeSessionId String? @unique
+  stripeSessionId String?
 
   restaurantId String          @db.ObjectId
   restaurant   RestaurantStep1 @relation(fields: [restaurantId], references: [id])

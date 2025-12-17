@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { EditIcon, TrashIcon } from "lucide-react";
 import { MenuItem } from "./MenuPage";
+import Image from "next/image";
 
 export default function MenuItemCard({
   item,
@@ -23,7 +24,7 @@ export default function MenuItemCard({
   return (
     <Card className={`${!item.available ? "opacity-60" : ""}`}>
       <CardHeader className="p-0 relative">
-        <img
+        <Image
           src={item.image || "/placeholder.svg"}
           alt={item.name}
           className="h-48 w-full object-cover rounded-t-lg"

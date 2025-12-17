@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { EditIcon, TrashIcon } from "lucide-react";
 import { MenuItem } from "./MenuPage";
+import Image from "next/image";
 
 export default function MenuItemCardList({
   item,
@@ -17,7 +18,7 @@ export default function MenuItemCardList({
     <Card className={`${!item.available ? "opacity-60" : ""}`}>
       <CardContent className="flex gap-4">
         <div className="h-20 w-20 overflow-hidden rounded-lg">
-          <img
+          <Image
             src={item.image || "/placeholder.svg"}
             alt={item.name}
             className="h-full w-full object-cover"

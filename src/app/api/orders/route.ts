@@ -1,100 +1,149 @@
+
+import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { NextResponse } from "next/server";
-import { orderQuerySchema } from "@/lib/validators";
 
-export async function GET(req: Request) {
-  const session = await auth();
-
-  if (!session?.user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  const url = new URL(req.url);
-
-  const parsedQuery = orderQuerySchema.safeParse({
-    _id: url.searchParams.get("_id") ?? undefined,
-  });
-
-  if (!parsedQuery.success) {
-    return NextResponse.json(
-      { error: "Invalid query parameters" },
-      { status: 400 }
-    );
-  }
-
-  const orderId = parsedQuery.data._id;
-  const role = session.user.role;
-  const userId = session.user.id;
-
+/* ===================== GET ===================== */
+export async function GET() {
   try {
-    if (role === "ADMIN") {
-      if (orderId) {
-        const order = await prisma.order.findUnique({
-          where: { id: orderId },
-          include: {
-            items: { include: { menuItem: true } },
-            restaurant: true,
-          },
-        });
+    const session = await auth();
 
-        if (!order) {
-          return NextResponse.json({ error: "Order not found" }, { status: 404 });
-        }
-
-        return NextResponse.json(order);
-      }
-
+    if (session?.user?.role === "ADMIN") {
       const orders = await prisma.order.findMany({
         orderBy: { createdAt: "desc" },
         include: {
-          items: { include: { menuItem: true } },
-          restaurant: true,
+          items: {
+            include: {
+              menuItem: { select: { id: true, name: true } },
+            },
+          },
         },
       });
 
-      return NextResponse.json(orders);
+      return NextResponse.json({ orders });
     }
 
-    const restaurant = await prisma.restaurantStep1.findUnique({
+    const userId = session?.user?.id;
+    if (!userId) return NextResponse.json({ orders: [] });
+
+    const restaurant = await prisma.restaurantStep1.findFirst({
       where: { userId },
+      select: { id: true },
     });
 
-    if (!restaurant) {
-      return NextResponse.json([]);
-    }
-
-    const restaurantId = restaurant.id;
-
-    if (orderId) {
-      const order = await prisma.order.findFirst({
-        where: { id: orderId, restaurantId },
-        include: {
-          items: { include: { menuItem: true } },
-          restaurant: true,
-        },
-      });
-
-      if (!order) {
-        return NextResponse.json({ error: "Order not found" }, { status: 404 });
-      }
-
-      return NextResponse.json(order);
-    }
+    if (!restaurant) return NextResponse.json({ orders: [] });
 
     const orders = await prisma.order.findMany({
-      where: { restaurantId },
+      where: { restaurantId: restaurant.id },
       orderBy: { createdAt: "desc" },
       include: {
-        items: { include: { menuItem: true } },
-        restaurant: true,
+        items: {
+          include: {
+            menuItem: { select: { id: true, name: true } },
+          },
+        },
       },
     });
 
-    return NextResponse.json(orders);
-  } catch {
+    return NextResponse.json({ orders });
+  } catch (error) {
+    console.error("GET /api/orders error:", error);
+    return NextResponse.json({ error: "Server error" }, { status: 500 });
+  }
+}
+
+/* ===================== POST ===================== */
+export async function POST(req: Request) {
+  try {
+    const session = await auth();
+    const body = await req.json();
+
+    const { tableId, tableNumber, phone } = body;
+
+    if (!tableId) {
+      return NextResponse.json(
+        { success: false, message: "tableId is required" },
+        { status: 400 }
+      );
+    }
+
+    const cart = await prisma.cart.findFirst({
+      where: { tableId },
+      include: {
+        cartItems: {
+          include: { menuItem: true },
+        },
+        table: true,
+      },
+    });
+
+    if (!cart || cart.cartItems.length === 0) {
+      return NextResponse.json(
+        { success: false, message: "Cart is empty" },
+        { status: 400 }
+      );
+    }
+
+    const restaurantId = cart.cartItems[0].menuItem.restaurantId;
+
+    const totalAmount = cart.cartItems.reduce(
+      (sum, item) => sum + item.quantity * item.menuItem.price,
+      0
+    );
+
+    const lastOrder = await prisma.order.findFirst({
+      where: { restaurantId },
+      orderBy: { orderNumber: "desc" },
+      select: { orderNumber: true },
+    });
+
+    const nextOrderNumber = (lastOrder?.orderNumber ?? 0) + 1;
+
+    const order = await prisma.order.create({
+      data: {
+        restaurantId,
+        tableId,
+        tableNumber: tableNumber ?? cart.table?.number ?? null,
+        userId: session?.user?.id ?? null,
+        phone: phone ?? null,
+        totalAmount,
+        orderNumber: nextOrderNumber,
+        status: "PENDING",
+        paid: false,
+        items: {
+          create: cart.cartItems.map((item) => ({
+            menuItemId: item.menuItemId,
+            quantity: item.quantity,
+            price: item.menuItem.price,
+          })),
+        },
+      },
+      include: { items: true },
+    });
+
+    await prisma.notification.create({
+      data: {
+        restaurantId,
+        orderId: order.id,
+        type: "NEW_ORDER",
+        message: `New order #${order.orderNumber} received`,
+        payload: {
+          orderId: order.id,
+          tableNumber: order.tableNumber,
+          totalAmount,
+        },
+      },
+    });
+
+    await prisma.cartItem.deleteMany({
+      where: { cartId: cart.id },
+    });
+
+    return NextResponse.json({ success: true, order });
+  } catch (error) {
+    console.error("POST /api/orders error:", error);
     return NextResponse.json(
-      { error: "Something went wrong" },
+      { success: false, message: "Failed to place order" },
       { status: 500 }
     );
   }

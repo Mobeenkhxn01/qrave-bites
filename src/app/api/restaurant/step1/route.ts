@@ -1,10 +1,22 @@
 import { prisma } from "@/lib/prisma";
 import { NextResponse, NextRequest } from "next/server";
 import slugify from "slugify";
+import {
+  restaurantStep1Schema,
+  restaurantByEmailSchema,
+} from "@/lib/validators";
 
 export async function POST(req: NextRequest) {
   try {
-    const data = await req.json();
+    const body = await req.json();
+    const parsed = restaurantStep1Schema.safeParse(body);
+
+    if (!parsed.success) {
+      return NextResponse.json(
+        { success: false, message: "Invalid request body" },
+        { status: 400 }
+      );
+    }
 
     const {
       restaurantname,
@@ -20,7 +32,7 @@ export async function POST(req: NextRequest) {
       latitude,
       longitude,
       address,
-    } = data;
+    } = parsed.data;
 
     const user = await prisma.user.findUnique({
       where: { email },
@@ -56,13 +68,13 @@ export async function POST(req: NextRequest) {
             phone,
             mobile,
             shop,
-            floor: floor || null,
+            floor: floor ?? null,
             area,
             city,
-            landmark: landmark || null,
-            latitude: latitude || null,
-            longitude: longitude || null,
-            address: address || null,
+            landmark: landmark ?? null,
+            latitude: latitude ?? null,
+            longitude: longitude ?? null,
+            address: address ?? null,
             slug,
             updatedAt: new Date(),
           },
@@ -78,13 +90,13 @@ export async function POST(req: NextRequest) {
             phone,
             mobile,
             shop,
-            floor: floor || null,
+            floor: floor ?? null,
             area,
             city,
-            landmark: landmark || null,
-            latitude: latitude || null,
-            longitude: longitude || null,
-            address: address || null,
+            landmark: landmark ?? null,
+            latitude: latitude ?? null,
+            longitude: longitude ?? null,
+            address: address ?? null,
             slug,
             user: { connect: { id: user.id } },
           },
@@ -110,14 +122,18 @@ export async function POST(req: NextRequest) {
 
 export async function GET(req: NextRequest) {
   try {
-    const email = new URL(req.url).searchParams.get("email");
+    const parsedQuery = restaurantByEmailSchema.safeParse({
+      email: new URL(req.url).searchParams.get("email"),
+    });
 
-    if (!email) {
+    if (!parsedQuery.success) {
       return NextResponse.json(
-        { success: false, message: "Email is required" },
+        { success: false, message: "Invalid query parameters" },
         { status: 400 }
       );
     }
+
+    const { email } = parsedQuery.data;
 
     const restaurant = await prisma.restaurantStep1.findUnique({
       where: { email },

@@ -1,13 +1,24 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { updateUserSchema } from "@/lib/validators";
 
 export async function PUT(req: Request) {
   try {
-    const data = await req.json();
-    const { id, name, image, ...otherUserInfo } = data;
+    const body = await req.json();
+    const parsed = updateUserSchema.safeParse(body);
+
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: "Invalid request body" },
+        { status: 400 }
+      );
+    }
+
+    const { id, name, image, ...otherUserInfo } = parsed.data;
 
     let filter;
+
     if (id) {
       filter = { id };
     } else {
@@ -19,8 +30,12 @@ export async function PUT(req: Request) {
     }
 
     const user = await prisma.user.findUnique({ where: filter });
+
     if (!user) {
-      return NextResponse.json({ error: "User not found" }, { status: 404 });
+      return NextResponse.json(
+        { error: "User not found" },
+        { status: 404 }
+      );
     }
 
     await prisma.user.update({
@@ -43,17 +58,27 @@ export async function PUT(req: Request) {
       },
     });
 
-    return NextResponse.json({ success: true, message: "Profile updated successfully" });
+    return NextResponse.json({
+      success: true,
+      message: "Profile updated successfully",
+    });
   } catch {
-    return NextResponse.json({ error: "Server error" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Server error" },
+      { status: 500 }
+    );
   }
 }
 
 export async function GET() {
   try {
     const session = await auth();
+
     if (!session?.user?.email) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return NextResponse.json(
+        { error: "Unauthorized" },
+        { status: 401 }
+      );
     }
 
     const user = await prisma.user.findUnique({
@@ -62,11 +87,17 @@ export async function GET() {
     });
 
     if (!user) {
-      return NextResponse.json({ error: "User not found" }, { status: 404 });
+      return NextResponse.json(
+        { error: "User not found" },
+        { status: 404 }
+      );
     }
 
     return NextResponse.json(user);
   } catch {
-    return NextResponse.json({ error: "Server error" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Server error" },
+      { status: 500 }
+    );
   }
 }

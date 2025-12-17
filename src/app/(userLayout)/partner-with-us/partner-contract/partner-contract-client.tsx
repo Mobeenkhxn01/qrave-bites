@@ -81,98 +81,106 @@ export default function PartnerContractClient() {
   return (
     <div className="px-4 md:px-6 lg:px-8">
       <div className="block lg:hidden mb-8">
-              <div className="w-full flex justify-center items-center">
-                <TitleHeaderPartner activeStep={4} />
-              </div>
-            </div>
-      
-            <div className="flex flex-col lg:flex-row gap-6">
-              <aside className="hidden lg:block w-1/3 p-12">
-                <TitleHeaderPartner activeStep={4} />
-              </aside>
-      
-              <section className="w-full lg:w-2/3 lg:pr-20">
-                <h1 className="text-2xl md:text-3xl lg:text-4xl font-semibold mb-6">
-                  Partner Agreement
-                </h1>
-      
-                <Card>
-                  <CardHeader>
-                    <h2 className="text-xl font-semibold">
-                      Agreement Terms & Policies
-                    </h2>
-                  </CardHeader>
-                  <CardContent>
-                    <ScrollArea className="h-80 border p-4 rounded-lg bg-gray-50">
-                      <div className="space-y-4 text-sm md:text-base text-gray-700">
-                        <h3 className="font-semibold">1. Partner Agreement</h3>
-                        <p>
-                          By partnering with QraveBites, you agree to comply with all
-                          operational guidelines, maintain quality standards, and
-                          provide accurate and timely services. You will be
-                          responsible for menu, pricing, and inventory management.
-                          Violations may result in account suspension.
-                        </p>
-      
-                        <h3 className="font-semibold">2. Privacy Policy</h3>
-                        <p>
-                          All personal and business information is securely stored and
-                          used only for platform operations. It will never be shared
-                          without consent except when required by law.
-                        </p>
-      
-                        <h3 className="font-semibold">3. Terms & Conditions</h3>
-                        <p>
-                          1. You must provide accurate information. <br />
-                          2. You must comply with all applicable laws. <br />
-                          3. Policy updates will be communicated. <br />
-                          4. All payments must be through approved gateways. <br />
-                          5. QraveBites may suspend accounts for violations.
-                        </p>
-      
-                        <p className="italic text-gray-600">
-                          By checking the box below, you confirm that you have read
-                          and agree to all the terms and policies above.
-                        </p>
-                      </div>
-                    </ScrollArea>
-                  </CardContent>
-                </Card>
-      
-                <Form {...form}>
-                  <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 mt-6">
-                    <FormField
-                      control={form.control}
-                      name="agreement"
-                      render={({ field }) => (
-                        <FormItem className="flex items-start space-x-2">
-                          <FormControl>
-                            <Checkbox checked={field.value} onCheckedChange={field.onChange} />
-                          </FormControl>
-                          <div className="flex flex-col">
-                            <FormLabel className="text-sm md:text-base font-medium">
-                              I agree to all the Terms & Conditions, Privacy Policy and Partner Agreement.
-                            </FormLabel>
-                            <FormMessage />
-                          </div>
-                        </FormItem>
-                      )}
-                    />
-      
-                    <div className="flex justify-end mt-4">
-                      <Button
-                        type="submit"
-                        size="lg"
-                        className="rounded-2xl bg-[#4947e0] text-white hover:bg-[#3a38b8] flex items-center"
-                      >
-                        Submit
-                        <Right className="ml-2" />
-                      </Button>
+        <div className="w-full flex justify-center items-center">
+          <TitleHeaderPartner activeStep={4} />
+        </div>
+      </div>
+
+      <div className="flex flex-col lg:flex-row gap-6">
+        <aside className="hidden lg:block w-1/3 p-12">
+          <TitleHeaderPartner activeStep={4} />
+        </aside>
+
+        <section className="w-full lg:w-2/3 lg:pr-20">
+          <h1 className="text-2xl md:text-3xl lg:text-4xl font-semibold mb-6">
+            Partner Agreement
+          </h1>
+
+          <Card>
+            <CardHeader>
+              <h2 className="text-xl font-semibold">
+                Agreement Terms & Policies
+              </h2>
+            </CardHeader>
+            <CardContent>
+              <ScrollArea className="h-80 border p-4 rounded-lg bg-gray-50">
+                <div className="space-y-4 text-sm md:text-base text-gray-700">
+                  <h3 className="font-semibold">1. Partner Agreement</h3>
+                  <p>
+                    By partnering with QraveBites, you agree to comply with all
+                    operational guidelines, maintain quality standards, and
+                    provide accurate and timely services. You will be
+                    responsible for menu, pricing, and inventory management.
+                    Violations may result in account suspension.
+                  </p>
+
+                  <h3 className="font-semibold">2. Privacy Policy</h3>
+                  <p>
+                    All personal and business information is securely stored and
+                    used only for platform operations. It will never be shared
+                    without consent except when required by law.
+                  </p>
+
+                  <h3 className="font-semibold">3. Terms & Conditions</h3>
+                  <p>
+                    1. You must provide accurate information. <br />
+                    2. You must comply with all applicable laws. <br />
+                    3. Policy updates will be communicated. <br />
+                    4. All payments must be through approved gateways. <br />
+                    5. QraveBites may suspend accounts for violations.
+                  </p>
+
+                  <p className="italic text-gray-600">
+                    By checking the box below, you confirm that you have read
+                    and agree to all the terms and policies above.
+                  </p>
+                </div>
+              </ScrollArea>
+            </CardContent>
+          </Card>
+
+          <Form {...form}>
+            <form
+              onSubmit={form.handleSubmit(onSubmit)}
+              className="space-y-6 mt-6"
+            >
+              <FormField
+                control={form.control}
+                name="agreement"
+                render={({ field }) => (
+                  <FormItem className="flex items-start space-x-2">
+                    <FormControl>
+                      <Checkbox
+                        checked={field.value}
+                        onCheckedChange={(value) => field.onChange(!!value)}
+                      />
+                    </FormControl>
+
+                    <div className="flex flex-col">
+                      <FormLabel className="text-sm md:text-base font-medium">
+                        I agree to all the Terms & Conditions, Privacy Policy
+                        and Partner Agreement.
+                      </FormLabel>
+                      <FormMessage />
                     </div>
-                  </form>
-                </Form>
-              </section>
-            </div>
+                  </FormItem>
+                )}
+              />
+
+              <div className="flex justify-end mt-4">
+                <Button
+                  type="submit"
+                  size="lg"
+                  className="rounded-2xl bg-[#4947e0] text-white hover:bg-[#3a38b8] flex items-center"
+                >
+                  Submit
+                  <Right className="ml-2" />
+                </Button>
+              </div>
+            </form>
+          </Form>
+        </section>
+      </div>
     </div>
   );
 }

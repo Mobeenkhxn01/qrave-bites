@@ -1,16 +1,23 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import {
+  restaurantStep2Schema,
+  restaurantStep2QuerySchema,
+} from "@/lib/validators";
 
 export async function GET(req: Request) {
-  const { searchParams } = new URL(req.url);
-  const email = searchParams.get("email");
+  const parsedQuery = restaurantStep2QuerySchema.safeParse({
+    email: new URL(req.url).searchParams.get("email"),
+  });
 
-  if (!email) {
+  if (!parsedQuery.success) {
     return NextResponse.json(
-      { success: false, message: "Email is required" },
+      { success: false, message: "Invalid query parameters" },
       { status: 400 }
     );
   }
+
+  const { email } = parsedQuery.data;
 
   const step1 = await prisma.restaurantStep1.findUnique({
     where: { email },
@@ -30,6 +37,15 @@ export async function GET(req: Request) {
 export async function POST(req: Request) {
   try {
     const body = await req.json();
+    const parsed = restaurantStep2Schema.safeParse(body);
+
+    if (!parsed.success) {
+      return NextResponse.json(
+        { success: false, message: "Invalid request body" },
+        { status: 400 }
+      );
+    }
+
     const {
       cuisine,
       restaurantImageUrl,
@@ -40,14 +56,7 @@ export async function POST(req: Request) {
       openingTime,
       closingTime,
       email,
-    } = body;
-
-    if (!email) {
-      return NextResponse.json(
-        { success: false, message: "User email is required" },
-        { status: 400 }
-      );
-    }
+    } = parsed.data;
 
     const step1 = await prisma.restaurantStep1.findUnique({
       where: { email },

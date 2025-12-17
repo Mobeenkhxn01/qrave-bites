@@ -11,30 +11,36 @@ export default async function RestaurantPage({
   searchParams,
 }: {
   params: Promise<{ city: string; slug: string }>;
-  searchParams: Promise<{ table?: string }>;
+  searchParams: Promise<{ tableId?: string }>;
 }) {
-  // ⭐ FIX — must await both params and searchParams
   const resolvedParams = await params;
   const sp = await searchParams;
 
   const city = decodeURIComponent(resolvedParams.city);
   const slug = decodeURIComponent(resolvedParams.slug);
 
-  const tableParam = sp.table;
-  let tableNumber: number | null = null;
-
-  if (tableParam !== undefined) {
-    const num = Number(tableParam);
-    tableNumber = isNaN(num) ? null : num;
-  }
+  const tableId = sp.tableId ?? null;
 
   const restaurant = await prisma.restaurantStep1.findUnique({
     where: { slug },
   });
 
   if (!restaurant) return notFound();
-
   if (decodeURIComponent(restaurant.city) !== city) return notFound();
+
+  let tableNumber: number | null = null;
+
+  if (tableId) {
+    const table = await prisma.table.findUnique({
+      where: { id: tableId },
+    });
+
+    if (!table || table.restaurantId !== restaurant.id) {
+      return notFound();
+    }
+
+    tableNumber = table.number;
+  }
 
   const menuItems = await prisma.menuItem.findMany({
     where: { restaurantId: restaurant.id },
@@ -68,21 +74,19 @@ export default async function RestaurantPage({
               <MenuItemCard
                 key={item.id}
                 item={item}
-                tableNumber={tableNumber}
+                tableId={tableId}
               />
             ))}
           </div>
         )}
       </div>
 
-      {/* Floating Cart Trigger Button */}
-      <CartDialog />
+      <CartDialog tableId={tableId} restaurantId={restaurant.id}  />
 
-      {/* Toast messages */}
       <ToastClient
         restaurantMissing={!restaurant}
         menuMissing={!hasMenu}
-        tableInvalid={tableParam ? tableNumber === null : false}
+        tableInvalid={!!tableId && tableNumber === null}
       />
     </div>
   );

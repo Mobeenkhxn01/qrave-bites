@@ -6,7 +6,6 @@ export async function GET(req: Request) {
   try {
     const session = await auth();
 
-    // ADMIN sees all orders
     if (session?.user?.role === "ADMIN") {
       const orders = await prisma.order.findMany({
         orderBy: { createdAt: "desc" },

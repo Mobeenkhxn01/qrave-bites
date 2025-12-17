@@ -1,16 +1,22 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { menuItemIdQuerySchema } from "@/lib/validators";
 
 export async function GET(request: NextRequest) {
   const url = new URL(request.url);
-  const id = url.searchParams.get("id");
 
-  if (!id) {
+  const parsedQuery = menuItemIdQuerySchema.safeParse({
+    id: url.searchParams.get("id"),
+  });
+
+  if (!parsedQuery.success) {
     return NextResponse.json(
-      { error: "MenuItem ID is required" },
+      { error: "Invalid query parameters" },
       { status: 400 }
     );
   }
+
+  const { id } = parsedQuery.data;
 
   const menuItem = await prisma.menuItem.findUnique({
     where: { id },

@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -9,47 +8,47 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { useCart } from "@/hooks/useCart";
-import axios from "axios";
-import { toast } from "react-hot-toast";
+import { useCartContext } from "@/context/CardContext";
 import { ShoppingCart } from "lucide-react";
-import { useSearchParams } from "next/navigation";
-import Trash from "@/components/icons/Trash";
+import { toast } from "react-hot-toast";
+import axios from "axios";
 
-export default function CartDialog() {
-  const searchParams = useSearchParams();
-  const tableNumber = Number(searchParams.get("table")) || null;
-
-  const {
-    cart,
-    isLoading,
-    addToCart,
-    removeFromCart,
-    clearCart,
-    totalPrice,
-  } = useCart(tableNumber);
+export default function CartDialog({
+  tableId,
+  restaurantId,
+}: {
+  tableId: string | null;
+  restaurantId: string;
+}) {
+  const { cart, isLoading, addToCart, removeFromCart, clearCart, totalPrice } =
+    useCartContext();
 
   const handleQtyChange = (menuItemId: string, change: number) => {
-    change > 0 ? addToCart(menuItemId) : removeFromCart(menuItemId);
+    change > 0
+      ? addToCart(menuItemId, tableId)
+      : removeFromCart(menuItemId, tableId);
+
     toast.success("Cart updated");
   };
 
   const handleCheckout = async () => {
-    if (!tableNumber) {
-      toast.error("Table number missing!");
+    if (!tableId || !cart?.id) {
+      toast.error("Table not detected");
       return;
     }
 
-    const res = await axios.post("/api/checkout", { tableNumber });
-    window.location.href = res.data.url;
+    try {
+      const res = await axios.post("/api/orders", {
+        cartId: cart.id,
+        tableId,
+        restaurantId,
+      });
+
+      toast.success(`Order #${res.data.order.orderNumber} placed`);
+      clearCart(tableId);
+    } catch (err: any) {
+      toast.error(err.response?.data?.error || "Checkout failed");
+    }
   };
 
   return (
@@ -71,12 +70,13 @@ export default function CartDialog() {
         {isLoading ? (
           <div className="p-10 text-center">Loading cart...</div>
         ) : (
-          <div className="p-4">
-            <p className="font-bold mb-4">Total: ₹{totalPrice.toFixed(2)}</p>
+          <div className="p-4 space-y-4">
+            <p className="font-bold">Total: ₹{totalPrice.toFixed(2)}</p>
 
             <Button
               className="w-full bg-[#eb0029]"
               onClick={handleCheckout}
+              disabled={!cart || cart.cartItems.length === 0}
             >
               Proceed to Checkout
             </Button>

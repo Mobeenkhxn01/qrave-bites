@@ -9,10 +9,10 @@ import toast from 'react-hot-toast'
 
 export function MenuItemCard({
   item,
-  tableNumber
+  tableId
 }: {
   item: MenuItem
-  tableNumber: number | null
+  tableId: string | null
 }) {
   const handleClickUnavailable = () => {
     toast.error("This item is currently unavailable")
@@ -58,7 +58,7 @@ export function MenuItemCard({
         {item.available ? (
           <AddToCartButton
             menuItemId={item.id}
-            tableNumber={tableNumber}
+            tableId={tableId}
             available={item.available}
           />
         ) : (

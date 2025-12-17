@@ -1,6 +1,12 @@
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
+import {
+  createMenuItemSchema,
+  updateMenuItemSchema,
+  menuItemQuerySchema,
+  menuItemDeleteSchema,
+} from "@/lib/validators";
 
 export async function POST(req: Request) {
   try {
@@ -11,20 +17,18 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const data = await req.json();
-    const { name, description, price, image, categoryId, prepTime, available } = data;
+    const body = await req.json();
+    const parsed = createMenuItemSchema.safeParse(body);
 
-    if (!name || !description || price === undefined || !categoryId || prepTime === undefined || available === undefined) {
-      return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
+    if (!parsed.success) {
+      return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
     }
 
-    const parsedPrice = parseFloat(price);
-    if (isNaN(parsedPrice) || parsedPrice < 0) {
-      return NextResponse.json({ error: "Invalid price" }, { status: 400 });
-    }
+    const { name, description, price, image, categoryId, prepTime, available } =
+      parsed.data;
 
     const restaurant = await prisma.restaurantStep1.findFirst({
-      where: { userId }
+      where: { userId },
     });
 
     if (!restaurant) {
@@ -32,11 +36,14 @@ export async function POST(req: Request) {
     }
 
     const conflict = await prisma.menuItem.findFirst({
-      where: { name: name.toLowerCase(), userId }
+      where: { name: name.toLowerCase(), userId },
     });
 
     if (conflict) {
-      return NextResponse.json({ error: "Menu item already exists" }, { status: 400 });
+      return NextResponse.json(
+        { error: "Menu item already exists" },
+        { status: 400 }
+      );
     }
 
     const menuItem = await prisma.menuItem.create({
@@ -44,37 +51,46 @@ export async function POST(req: Request) {
         name: name.toLowerCase(),
         description,
         image,
-        price: parsedPrice,
+        price,
         prepTime,
         available,
         userId,
         categoryId,
-        restaurantId: restaurant.id
-      }
+        restaurantId: restaurant.id,
+      },
     });
 
     return NextResponse.json(menuItem, { status: 201 });
-  } catch (error) {
-    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+  } catch {
+    return NextResponse.json(
+      { error: "Internal Server Error" },
+      { status: 500 }
+    );
   }
 }
 
 export async function GET(req: Request) {
   try {
     const url = new URL(req.url);
-    const userId = url.searchParams.get("userId");
 
-    if (!userId) {
-      return NextResponse.json({ error: "Missing userId" }, { status: 400 });
+    const parsedQuery = menuItemQuerySchema.safeParse({
+      userId: url.searchParams.get("userId"),
+    });
+
+    if (!parsedQuery.success) {
+      return NextResponse.json({ error: "Invalid query" }, { status: 400 });
     }
 
     const items = await prisma.menuItem.findMany({
-      where: { userId }
+      where: { userId: parsedQuery.data.userId },
     });
 
     return NextResponse.json(items);
-  } catch (error) {
-    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+  } catch {
+    return NextResponse.json(
+      { error: "Internal Server Error" },
+      { status: 500 }
+    );
   }
 }
 
@@ -87,32 +103,44 @@ export async function PUT(req: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const data = await req.json();
-    const { id, name, description, price, image, categoryId, prepTime, available } = data;
+    const body = await req.json();
+    const parsed = updateMenuItemSchema.safeParse(body);
 
-    if (!id || !name || !description || price === undefined || !categoryId || prepTime === undefined || available === undefined) {
-      return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
+    if (!parsed.success) {
+      return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
     }
 
-    const parsedPrice = parseFloat(price);
-    if (isNaN(parsedPrice) || parsedPrice < 0) {
-      return NextResponse.json({ error: "Invalid price" }, { status: 400 });
-    }
+    const {
+      id,
+      name,
+      description,
+      price,
+      image,
+      categoryId,
+      prepTime,
+      available,
+    } = parsed.data;
 
     const existing = await prisma.menuItem.findFirst({
-      where: { id, userId }
+      where: { id, userId },
     });
 
     if (!existing) {
-      return NextResponse.json({ error: "Menu item not found" }, { status: 404 });
+      return NextResponse.json(
+        { error: "Menu item not found" },
+        { status: 404 }
+      );
     }
 
     const conflict = await prisma.menuItem.findFirst({
-      where: { name: name.toLowerCase(), userId, id: { not: id } }
+      where: { name: name.toLowerCase(), userId, id: { not: id } },
     });
 
     if (conflict) {
-      return NextResponse.json({ error: "Menu item already exists" }, { status: 400 });
+      return NextResponse.json(
+        { error: "Menu item already exists" },
+        { status: 400 }
+      );
     }
 
     const updated = await prisma.menuItem.update({
@@ -120,17 +148,20 @@ export async function PUT(req: Request) {
       data: {
         name: name.toLowerCase(),
         description,
-        price: parsedPrice,
+        price,
         image,
         categoryId,
         prepTime,
-        available
-      }
+        available,
+      },
     });
 
     return NextResponse.json(updated);
-  } catch (error) {
-    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+  } catch {
+    return NextResponse.json(
+      { error: "Internal Server Error" },
+      { status: 500 }
+    );
   }
 }
 
@@ -144,25 +175,35 @@ export async function DELETE(req: Request) {
     }
 
     const url = new URL(req.url);
-    const id = url.searchParams.get("id");
+    const parsedQuery = menuItemDeleteSchema.safeParse({
+      id: url.searchParams.get("id"),
+    });
 
-    if (!id) {
-      return NextResponse.json({ error: "Missing id" }, { status: 400 });
+    if (!parsedQuery.success) {
+      return NextResponse.json({ error: "Invalid query" }, { status: 400 });
     }
 
+    const { id } = parsedQuery.data;
+
     const existing = await prisma.menuItem.findFirst({
-      where: { id, userId }
+      where: { id, userId },
     });
 
     if (!existing) {
-      return NextResponse.json({ error: "Menu item not found" }, { status: 404 });
+      return NextResponse.json(
+        { error: "Menu item not found" },
+        { status: 404 }
+      );
     }
 
     await prisma.cartItem.deleteMany({ where: { menuItemId: id } });
     await prisma.menuItem.delete({ where: { id } });
 
     return NextResponse.json({ success: true });
-  } catch (error) {
-    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+  } catch {
+    return NextResponse.json(
+      { error: "Internal Server Error" },
+      { status: 500 }
+    );
   }
 }

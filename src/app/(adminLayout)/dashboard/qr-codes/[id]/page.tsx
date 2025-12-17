@@ -22,14 +22,12 @@ export default async function QRRedirectPage({
     return <div>Invalid QR</div>;
   }
 
-  // increment scan count
   await prisma.table.update({
     where: { id: tableId },
     data: { scan: { increment: 1 } },
   });
 
-  // IMPORTANT: Correct menu redirect
   redirect(
-    `/city/${table.restaurant.city}/${table.restaurant.slug}/menu?table=${table.number}`
+    `/city/${table.restaurant.city}/${table.restaurant.slug}/menu?tableId=${id}`
   );
 }

@@ -1,41 +1,46 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import {
+  inventoryIdParamSchema,
+  inventoryUpdateSchema,
+} from "@/lib/validators";
 
 type RouteParams = Promise<{ id: string }>;
 
 export async function PUT(req: Request, { params }: { params: RouteParams }) {
   try {
-    const { id } = await params;
+    const parsedParams = inventoryIdParamSchema.safeParse(await params);
+
+    if (!parsedParams.success) {
+      return NextResponse.json(
+        { success: false, message: "Invalid id" },
+        { status: 400 }
+      );
+    }
+
     const body = await req.json();
+    const parsedBody = inventoryUpdateSchema.safeParse(body);
 
-    const data: any = {};
-    const fields = [
-      "name",
-      "category",
-      "currentStock",
-      "minStock",
-      "maxStock",
-      "unit",
-      "cost",
-      "supplier",
-    ];
+    if (!parsedBody.success) {
+      return NextResponse.json(
+        { success: false, message: "Invalid request body" },
+        { status: 400 }
+      );
+    }
 
-    fields.forEach((f) => {
-      if (body[f] !== undefined) data[f] = body[f];
-    });
+    const data: any = { ...parsedBody.data };
 
     if (data.currentStock !== undefined) {
       data.lastRestocked = new Date();
     }
 
     const updated = await prisma.inventory.update({
-      where: { id },
+      where: { id: parsedParams.data.id },
       data,
     });
 
     return NextResponse.json({ success: true, item: updated });
   } catch (err: any) {
-    console.error("PUT /api/inventory/[id] error:", err);
     return NextResponse.json(
       { success: false, message: err.message || "Server error" },
       { status: 500 }
@@ -48,13 +53,21 @@ export async function DELETE(
   { params }: { params: RouteParams }
 ) {
   try {
-    const { id } = await params;
+    const parsedParams = inventoryIdParamSchema.safeParse(await params);
 
-    await prisma.inventory.delete({ where: { id } });
+    if (!parsedParams.success) {
+      return NextResponse.json(
+        { success: false, message: "Invalid id" },
+        { status: 400 }
+      );
+    }
+
+    await prisma.inventory.delete({
+      where: { id: parsedParams.data.id },
+    });
 
     return NextResponse.json({ success: true });
-  } catch (err) {
-    console.error("DELETE /api/inventory/[id] error:", err);
+  } catch {
     return NextResponse.json(
       { success: false, message: "Server error" },
       { status: 500 }

@@ -4,89 +4,98 @@ import { prisma } from "@/lib/prisma";
 import Google from "next-auth/providers/google";
 import CredentialsProvider from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
+import { Role } from "@prisma/client";
 
 declare module "next-auth" {
   interface Session {
     user: {
       id: string;
-      role: string;
+      role: Role;
     } & DefaultSession["user"];
   }
 
   interface User {
-    // ...other properties
-    role: string | undefined;
+    role: Role;
   }
 }
 
-
 export const { handlers, signIn, signOut, auth } = NextAuth({
   adapter: PrismaAdapter(prisma),
-  trustHost:!!process.env.NEXTAUTH_TRUST_HOST,
+  trustHost: !!process.env.NEXTAUTH_TRUST_HOST,
+
   providers: [
     CredentialsProvider({
       name: "Credentials",
       credentials: {
-        email: { label: "Email", type: "text", value: "password" },
-        password: { label: "Password", type: "password", value: "password" },
+        email: { label: "Email", type: "text" },
+        password: { label: "Password", type: "password" },
       },
 
       async authorize(credentials) {
-        if (!credentials?.email || !credentials?.password) {
-          throw new Error("Invalid credentials.");
-        }
-        try {
-          const user = await prisma.user.findUnique({
-            where: { email: credentials.email as string },
-          });
+        const email = String(credentials?.email || "");
+        const password = String(credentials?.password || "");
 
-          if (!user) {
-            throw new Error("No user found.");
-          }
+        if (!email || !password) return null;
 
-          const isValidPassword = await bcrypt.compare(
-            credentials.password as string,
-            user.password as string
-          );
-          if (!isValidPassword) {
-            throw new Error("Invalid password.");
-          }
+        const user = await prisma.user.findUnique({
+          where: { email },
+        });
 
-          return {
-            role: user.role ?? "",
-            email: user.email,
-            name: user.name,
-            id: user.id,
-            image: user.image,
-          };
-        } catch (error) {
-          console.error("Auth Error", error);
-          throw error;
-        }
+        if (!user || !user.password) return null;
+
+        const isValid = await bcrypt.compare(password, user.password);
+        if (!isValid) return null;
+
+        return {
+          id: user.id,
+          email: user.email,
+          name: user.name,
+          image: user.image,
+          role: user.role,
+        };
       },
     }),
-    Google,
+
+    Google({
+      clientId: process.env.GOOGLE_CLIENT_ID!,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+    }),
   ],
 
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
         token.id = user.id;
-        token.role = user.role;
+
+        if (user.role) {
+          token.role = user.role;
+        } else {
+          const dbUser = await prisma.user.findUnique({
+            where: { id: user.id },
+            select: { role: true },
+          });
+
+          token.role = dbUser?.role ?? Role.USER;
+        }
       }
 
       return token;
     },
+
     async session({ session, token }) {
-      session.user.id = token.id as string;
-      session.user.role = token.role as string;
+      if (session.user) {
+        session.user.id = token.id as string;
+        session.user.role = token.role as Role;
+      }
       return session;
     },
   },
+
   pages: {
     signIn: "/login",
     error: "/login",
   },
+
   session: {
     strategy: "jwt",
     maxAge: 7 * 24 * 60 * 60,

@@ -17,18 +17,18 @@ interface CartItem {
 interface Cart {
   id: string;
   userId?: string | null;
-  tableNumber?: number | null;
+  tableId?: string | null;
   cartItems: CartItem[];
 }
 
-export const useCart = (tableNumber: number | null) => {
+export const useCart = (tableId: string | null) => {
   const queryClient = useQueryClient();
 
   const { data: cart, isLoading } = useQuery<Cart>({
-    queryKey: ["cart", tableNumber],
+    queryKey: ["cart", tableId],
     queryFn: async () => {
-      const url = tableNumber
-        ? `/api/cart?table=${tableNumber}`
+      const url = tableId
+        ? `/api/cart?tableId=${tableId}`
         : `/api/cart`;
 
       const res = await axios.get(url);
@@ -37,44 +37,56 @@ export const useCart = (tableNumber: number | null) => {
   });
 
   const addToCartMutation = useMutation({
-    mutationFn: async (menuItemId: string) => {
-      const url = tableNumber
-        ? `/api/cart?table=${tableNumber}`
+    mutationFn: async ({
+      menuItemId,
+      tableId,
+    }: {
+      menuItemId: string;
+      tableId: string | null;
+    }) => {
+      const url = tableId
+        ? `/api/cart?tableId=${tableId}`
         : `/api/cart`;
 
       const res = await axios.post(url, { menuItemId });
       return res.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["cart", tableNumber] });
+      queryClient.invalidateQueries({ queryKey: ["cart", tableId] });
     },
   });
 
   const removeFromCartMutation = useMutation({
-    mutationFn: async (menuItemId: string) => {
-      const url = tableNumber
-        ? `/api/cart?table=${tableNumber}`
+    mutationFn: async ({
+      menuItemId,
+      tableId,
+    }: {
+      menuItemId: string;
+      tableId: string | null;
+    }) => {
+      const url = tableId
+        ? `/api/cart?tableId=${tableId}`
         : `/api/cart`;
 
       const res = await axios.delete(url, { data: { menuItemId } });
       return res.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["cart", tableNumber] });
+      queryClient.invalidateQueries({ queryKey: ["cart", tableId] });
     },
   });
 
   const clearCartMutation = useMutation({
-    mutationFn: async () => {
-      const url = tableNumber
-        ? `/api/cart/clear?table=${tableNumber}`
+    mutationFn: async (tableId: string | null) => {
+      const url = tableId
+        ? `/api/cart/clear?tableId=${tableId}`
         : `/api/cart/clear`;
 
       const res = await axios.delete(url);
       return res.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["cart", tableNumber] });
+      queryClient.invalidateQueries({ queryKey: ["cart", tableId] });
     },
   });
 
@@ -90,10 +102,12 @@ export const useCart = (tableNumber: number | null) => {
   return {
     cart,
     isLoading,
-    addToCart: (menuItemId: string) => addToCartMutation.mutate(menuItemId),
-    removeFromCart: (menuItemId: string) =>
-      removeFromCartMutation.mutate(menuItemId),
-    clearCart: () => clearCartMutation.mutate(),
+    addToCart: (menuItemId: string, tableId: string | null) =>
+      addToCartMutation.mutate({ menuItemId, tableId }),
+    removeFromCart: (menuItemId: string, tableId: string | null) =>
+      removeFromCartMutation.mutate({ menuItemId, tableId }),
+    clearCart: (tableId: string | null) =>
+      clearCartMutation.mutate(tableId),
     totalItems,
     totalPrice,
   };

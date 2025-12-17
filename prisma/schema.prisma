@@ -240,6 +240,7 @@ model Order {
   totalAmount Float       @default(0)
   status      OrderStatus @default(PENDING)
   paid        Boolean     @default(false)
+  stripeSessionId String? @unique
 
   restaurantId String          @db.ObjectId
   restaurant   RestaurantStep1 @relation(fields: [restaurantId], references: [id])
@@ -259,30 +260,30 @@ model Order {
 }
 
 model OrderItem {
-  id         String @id @default(auto()) @map("_id") @db.ObjectId
-  orderId    String @db.ObjectId
-  menuItemId String @db.ObjectId
-  quantity   Int    @default(1)
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  orderId    String   @db.ObjectId
+  menuItemId String   @db.ObjectId
+  quantity   Int      @default(1)
   price      Float
-  status     String @default("pending")   // <-- add this
+  status     String   @default("pending")
   order      Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
   menuItem   MenuItem @relation(fields: [menuItemId], references: [id])
 }
-
 
 model Cart {
   id     String  @id @default(auto()) @map("_id") @db.ObjectId
   userId String? @db.ObjectId
   user   User?   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  tableNumber Int?
+  tableId String? @db.ObjectId
+  table   Table?  @relation(fields: [tableId], references: [id], onDelete: Cascade)
 
   cartItems CartItem[]
   createdAt DateTime   @default(now())
   updatedAt DateTime   @updatedAt
 
   @@index([userId])
-  @@index([tableNumber])
+  @@index([tableId])
 }
 
 model CartItem {
@@ -340,22 +341,23 @@ model Table {
   restaurantId String          @db.ObjectId
   restaurant   RestaurantStep1 @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
   orders       Order[]
+  Cart         Cart[]
 
   @@unique([restaurantId, number])
   @@index([restaurantId])
 }
 
 model Inventory {
-  id           String   @id @default(auto()) @map("_id") @db.ObjectId
-  name         String
-  category     String
-  currentStock Int      @default(0)
-  minStock     Int      @default(0)
-  maxStock     Int      @default(0)
-  unit         String
-  cost         Float    @default(0)
-  supplier     String?
+  id            String   @id @default(auto()) @map("_id") @db.ObjectId
+  name          String
+  category      String
+  currentStock  Int      @default(0)
+  minStock      Int      @default(0)
+  maxStock      Int      @default(0)
+  unit          String
+  cost          Float    @default(0)
+  supplier      String?
   lastRestocked DateTime @default(now())
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 }

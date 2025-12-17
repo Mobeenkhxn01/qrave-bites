@@ -5,11 +5,11 @@ import { Button } from "@/components/ui/button";
 
 export function AddToCartButton({
   menuItemId,
-  tableNumber,
+  tableId,
   available = true,
 }: {
   menuItemId: string;
-  tableNumber: number | null;
+  tableId: string | null;
   available?: boolean;
 }) {
   const { addToCart, cart } = useCartContext();
@@ -17,12 +17,13 @@ export function AddToCartButton({
   const itemInCart = cart?.cartItems?.find(
     (item) => item.menuItem.id === menuItemId
   );
+
   const quantity = itemInCart?.quantity || 0;
 
   return (
     <div className="flex items-center space-x-2 w-full">
       <Button
-        onClick={() => addToCart(menuItemId)}
+        onClick={() => addToCart(menuItemId, tableId)}
         className="w-full"
         disabled={!available}
       >

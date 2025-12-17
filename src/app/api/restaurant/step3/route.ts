@@ -1,16 +1,24 @@
 import { NextResponse, NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
+import {
+  restaurantStep3Schema,
+  restaurantStep3QuerySchema,
+} from "@/lib/validators";
 
 export async function GET(req: NextRequest) {
   try {
-    const email = new URL(req.url).searchParams.get("email");
+    const parsedQuery = restaurantStep3QuerySchema.safeParse({
+      email: new URL(req.url).searchParams.get("email"),
+    });
 
-    if (!email) {
+    if (!parsedQuery.success) {
       return NextResponse.json(
-        { success: false, message: "Email is required" },
+        { success: false, message: "Invalid query parameters" },
         { status: 400 }
       );
     }
+
+    const { email } = parsedQuery.data;
 
     const user = await prisma.user.findUnique({
       where: { email },
@@ -40,7 +48,15 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
-    const data = await req.json();
+    const body = await req.json();
+    const parsed = restaurantStep3Schema.safeParse(body);
+
+    if (!parsed.success) {
+      return NextResponse.json(
+        { success: false, message: "Invalid request body" },
+        { status: 400 }
+      );
+    }
 
     const {
       panNumber,
@@ -52,14 +68,7 @@ export async function POST(req: NextRequest) {
       accountType,
       upiId,
       email,
-    } = data;
-
-    if (!email) {
-      return NextResponse.json(
-        { success: false, message: "User email is required" },
-        { status: 400 }
-      );
-    }
+    } = parsed.data;
 
     const user = await prisma.user.findUnique({
       where: { email },
@@ -84,11 +93,11 @@ export async function POST(req: NextRequest) {
             panNumber,
             fullName,
             restaurantAddress,
-            panImage: panImage || null,
+            panImage: panImage ?? null,
             accountNumber,
             ifscCode,
             accountType,
-            upiId: upiId || null,
+            upiId: upiId ?? null,
             updatedAt: new Date(),
           },
         })
@@ -97,11 +106,11 @@ export async function POST(req: NextRequest) {
             panNumber,
             fullName,
             restaurantAddress,
-            panImage: panImage || null,
+            panImage: panImage ?? null,
             accountNumber,
             ifscCode,
             accountType,
-            upiId: upiId || null,
+            upiId: upiId ?? null,
             userId: user.id,
           },
         });

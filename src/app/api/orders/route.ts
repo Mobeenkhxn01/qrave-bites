@@ -1,18 +1,29 @@
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { NextResponse } from "next/server";
+import { orderQuerySchema } from "@/lib/validators";
 
-export const GET = async (req: Request) => {
+export async function GET(req: Request) {
   const session = await auth();
 
   if (!session?.user) {
-    return new Response(JSON.stringify({ error: "Unauthorized" }), {
-      status: 401,
-      headers: { "Content-Type": "application/json" },
-    });
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   const url = new URL(req.url);
-  const orderId = url.searchParams.get("_id");
+
+  const parsedQuery = orderQuerySchema.safeParse({
+    _id: url.searchParams.get("_id") ?? undefined,
+  });
+
+  if (!parsedQuery.success) {
+    return NextResponse.json(
+      { error: "Invalid query parameters" },
+      { status: 400 }
+    );
+  }
+
+  const orderId = parsedQuery.data._id;
   const role = session.user.role;
   const userId = session.user.id;
 
@@ -28,10 +39,10 @@ export const GET = async (req: Request) => {
         });
 
         if (!order) {
-          return new Response(JSON.stringify({ error: "Order not found" }), { status: 404 });
+          return NextResponse.json({ error: "Order not found" }, { status: 404 });
         }
 
-        return new Response(JSON.stringify(order), { status: 200 });
+        return NextResponse.json(order);
       }
 
       const orders = await prisma.order.findMany({
@@ -42,7 +53,7 @@ export const GET = async (req: Request) => {
         },
       });
 
-      return new Response(JSON.stringify(orders), { status: 200 });
+      return NextResponse.json(orders);
     }
 
     const restaurant = await prisma.restaurantStep1.findUnique({
@@ -50,7 +61,7 @@ export const GET = async (req: Request) => {
     });
 
     if (!restaurant) {
-      return new Response(JSON.stringify([]), { status: 200 });
+      return NextResponse.json([]);
     }
 
     const restaurantId = restaurant.id;
@@ -65,10 +76,10 @@ export const GET = async (req: Request) => {
       });
 
       if (!order) {
-        return new Response(JSON.stringify({ error: "Order not found" }), { status: 404 });
+        return NextResponse.json({ error: "Order not found" }, { status: 404 });
       }
 
-      return new Response(JSON.stringify(order), { status: 200 });
+      return NextResponse.json(order);
     }
 
     const orders = await prisma.order.findMany({
@@ -80,11 +91,11 @@ export const GET = async (req: Request) => {
       },
     });
 
-    return new Response(JSON.stringify(orders), { status: 200 });
-  } catch (error) {
-    return new Response(
-      JSON.stringify({ error: "Something went wrong" }),
+    return NextResponse.json(orders);
+  } catch {
+    return NextResponse.json(
+      { error: "Something went wrong" },
       { status: 500 }
     );
   }
-};
+}

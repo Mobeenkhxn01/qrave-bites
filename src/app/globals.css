@@ -276,3 +276,26 @@ button{
   cursor: pointer;
 }
 
+@keyframes wave {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+.wave-bg {
+  background: linear-gradient(
+    120deg,
+    #020617,
+    #0f172a,
+    #1e1b4b,
+    #020617
+  );
+  background-size: 300% 300%;
+  animation: wave 18s ease infinite;
+}

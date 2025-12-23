@@ -2,56 +2,69 @@
 
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
-import React, { useState } from "react";
+import { useState } from "react";
 import { ContactDialog } from "../ContactDialog";
+import { motion } from "framer-motion";
 
 export default function Hero() {
   const [open, setOpen] = useState(false);
+
   return (
-    <section className="w-full bg-blue-950 overflow-hidden">
-      <div className="mx-auto w-full  py-16 lg:py-24 flex flex-col items-center text-center">
-        <div className="max-w-5xl">
+    <section className="w-full wave-bg overflow-hidden">
+
+      <div className="mx-auto w-full py-16 lg:py-24 flex flex-col items-center text-center">
+
+        <motion.div
+          initial={{ opacity: 0, y: 40 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, ease: "easeOut" }}
+          viewport={{ once: true }}
+          className="max-w-5xl"
+        >
           <h1 className="font-bold text-white text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl 2xl:text-8xl leading-tight">
-            Power your business with Qrave-bites
+            Power your restaurant
+            <br />
+            with <span className="text-blue-400">QraveBites</span>
           </h1>
 
           <div className="mt-6 flex flex-wrap justify-center gap-3 text-[#ae9bf1] text-sm sm:text-base">
-            <span>QR Solution</span>
-            <span>Inventory Management</span>
+            <span>QR Ordering</span>
+            <span>Inventory</span>
             <span>Online Store</span>
-            <span>Payment Integration</span>
-            <span>Orders</span>
+            <span>Payments</span>
+            <span>Analytics</span>
           </div>
 
           <Button
             onClick={() => setOpen(true)}
-            className="mt-10 px-14 py-8 rounded-full bg-[#006aff] text-white font-sans text-xl hover:bg-blue-900 transition"
+            className="mt-10 px-14 py-8 rounded-full bg-[#006aff] text-white font-sans text-lg sm:text-xl hover:bg-blue-900 transition"
           >
             Get Started
           </Button>
 
           <ContactDialog open={open} onOpenChange={setOpen} />
-        </div>
+        </motion.div>
 
-        {/* ================= IMAGES ================= */}
-        <div className="relative w-full mt-16 overflow-hidden">
-          {/* ===== DESKTOP ===== */}
-          <div className="hidden xl:flex items-center justify-center gap-8 py-20">
-            {/* LEFT HALF */}
+        <div className="relative w-full mt-20 overflow-hidden">
+
+          <motion.div
+            initial={{ opacity: 0, y: 60 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.7, ease: "easeOut" }}
+            viewport={{ once: false, margin: "0px 0px -100px 0px" }}
+            className="hidden xl:flex items-center justify-center gap-8 py-20"
+          >
             <div className="relative w-[760px] h-[480px] rounded-3xl overflow-hidden -ml-[380px]">
               <Image
-                src={
-                  "https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=1200&q=80 "
-                }
+                src="https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=1200&q=80"
                 alt="Restaurant interior"
                 fill
-                className="object-cover "
+                className="object-cover"
                 priority
               />
             </div>
 
-            {/* SMALL 1 */}
-            <div className="relative w-[250px] h-[420px] rounded-2xl overflow-hidden  translate-y-14">
+            <div className="relative w-[250px] h-[420px] rounded-2xl overflow-hidden translate-y-14">
               <Image
                 src="https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=600&q=80"
                 alt="Food dish"
@@ -60,7 +73,6 @@ export default function Hero() {
               />
             </div>
 
-            {/* SMALL 2 */}
             <div className="relative w-[250px] h-[420px] rounded-2xl overflow-hidden -translate-y-14">
               <Image
                 src="https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=600&q=80"
@@ -70,7 +82,6 @@ export default function Hero() {
               />
             </div>
 
-            {/* RIGHT HALF */}
             <div className="relative w-[760px] h-[480px] rounded-3xl overflow-hidden -mr-[380px]">
               <Image
                 src="https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=1200&q=80"
@@ -79,9 +90,8 @@ export default function Hero() {
                 className="object-cover"
               />
             </div>
-          </div>
+          </motion.div>
 
-          {/* ===== TABLET ===== */}
           <div className="hidden md:flex xl:hidden items-center justify-center gap-6">
             <div className="relative w-[420px] h-[360px] rounded-2xl overflow-hidden -ml-[210px]">
               <Image
@@ -111,8 +121,7 @@ export default function Hero() {
             </div>
           </div>
 
-          {/* ===== MOBILE ===== */}
-          <div className="flex md:hidden flex-col gap-4">
+          <div className="flex md:hidden flex-col gap-4 px-4">
             <div className="relative w-full h-[260px] rounded-2xl overflow-hidden">
               <Image
                 src="https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=600&q=80"
@@ -131,6 +140,7 @@ export default function Hero() {
               />
             </div>
           </div>
+
         </div>
       </div>
     </section>

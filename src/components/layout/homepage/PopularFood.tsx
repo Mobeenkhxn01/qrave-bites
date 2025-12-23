@@ -1,66 +1,119 @@
 "use client";
+
+import { Card, CardFooter, CardHeader } from "@/components/ui/card";
 import Image from "next/image";
-import { useQuery } from "@tanstack/react-query";
-import { MenuItem } from "@prisma/client";
-import FoodCarousel from "./FoodCarousel";
+import Link from "next/link";
 
 export default function PopularFood() {
-  const {
-    data = [],
-    isLoading,
-    isError,
-  } = useQuery<MenuItem[]>({
-    queryKey: ["menu-items"],
-    queryFn: async () => {
-      const res = await fetch("/api/menu-items");
-      if (!res.ok) throw new Error("Failed to fetch menu items");
-      return res.json();
-    },
-  });
-
   return (
-    <div className="w-full flex flex-col items-center mt-4 pt-10">
-      <div className="w-full max-w-6xl flex flex-col items-center">
-        {/* Section Title */}
-        <div className="flex flex-row items-center">
-          <Image
-            src="/titleIcon.svg"
-            className="w-4 h-4"
-            alt="title icon"
-            width={512}
-            height={512}
-          />
-          <h1 className="text-[#fc791a] uppercase font-bold text-xl mx-2">
-            Best Food
-          </h1>
-          <Image
-            src="/titleIcon.svg"
-            className="w-4 h-4"
-            alt="title icon"
-            width={512}
-            height={512}
-          />
+    <section className="w-full bg-white py-16">
+      <div className="mx-auto w-full max-w-7xl px-4 flex gap-8 flex-col">
+        <div className="px-36 py-10">
+
+        <h1 className="font-sans text-center text-5xl font-bold">
+          Flexible <span className="text-blue-800">business solutions</span> for
+          omni-channel selling
+        </h1>
         </div>
 
-        <h1 className="text-[#010f1c] font-extrabold text-3xl mt-4">
-          Popular Food Items
-        </h1>
+  
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          {/* ===== CARD 1 ===== */}
+          <Card className="overflow-hidden">
+            <CardHeader className="space-y-2">
+              <h1 className="text-2xl font-bold">POS</h1>
+              <p className="text-gray-600">
+                Lorem ipsum dolor, sit amet consectetur adipisicing elit.
+                Maiores,
+              </p>
+              <Link href="/know-more" className="text-blue-600 font-medium">
+                Know More →
+              </Link>
+            </CardHeader>
 
-        {/* Carousel */}
-        <div className="w-full mt-6">
-          {isLoading && <p className="text-center">Loading...</p>}
-          {isError && (
-            <p className="text-center text-red-500">
-              Failed to load menu items.
-            </p>
-          )}
-          {!isLoading && !isError && data.length > 0 ? (
-            <FoodCarousel data={data} />
-          ) : (
-            !isLoading && <p className="text-gray-500">No popular items available.</p>
-          )}
+            <CardFooter className="relative h-[280px] sm:h-[340px] md:h-[400px] rounded-2xl overflow-hidden">
+              <Image
+                src="https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=1200&q=80"
+                alt="Restaurant interior"
+                fill
+                className="object-cover"
+                priority
+              />
+            </CardFooter>
+          </Card>
+
+          {/* ===== CARD 2 ===== */}
+          <Card className="overflow-hidden">
+            <CardHeader className="space-y-2">
+              <h1 className="text-2xl font-bold">Online Store</h1>
+              <p className="text-gray-600">
+                Lorem ipsum dolor, sit amet consectetur adipisicing elit.
+                Maiores,
+              </p>
+              <Link href="/know-more" className="text-blue-600 font-medium">
+                Know More →
+              </Link>
+            </CardHeader>
+
+            <CardFooter className="relative h-[280px] sm:h-[340px] md:h-[400px] rounded-2xl overflow-hidden">
+              <Image
+                src="https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=1200&q=80"
+                alt="Online store"
+                fill
+                className="object-cover"
+              />
+            </CardFooter>
+          </Card>
+        </div>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          {/* ===== CARD 1 ===== */}
+          <Card className="overflow-hidden">
+            <CardHeader className="space-y-2">
+              <h1 className="text-2xl font-bold">POS</h1>
+              <p className="text-gray-600">
+                Lorem ipsum dolor, sit amet consectetur adipisicing elit.
+                Maiores,
+              </p>
+              <Link href="/know-more" className="text-blue-600 font-medium">
+                Know More →
+              </Link>
+            </CardHeader>
+
+            <CardFooter className="relative h-[280px] sm:h-[340px] md:h-[400px] rounded-2xl overflow-hidden">
+              <Image
+                src="https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=1200&q=80"
+                alt="Restaurant interior"
+                fill
+                className="object-cover"
+                priority
+              />
+            </CardFooter>
+          </Card>
+
+          {/* ===== CARD 2 ===== */}
+          <Card className="overflow-hidden">
+            <CardHeader className="space-y-2">
+              <h1 className="text-2xl font-bold">Online Store</h1>
+              <p className="text-gray-600">
+                Lorem ipsum dolor, sit amet consectetur adipisicing elit.
+                Maiores,
+              </p>
+              <Link href="/know-more" className="text-blue-600 font-medium">
+                Know More →
+              </Link>
+            </CardHeader>
+
+            <CardFooter className="relative h-[280px] sm:h-[340px] md:h-[400px] rounded-2xl overflow-hidden">
+              <Image
+                src="https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=1200&q=80"
+                alt="Online store"
+                fill
+                className="object-cover"
+              />
+            </CardFooter>
+          </Card>
         </div>
       </div>
-    </div>
+    </section>
   );
 }

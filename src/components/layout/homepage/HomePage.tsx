@@ -1,12 +1,14 @@
 "use client";
+import Contact from "../contact/Contact";
 import Hero from "./Hero";
 import PopularFood from "./PopularFood";
 
 export default function HomePage() {
   return (
-    <div className="flex flex-col">
+    <div className="w-full flex flex-col">
       <Hero />
       <PopularFood />
+      <Contact/>
     </div>
   );
 }

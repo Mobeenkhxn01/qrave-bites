@@ -21,7 +21,7 @@ declare module "next-auth" {
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   adapter: PrismaAdapter(prisma),
-  trustHost: !!process.env.NEXTAUTH_TRUST_HOST,
+  trustHost: !!process.env.MOBEEN_NEXTAUTH_TRUST_HOST,
 
   providers: [
     CredentialsProvider({
@@ -101,5 +101,5 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     maxAge: 7 * 24 * 60 * 60,
   },
 
-  secret: process.env.AUTH_SECRET,
+  secret: process.env.MOBEEN_AUTH_SECRET,
 });

@@ -96,7 +96,7 @@ bun install
 Create a `.env` file in the root with the following keys:
 
 ```env
-MOBEEN_DATABASE_URL=your_mongodb_connection_string
+DATABASE_URL=your_mongodb_connection_string
 NEXTMOBEEN_AUTH_SECRET=your_MOBEEN_AUTH_SECRET
 NEXTAUTH_URL=https://qrave-bites.onrender.com
 MOBEEN_STRIPE_SECRET_KEY=your_stripe_secret
@@ -178,7 +178,7 @@ MOBEEN_AWS_ACCESS_KEY="your aws access key"
 MOBEEN_AWS_BUCKET_NAME="aws bucket name"
 MOBEEN_AWS_REGION="aws region"
 MOBEEN_AWS_SECRET_KEY="your aws secret key"
-MOBEEN_DATABASE_URL="mongodb url"
+DATABASE_URL="mongodb url"
 MOBEEN_JWT_SECRET="jwt secret token"
 ```
 

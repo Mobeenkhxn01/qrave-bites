@@ -4,9 +4,11 @@ import { NextResponse } from "next/server";
 
 export async function GET(
   req: Request,
-  { params }: { params: { tableId: string } }
+  { params }: { params: Promise<{ tableId: string }> }
 ) {
   try {
+    const { tableId } = await params;
+
     const session = await auth();
     if (!session) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -20,7 +22,7 @@ export async function GET(
     }
 
     const table = await prisma.table.findUnique({
-      where: { id: params.tableId },
+      where: { id: tableId },
       include: {
         restaurant: {
           select: {
@@ -44,10 +46,8 @@ export async function GET(
     }
 
     return NextResponse.json(table, { status: 200 });
-  } catch {
-    return NextResponse.json(
-      { error: "Server Error" },
-      { status: 500 }
-    );
+  } catch (error) {
+    console.error(error);
+    return NextResponse.json({ error: "Server Error" }, { status: 500 });
   }
 }

@@ -9,9 +9,6 @@ import { useSearchParams } from 'next/navigation'
 
 export default function Menu() {
   const searchParams = useSearchParams()
-  const tableNumber = searchParams.get("table")
-    ? Number(searchParams.get("table"))
-    : null
 
   const { data: menuItems, isLoading } = useQuery<MenuItem[]>({
     queryKey: ['menuItems'],
@@ -53,7 +50,7 @@ export default function Menu() {
             <MenuItemCard 
               key={item.id} 
               item={item}  
-              tableNumber={tableNumber} 
+              tableId={searchParams.get("table")}
             />
           ))
         ) : (

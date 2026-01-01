@@ -4,7 +4,7 @@ import { prisma } from "@/lib/prisma";
 
 export const runtime = "nodejs";
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
+const stripe = new Stripe(process.env.MOBEEN_STRIPE_SECRET_KEY!);
 
 export async function POST(req: Request) {
   const body = await req.text();
@@ -23,7 +23,7 @@ export async function POST(req: Request) {
     event = stripe.webhooks.constructEvent(
       body,
       signature,
-      process.env.STRIPE_WEBHOOK_SECRET!
+      process.env.MOBEEN_STRIPE_WEBHOOK_SECRET!
     );
   } catch (err: any) {
     return NextResponse.json(
@@ -36,18 +36,14 @@ export async function POST(req: Request) {
     const session = event.data.object as Stripe.Checkout.Session;
     const orderId = session.metadata?.orderId;
 
-    if (!orderId) {
-      return NextResponse.json({ received: true });
-    }
+    if (!orderId) return NextResponse.json({ received: true });
 
     const existing = await prisma.order.findUnique({
       where: { id: orderId },
       select: { paid: true },
     });
 
-    if (existing?.paid) {
-      return NextResponse.json({ received: true });
-    }
+    if (existing?.paid) return NextResponse.json({ received: true });
 
     const order = await prisma.order.update({
       where: { id: orderId },

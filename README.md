@@ -96,10 +96,10 @@ bun install
 Create a `.env` file in the root with the following keys:
 
 ```env
-DATABASE_URL=your_mongodb_connection_string
-NEXTAUTH_SECRET=your_auth_secret
+MOBEEN_DATABASE_URL=your_mongodb_connection_string
+NEXTMOBEEN_AUTH_SECRET=your_MOBEEN_AUTH_SECRET
 NEXTAUTH_URL=https://qrave-bites.onrender.com
-STRIPE_SECRET_KEY=your_stripe_secret
+MOBEEN_STRIPE_SECRET_KEY=your_stripe_secret
 STRIPE_PUBLIC_KEY=your_stripe_public
 ```
 
@@ -171,15 +171,15 @@ bun run start
 6. Add the following **Environment Variables**:
 
 ```env
-AUTH_GOOGLE_ID="google client id"
-AUTH_GOOGLE_SECRET="google secret"
-AUTH_SECRET="your auth secret"
-AWS_ACCESS_KEY="your aws access key"
-AWS_BUCKET_NAME="aws bucket name"
-AWS_REGION="aws region"
-AWS_SECRET_KEY="your aws secret key"
-DATABASE_URL="mongodb url"
-JWT_SECRET="jwt secret token"
+MOBEEN_AUTH_GOOGLE_ID="google client id"
+MOBEEN_AUTH_GOOGLE_SECRET="google secret"
+MOBEEN_AUTH_SECRET="your auth secret"
+MOBEEN_AWS_ACCESS_KEY="your aws access key"
+MOBEEN_AWS_BUCKET_NAME="aws bucket name"
+MOBEEN_AWS_REGION="aws region"
+MOBEEN_AWS_SECRET_KEY="your aws secret key"
+MOBEEN_DATABASE_URL="mongodb url"
+MOBEEN_JWT_SECRET="jwt secret token"
 ```
 
 7. Hit Deploy!

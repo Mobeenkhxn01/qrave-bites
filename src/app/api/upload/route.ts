@@ -29,10 +29,10 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     }
 
     const s3 = new S3Client({
-      region: process.env.AWS_REGION!,
+      region: process.env.MOBEEN_AWS_REGION!,
       credentials: {
-        accessKeyId: process.env.AWS_ACCESS_KEY!,
-        secretAccessKey: process.env.AWS_SECRET_KEY!,
+        accessKeyId: process.env.MOBEEN_AWS_ACCESS_KEY!,
+        secretAccessKey: process.env.MOBEEN_AWS_SECRET_KEY!,
       },
     });
 
@@ -41,7 +41,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
 
     const buffer = Buffer.from(await file.arrayBuffer());
 
-    const bucket = process.env.AWS_BUCKET_NAME!;
+    const bucket = process.env.MOBEEN_AWS_BUCKET_NAME!;
 
     await s3.send(
       new PutObjectCommand({
@@ -53,7 +53,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       })
     );
 
-    const url = `https://${bucket}.s3.${process.env.AWS_REGION}.amazonaws.com/${key}`;
+    const url = `https://${bucket}.s3.${process.env.MOBEEN_AWS_REGION}.amazonaws.com/${key}`;
 
     return NextResponse.json({ url });
   } catch {

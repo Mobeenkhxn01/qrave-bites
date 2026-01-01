@@ -85,7 +85,7 @@ export const columns: ColumnDef<NotificationRow>[] = [
     header: "Message",
     accessorKey: "message",
     cell: ({ row }) => (
-      <p className="text-muted-foreground line-clamp-1 w-[200px]">
+      <p className="text-muted-foreground line-clamp-1 w-50">
         {row.original.message}
       </p>
     ),

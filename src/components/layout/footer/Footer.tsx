@@ -1,68 +1,44 @@
-import { Separator } from "@/components/ui/separator";
-import Link from "next/link";
-import { FiInstagram, FiLinkedin, FiTwitter } from "react-icons/fi";
+import Image from "next/image";
+import ContactBar from "./ContactBar";
+import FooterMain from "./FooterMain";
+import BottomBar from "./BottomBar";
 
 export default function Footer() {
   return (
-    <footer className="w-full bg-black text-white pt-10">
-      <div className="mx-auto max-w-7xl px-6">
-
-        {/* ===== TOP LINKS ===== */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-10 text-center sm:text-left">
-          {/* Business */}
-          <div>
-            <h3 className="text-gray-400 mb-4 font-medium">Business</h3>
-            <ul className="space-y-2 ">
-              <li>QR Store</li>
-              <li>Inventory Management</li>
-              <li>Payment</li>
-              <li>Order</li>
-              <li>Solutions</li>
-            </ul>
-          </div>
-
-          {/* QraveBites */}
-          <div>
-            <h3 className="text-gray-400 mb-4 font-medium">QraveBites</h3>
-            <ul className="space-y-2">
-              <li>Contact Us</li>
-              <li>Request Demo</li>
-              <li>Privacy Policy</li>
-              <li>About Us</li>
-              <li>Home</li>
-            </ul>
-          </div>
-        </div>
-
-        {/* Divider */}
-        <Separator className="my-10 bg-gray-700" />
-
-        {/* ===== BOTTOM BAR ===== */}
-        <div className="flex flex-col sm:flex-row gap-6 sm:gap-0 items-center justify-between text-sm text-gray-300 pb-8">
-
-          {/* Copyright */}
-          <p className="text-center sm:text-left">
-            © QraveBites | All Rights Reserved
-          </p>
-
-          {/* Links + Social */}
-          <div className="flex items-center gap-6">
-            <span className="cursor-pointer hover:text-white transition">
-              Terms & Conditions
-            </span>
-
-            <Link href="#" aria-label="LinkedIn" className="hover:text-white transition">
-              <FiLinkedin size={18} />
-            </Link>
-            <Link href="#" aria-label="Instagram" className="hover:text-white transition">
-              <FiInstagram size={18} />
-            </Link>
-            <Link href="#" aria-label="Twitter" className="hover:text-white transition">
-              <FiTwitter size={18} />
-            </Link>
-          </div>
-        </div>
+    <footer className="relative w-full bg-[#212529] pt-6 overflow-hidden">
+      {/* Background Shapes */}
+      <div className="absolute top-0 right-0">
+        <Image
+          className="w-[8rem] md:w-[16rem]"
+          src="/footerShape1_4 (1).png"
+          alt="Decorative shape"
+          width={512}
+          height={512}
+        />
       </div>
+      <div className="absolute bottom-0 left-0">
+        <Image
+          className="w-[8rem] md:w-[16rem]"
+          src="/footerShape1_2 (1).png"
+          alt="Decorative shape"
+          width={512}
+          height={512}
+        />
+      </div>
+      <div className="absolute bottom-0 left-0">
+        <Image
+          className="w-[8rem] md:w-[16rem]"
+          src="/footerShape1_1.png"
+          alt="Decorative shape"
+          width={512}
+          height={512}
+        />
+      </div>
+
+      {/* Sections */}
+      <ContactBar />
+      <FooterMain />
+      <BottomBar />
     </footer>
   );
 }

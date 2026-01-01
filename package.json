@@ -11,7 +11,17 @@
   "pnpm": {
     "overrides": {
       "@auth/core": "0.41.1"
-    }
+    },
+    "ignoredBuiltDependencies": [
+      "@prisma/client"
+    ],
+    "onlyBuiltDependencies": [
+      "@prisma/engines",
+      "bcrypt",
+      "prisma",
+      "sharp",
+      "unrs-resolver"
+    ]
   },
   "type": "module",
   "dependencies": {

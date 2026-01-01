@@ -26,6 +26,8 @@ export default function MenuItemCard({
       <CardHeader className="p-0 relative">
         <Image
           src={item.image || "/placeholder.svg"}
+          width={400}
+          height={300}
           alt={item.name}
           className="h-48 w-full object-cover rounded-t-lg"
         />

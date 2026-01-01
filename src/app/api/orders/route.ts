@@ -8,8 +8,10 @@ export async function GET() {
   try {
     const session = await auth();
 
+    let orders;
+
     if (session?.user?.role === "ADMIN") {
-      const orders = await prisma.order.findMany({
+      orders = await prisma.order.findMany({
         orderBy: { createdAt: "desc" },
         include: {
           items: {
@@ -19,40 +21,54 @@ export async function GET() {
           },
         },
       });
+    } else {
+      const userId = session?.user?.id;
+      if (!userId) return NextResponse.json([]);
 
-      return NextResponse.json({ orders });
-    }
+      const restaurant = await prisma.restaurantStep1.findFirst({
+        where: { userId },
+        select: { id: true },
+      });
 
-    const userId = session?.user?.id;
-    if (!userId) return NextResponse.json({ orders: [] });
+      if (!restaurant) return NextResponse.json([]);
 
-    const restaurant = await prisma.restaurantStep1.findFirst({
-      where: { userId },
-      select: { id: true },
-    });
-
-    if (!restaurant) return NextResponse.json({ orders: [] });
-
-    const orders = await prisma.order.findMany({
-      where: { restaurantId: restaurant.id },
-      orderBy: { createdAt: "desc" },
-      include: {
-        items: {
-          include: {
-            menuItem: { select: { id: true, name: true } },
+      orders = await prisma.order.findMany({
+        where: { restaurantId: restaurant.id },
+        orderBy: { createdAt: "desc" },
+        include: {
+          items: {
+            include: {
+              menuItem: { select: { id: true, name: true } },
+            },
           },
         },
-      },
-    });
+      });
+    }
 
-    return NextResponse.json({ orders });
+    // 🔥 SHAPE DATA FOR UI
+    const formatted = orders.map((o) => ({
+      id: o.id,
+      orderNumber: o.orderNumber,
+      tableNumber: o.tableNumber ?? null,
+      totalAmount: o.totalAmount,
+      status: o.status,
+      paid: o.paid,
+      createdAt: o.createdAt.toISOString(),
+      items: o.items.map((i) => ({
+        id: i.id,
+        quantity: i.quantity,
+        price: i.price,
+        menuItem: i.menuItem,
+      })),
+    }));
+
+    return NextResponse.json(formatted);
   } catch (error) {
     console.error("GET /api/orders error:", error);
-    return NextResponse.json({ error: "Server error" }, { status: 500 });
+    return NextResponse.json([], { status: 500 });
   }
 }
 
-/* ===================== POST ===================== */
 export async function POST(req: Request) {
   try {
     const session = await auth();

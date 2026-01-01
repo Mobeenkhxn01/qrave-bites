@@ -1,110 +1,78 @@
-import { prisma } from "@/lib/prisma";
-import Stripe from "stripe";
 import { NextResponse } from "next/server";
-import { pusherServer } from "@/lib/pusher";
+import Stripe from "stripe";
+import { prisma } from "@/lib/prisma";
 
 export const runtime = "nodejs";
-export const dynamic = "force-dynamic";
 
-export const config = {
-  api: {
-    bodyParser: false,
-  },
-};
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
 
 export async function POST(req: Request) {
   const body = await req.text();
   const signature = req.headers.get("stripe-signature");
 
-  const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-    apiVersion: "2025-02-24.acacia",
-  });
+  if (!signature) {
+    return NextResponse.json(
+      { error: "Missing Stripe signature" },
+      { status: 400 }
+    );
+  }
 
-  let event;
+  let event: Stripe.Event;
 
   try {
     event = stripe.webhooks.constructEvent(
       body,
-      signature!,
+      signature,
       process.env.STRIPE_WEBHOOK_SECRET!
     );
   } catch (err: any) {
-    return new NextResponse(`Webhook Error: ${err.message}`, { status: 400 });
+    return NextResponse.json(
+      { error: `Webhook Error: ${err.message}` },
+      { status: 400 }
+    );
   }
 
   if (event.type === "checkout.session.completed") {
-    const session = event.data.object as any;
+    const session = event.data.object as Stripe.Checkout.Session;
+    const orderId = session.metadata?.orderId;
 
-    const restaurantId = session.metadata.restaurantId;
-    const tableId = session.metadata.tableId;
-    const cartId = session.metadata.cartId;
-
-    const existing = await prisma.order.findFirst({
-      where: { stripeSessionId: session.id },
-    });
-
-    if (existing) {
+    if (!orderId) {
       return NextResponse.json({ received: true });
     }
 
-    const cart = await prisma.cart.findUnique({
-      where: { id: cartId },
-      include: { cartItems: { include: { menuItem: true } } },
+    const existing = await prisma.order.findUnique({
+      where: { id: orderId },
+      select: { paid: true },
     });
 
-    if (!cart || cart.tableId !== tableId || cart.cartItems.length === 0) {
+    if (existing?.paid) {
       return NextResponse.json({ received: true });
     }
 
-    const table = await prisma.table.findUnique({
-      where: { id: tableId },
-    });
-
-    if (!table) {
-      return NextResponse.json({ received: true });
-    }
-
-    const lastOrder = await prisma.order.findFirst({
-      where: { restaurantId },
-      orderBy: { createdAt: "desc" },
-    });
-
-    const orderNumber = lastOrder ? lastOrder.orderNumber + 1 : 1;
-
-    const order = await prisma.order.create({
+    const order = await prisma.order.update({
+      where: { id: orderId },
       data: {
-        restaurantId,
-        tableId,
-        tableNumber: table.number,
-        totalAmount: (session.amount_total ?? 0) / 100,
         paid: true,
-        status: "PENDING",
-        orderNumber,
-        stripeSessionId: session.id,
-        items: {
-          create: cart.cartItems.map((i) => ({
-            menuItemId: i.menuItemId,
-            quantity: i.quantity,
-            price: i.menuItem.price,
-          })),
-        },
+        status: "CONFIRMED",
       },
-      include: { items: true },
     });
 
-    await pusherServer.trigger(`restaurant-${restaurantId}`, "new-order", {
-      orderId: order.id,
-      orderNumber,
-      tableNumber: table.number,
-      totalAmount: order.totalAmount,
-      items: order.items,
-    });
+    if (order.tableId) {
+      await prisma.cart.deleteMany({
+        where: { tableId: order.tableId },
+      });
+    }
 
-    await prisma.cartItem.deleteMany({ where: { cartId } });
-    await prisma.cart.deleteMany({
-      where: {
-        id: cartId,
-        tableId,
+    await prisma.notification.create({
+      data: {
+        restaurantId: order.restaurantId,
+        orderId: order.id,
+        type: "ORDER_UPDATE",
+        message: `Payment received for order #${order.orderNumber}`,
+        payload: {
+          orderId: order.id,
+          paid: true,
+        },
       },
     });
   }

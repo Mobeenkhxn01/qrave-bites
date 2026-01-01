@@ -11,9 +11,7 @@ export default function Hero() {
 
   return (
     <section className="w-full wave-bg overflow-hidden">
-
       <div className="mx-auto w-full py-16 lg:py-24 flex flex-col items-center text-center">
-
         <motion.div
           initial={{ opacity: 0, y: 40 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -46,7 +44,7 @@ export default function Hero() {
         </motion.div>
 
         <div className="relative w-full mt-20 overflow-hidden">
-
+          {/* XL layout */}
           <motion.div
             initial={{ opacity: 0, y: 60 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -54,7 +52,7 @@ export default function Hero() {
             viewport={{ once: false, margin: "0px 0px -100px 0px" }}
             className="hidden xl:flex items-center justify-center gap-8 py-20"
           >
-            <div className="relative w-[760px] h-[480px] rounded-3xl overflow-hidden -ml-[380px]">
+            <div className="relative w-190 h-120 rounded-3xl overflow-hidden -ml-95">
               <Image
                 src="https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=1200&q=80"
                 alt="Restaurant interior"
@@ -64,7 +62,7 @@ export default function Hero() {
               />
             </div>
 
-            <div className="relative w-[250px] h-[420px] rounded-2xl overflow-hidden translate-y-14">
+            <div className="relative w-62.5 h-105 rounded-2xl overflow-hidden translate-y-14">
               <Image
                 src="https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=600&q=80"
                 alt="Food dish"
@@ -73,7 +71,7 @@ export default function Hero() {
               />
             </div>
 
-            <div className="relative w-[250px] h-[420px] rounded-2xl overflow-hidden -translate-y-14">
+            <div className="relative w-62.5 h-105 rounded-2xl overflow-hidden -translate-y-14">
               <Image
                 src="https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=600&q=80"
                 alt="Burger"
@@ -82,7 +80,7 @@ export default function Hero() {
               />
             </div>
 
-            <div className="relative w-[760px] h-[480px] rounded-3xl overflow-hidden -mr-[380px]">
+            <div className="relative w-190 h-120 rounded-3xl overflow-hidden -mr-95">
               <Image
                 src="https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=1200&q=80"
                 alt="Restaurant ambience"
@@ -92,8 +90,9 @@ export default function Hero() {
             </div>
           </motion.div>
 
+          {/* MD layout */}
           <div className="hidden md:flex xl:hidden items-center justify-center gap-6">
-            <div className="relative w-[420px] h-[360px] rounded-2xl overflow-hidden -ml-[210px]">
+            <div className="relative w-105 h-90 rounded-2xl overflow-hidden -ml-52.5">
               <Image
                 src="https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=800&q=80"
                 alt="Restaurant interior"
@@ -102,7 +101,7 @@ export default function Hero() {
               />
             </div>
 
-            <div className="relative w-[300px] h-[380px] rounded-2xl overflow-hidden">
+            <div className="relative w-75 h-95 rounded-2xl overflow-hidden">
               <Image
                 src="https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=600&q=80"
                 alt="Food dish"
@@ -111,7 +110,7 @@ export default function Hero() {
               />
             </div>
 
-            <div className="relative w-[420px] h-[360px] rounded-2xl overflow-hidden -mr-[210px]">
+            <div className="relative w-105 h-90 rounded-2xl overflow-hidden -mr-52.5">
               <Image
                 src="https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=600&q=80"
                 alt="Burger"
@@ -121,8 +120,9 @@ export default function Hero() {
             </div>
           </div>
 
+          {/* Mobile layout */}
           <div className="flex md:hidden flex-col gap-4 px-4">
-            <div className="relative w-full h-[260px] rounded-2xl overflow-hidden">
+            <div className="relative w-full h-65 rounded-2xl overflow-hidden">
               <Image
                 src="https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=600&q=80"
                 alt="Restaurant interior"
@@ -131,7 +131,7 @@ export default function Hero() {
               />
             </div>
 
-            <div className="relative w-full h-[260px] rounded-2xl overflow-hidden">
+            <div className="relative w-full h-65 rounded-2xl overflow-hidden">
               <Image
                 src="https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=600&q=80"
                 alt="Food dish"
@@ -140,7 +140,6 @@ export default function Hero() {
               />
             </div>
           </div>
-
         </div>
       </div>
     </section>

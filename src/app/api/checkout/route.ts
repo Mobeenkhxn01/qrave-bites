@@ -1,96 +1,65 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import {
-  inventoryQuerySchema,
-  inventoryCreateSchema,
-} from "@/lib/validators";
+import Stripe from "stripe";
 
-export async function GET(req: Request) {
-  try {
-    const url = new URL(req.url);
-
-    const parsedQuery = inventoryQuerySchema.safeParse({
-      q: url.searchParams.get("q") ?? undefined,
-      category: url.searchParams.get("category") ?? undefined,
-    });
-
-    if (!parsedQuery.success) {
-      return NextResponse.json(
-        { success: false, message: "Invalid query parameters" },
-        { status: 400 }
-      );
-    }
-
-    const { q, category } = parsedQuery.data;
-
-    const where: any = {};
-
-    if (q) {
-      where.OR = [
-        { name: { contains: q, mode: "insensitive" } },
-        { supplier: { contains: q, mode: "insensitive" } },
-      ];
-    }
-
-    if (category) {
-      where.category = category;
-    }
-
-    const items = await prisma.inventory.findMany({
-      where,
-      orderBy: { updatedAt: "desc" },
-    });
-
-    return NextResponse.json({ success: true, items });
-  } catch {
-    return NextResponse.json(
-      { success: false, message: "Server error" },
-      { status: 500 }
-    );
-  }
-}
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
 
 export async function POST(req: Request) {
   try {
-    const body = await req.json();
-    const parsedBody = inventoryCreateSchema.safeParse(body);
+    const { orderId } = await req.json();
 
-    if (!parsedBody.success) {
+    if (!orderId) {
       return NextResponse.json(
-        { success: false, message: "Invalid request body" },
+        { message: "orderId is required" },
         { status: 400 }
       );
     }
 
-    const {
-      name,
-      category,
-      currentStock = 0,
-      minStock = 0,
-      maxStock = 0,
-      unit = "",
-      cost = 0,
-      supplier = "",
-    } = parsedBody.data;
-
-    const item = await prisma.inventory.create({
-      data: {
-        name,
-        category,
-        currentStock,
-        minStock,
-        maxStock,
-        unit,
-        cost,
-        supplier,
-        lastRestocked: new Date(),
+    const order = await prisma.order.findUnique({
+      where: { id: orderId },
+      include: {
+        items: { include: { menuItem: true } },
       },
     });
 
-    return NextResponse.json({ success: true, item }, { status: 201 });
-  } catch {
+    if (!order) {
+      return NextResponse.json(
+        { message: "Order not found" },
+        { status: 404 }
+      );
+    }
+
+  const session = await stripe.checkout.sessions.create({
+  mode: "payment",
+  payment_method_types: ["card"],
+  success_url: `${process.env.NEXT_PUBLIC_URL}/payment/success?orderId=${order.id}`,
+  cancel_url: `${process.env.NEXT_PUBLIC_URL}`,
+  line_items: order.items.map((item) => ({
+    quantity: item.quantity,
+    price_data: {
+      currency: "inr",
+      unit_amount: Math.round(item.price * 100),
+      product_data: {
+        name: item.menuItem.name,
+      },
+    },
+  })),
+  metadata: {
+    orderId: order.id,
+  },
+});
+
+
+    await prisma.order.update({
+      where: { id: order.id },
+      data: { stripeSessionId: session.id },
+    });
+
+    return NextResponse.json({ url: session.url });
+  } catch (e) {
+    console.error(e);
     return NextResponse.json(
-      { success: false, message: "Server error" },
+      { message: "Stripe checkout failed" },
       { status: 500 }
     );
   }

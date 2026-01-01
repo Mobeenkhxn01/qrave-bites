@@ -20,6 +20,8 @@ export default function MenuItemCardList({
         <div className="h-20 w-20 overflow-hidden rounded-lg">
           <Image
             src={item.image || "/placeholder.svg"}
+            width={80}
+            height={80}
             alt={item.name}
             className="h-full w-full object-cover"
           />

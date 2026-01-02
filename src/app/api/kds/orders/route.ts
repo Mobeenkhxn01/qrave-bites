@@ -2,6 +2,15 @@ import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
+type CartItemType = {
+  menuItemId: string;
+  quantity: number;
+  menuItem: {
+    price: number;
+    restaurantId: string;
+  };
+};
+
 /* ===================== GET ===================== */
 export async function GET() {
   try {
@@ -45,8 +54,7 @@ export async function GET() {
     });
 
     return NextResponse.json({ orders });
-  } catch (error) {
-    console.error("GET /api/orders error:", error);
+  } catch {
     return NextResponse.json({ error: "Server error" }, { status: 500 });
   }
 }
@@ -83,10 +91,13 @@ export async function POST(req: Request) {
       );
     }
 
-    const restaurantId = cart.cartItems[0].menuItem.restaurantId;
+    const cartItems = cart.cartItems as CartItemType[];
 
-    const totalAmount = cart.cartItems.reduce(
-      (sum, item) => sum + item.quantity * item.menuItem.price,
+    const restaurantId = cartItems[0].menuItem.restaurantId;
+
+    const totalAmount = cartItems.reduce(
+      (sum: number, item: CartItemType) =>
+        sum + item.quantity * item.menuItem.price,
       0
     );
 
@@ -110,7 +121,7 @@ export async function POST(req: Request) {
         status: "PENDING",
         paid: false,
         items: {
-          create: cart.cartItems.map((item) => ({
+          create: cartItems.map((item: CartItemType) => ({
             menuItemId: item.menuItemId,
             quantity: item.quantity,
             price: item.menuItem.price,
@@ -139,8 +150,7 @@ export async function POST(req: Request) {
     });
 
     return NextResponse.json({ success: true, order });
-  } catch (error) {
-    console.error("POST /api/orders error:", error);
+  } catch {
     return NextResponse.json(
       { success: false, message: "Failed to place order" },
       { status: 500 }

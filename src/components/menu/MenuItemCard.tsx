@@ -1,21 +1,29 @@
 'use client'
 
-import { MenuItem } from '@prisma/client'
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card'
 import Image from 'next/image'
 import { AddToCartButton } from './AddToCartButton'
 import { Badge } from '@/components/ui/badge'
 import toast from 'react-hot-toast'
 
+type MenuItemType = {
+  id: string
+  name: string
+  description: string | null
+  image: string | null
+  price: number
+  available: boolean
+}
+
 export function MenuItemCard({
   item,
   tableId
 }: {
-  item: MenuItem
+  item: MenuItemType
   tableId: string | null
 }) {
   const handleClickUnavailable = () => {
-    toast.error("This item is currently unavailable")
+    toast.error('This item is currently unavailable')
   }
 
   return (
@@ -26,7 +34,7 @@ export function MenuItemCard({
     >
       <CardHeader className="p-0 relative">
         <Image
-          src={item.image || "/placeholder-food.jpg"}
+          src={item.image || '/placeholder-food.jpg'}
           alt={item.name}
           width={500}
           height={350}

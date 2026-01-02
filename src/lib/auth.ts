@@ -4,7 +4,8 @@ import { prisma } from "@/lib/prisma";
 import Google from "next-auth/providers/google";
 import CredentialsProvider from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
-import { Role } from "@prisma/client";
+
+type Role = "ADMIN" | "RESTAURANT_OWNER" | "USER";
 
 declare module "next-auth" {
   interface Session {
@@ -51,7 +52,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           email: user.email,
           name: user.name,
           image: user.image,
-          role: user.role,
+          role: user.role as Role,
         };
       },
     }),
@@ -66,19 +67,8 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     async jwt({ token, user }) {
       if (user) {
         token.id = user.id;
-
-        if (user.role) {
-          token.role = user.role;
-        } else {
-          const dbUser = await prisma.user.findUnique({
-            where: { id: user.id },
-            select: { role: true },
-          });
-
-          token.role = dbUser?.role ?? Role.USER;
-        }
+        token.role = user.role;
       }
-
       return token;
     },
 

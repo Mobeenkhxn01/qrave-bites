@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { pusherServer } from "@/lib/pusher";
 
 type CartItemType = {
   menuItemId: string;
@@ -98,60 +97,41 @@ export async function GET() {
   }
 }
 
-/* ===================== CREATE ORDER ===================== */
 export async function POST(req: Request) {
   try {
     const session = await auth();
-
-    const body: {
-      tableId?: string;
-      tableNumber?: number;
-      phone?: string;
-    } = await req.json();
-
-    const { tableId, tableNumber, phone } = body;
+    const { tableId, tableNumber, phone } = await req.json();
 
     if (!tableId) {
-      return NextResponse.json(
-        { success: false, message: "tableId is required" },
-        { status: 400 }
-      );
+      return NextResponse.json({ message: "tableId required" }, { status: 400 });
     }
 
     const cart = await prisma.cart.findFirst({
       where: { tableId },
       include: {
-        cartItems: {
-          include: { menuItem: true },
-        },
+        cartItems: { include: { menuItem: true } },
         table: true,
       },
     });
 
     if (!cart || cart.cartItems.length === 0) {
-      return NextResponse.json(
-        { success: false, message: "Cart is empty" },
-        { status: 400 }
-      );
+      return NextResponse.json({ message: "Cart empty" }, { status: 400 });
     }
 
     const cartItems = cart.cartItems as CartItemType[];
     const restaurantId = cartItems[0].menuItem.restaurantId;
 
     const totalAmount = cartItems.reduce(
-      (sum, item) => sum + item.quantity * item.menuItem.price,
+      (sum, i) => sum + i.quantity * i.menuItem.price,
       0
     );
 
-    /* ========= ATOMIC TRANSACTION (FIXES PROD 500) ========= */
     const order = await prisma.$transaction(async (tx) => {
-      const lastOrder = await tx.order.findFirst({
+      const last = await tx.order.findFirst({
         where: { restaurantId },
         orderBy: { orderNumber: "desc" },
         select: { orderNumber: true },
       });
-
-      const nextOrderNumber = (lastOrder?.orderNumber ?? 0) + 1;
 
       return tx.order.create({
         data: {
@@ -159,59 +139,26 @@ export async function POST(req: Request) {
           tableId,
           tableNumber: tableNumber ?? cart.table?.number ?? null,
           userId: session?.user?.id ?? null,
-          phone: phone ?? null,
+          phone,
           totalAmount,
-          orderNumber: nextOrderNumber,
-          status: "PENDING",
+          orderNumber: (last?.orderNumber ?? 0) + 1,
           paid: false,
+          status: "PENDING",
           items: {
-            create: cartItems.map((item) => ({
-              menuItemId: item.menuItemId,
-              quantity: item.quantity,
-              price: item.menuItem.price,
+            create: cartItems.map((i) => ({
+              menuItemId: i.menuItemId,
+              quantity: i.quantity,
+              price: i.menuItem.price,
             })),
           },
         },
-        include: { items: true },
       });
     });
 
-    /* ================= NOTIFICATION ================= */
-    await prisma.notification.create({
-      data: {
-        restaurantId,
-        orderId: order.id,
-        type: "NEW_ORDER",
-        message: `New order #${order.orderNumber} received`,
-        payload: {
-          orderId: order.id,
-          tableNumber: order.tableNumber,
-          totalAmount,
-        },
-      },
-    });
-
-    await pusherServer.trigger(
-      `restaurant-${restaurantId}`,
-      "new-order",
-      {
-        orderId: order.id,
-        orderNumber: order.orderNumber,
-        tableNumber: order.tableNumber,
-        totalAmount,
-      }
-    );
-
-    await prisma.cartItem.deleteMany({
-      where: { cartId: cart.id },
-    });
-
     return NextResponse.json({ success: true, order });
-  } catch (error) {
-    console.error("CREATE ORDER ERROR:", error);
-    return NextResponse.json(
-      { success: false, message: "Failed to place order" },
-      { status: 500 }
-    );
+  } catch (e) {
+    console.error("ORDER_CREATE_ERROR", e);
+    return NextResponse.json({ message: "Failed" }, { status: 500 });
   }
 }
+

@@ -1,10 +1,10 @@
+export const dynamic = "force-dynamic";
+
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
 import ToastClient from "./toast-client";
 
-export type CityItem = {
-  city: string;
-};
+type CityItem = { city: string };
 
 export default async function HomePage() {
   const cities: CityItem[] = await prisma.restaurantStep1.findMany({
@@ -25,15 +25,11 @@ export default async function HomePage() {
         <p className="text-gray-500 text-lg">No cities available.</p>
       ) : (
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-          {cities.map((item: CityItem, index: number) => (
+          {cities.map((item) => (
             <Link
-              key={index}
+              key={item.city}
               href={`/city/${encodeURIComponent(item.city)}`}
-              className="
-                bg-white border rounded-lg p-4 text-center shadow-sm
-                hover:shadow-md transition
-                text-gray-800 font-medium
-              "
+              className="bg-white border rounded-lg p-4 text-center shadow-sm hover:shadow-md transition text-gray-800 font-medium"
             >
               {item.city}
             </Link>

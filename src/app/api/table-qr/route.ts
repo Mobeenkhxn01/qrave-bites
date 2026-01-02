@@ -29,7 +29,7 @@ export async function POST(req: Request) {
       },
     });
 
-    const qrLink = `${process.env.MOBEEN_NEXT_PUBLIC_URL}/city/${restaurant.city}/${restaurant.slug}?table=${number}`;
+    const qrLink = `${process.env.AUTH_URL}/city/${restaurant.city}/${restaurant.slug}?table=${number}`;
 
     const qrCodeUrl = await QRCode.toDataURL(qrLink);
 

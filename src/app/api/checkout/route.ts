@@ -42,8 +42,8 @@ export async function POST(req: Request) {
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
       payment_method_types: ["card"],
-      success_url: `${process.env.MOBEEN_NEXT_PUBLIC_URL}/payment/success?orderId=${order.id}`,
-      cancel_url: `${process.env.MOBEEN_NEXT_PUBLIC_URL}`,
+      success_url: `${process.env.AUTH_URL}/payment/success?orderId=${order.id}`,
+      cancel_url: `${process.env.AUTH_URL}`,
       line_items: order.items.map((item: OrderItemType) => ({
         quantity: item.quantity,
         price_data: {

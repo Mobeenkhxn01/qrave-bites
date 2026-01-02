@@ -25,7 +25,7 @@ type PrismaAdapterClient = Parameters<typeof PrismaAdapter>[0];
 export const { handlers, signIn, signOut, auth } = NextAuth({
   adapter: PrismaAdapter(prisma as unknown as PrismaAdapterClient),
 
-  trustHost: !!process.env.MOBEEN_NEXTAUTH_TRUST_HOST,
+  trustHost: !!process.env.NEXTAUTH_TRUST_HOST,
 
   providers: [
     CredentialsProvider({

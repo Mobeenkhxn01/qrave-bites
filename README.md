@@ -179,7 +179,7 @@ MOBEEN_AWS_BUCKET_NAME="aws bucket name"
 MOBEEN_AWS_REGION="aws region"
 MOBEEN_AWS_SECRET_KEY="your aws secret key"
 DATABASE_URL="mongodb url"
-MOBEEN_JWT_SECRET="jwt secret token"
+AUTH_SECRET="jwt secret token"
 ```
 
 7. Hit Deploy!

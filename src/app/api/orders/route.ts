@@ -1,14 +1,42 @@
-
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
-/* ===================== GET ===================== */
+type CartItemType = {
+  menuItemId: string;
+  quantity: number;
+  menuItem: {
+    price: number;
+    restaurantId: string;
+  };
+};
+
+type OrderItemType = {
+  id: string;
+  quantity: number;
+  price: number;
+  menuItem: {
+    id: string;
+    name: string;
+  };
+};
+
+type OrderType = {
+  id: string;
+  orderNumber: number;
+  tableNumber: number | null;
+  totalAmount: number;
+  status: string;
+  paid: boolean;
+  createdAt: Date;
+  items: OrderItemType[];
+};
+
 export async function GET() {
   try {
     const session = await auth();
 
-    let orders;
+    let orders: OrderType[] = [];
 
     if (session?.user?.role === "ADMIN") {
       orders = await prisma.order.findMany({
@@ -45,8 +73,7 @@ export async function GET() {
       });
     }
 
-    // 🔥 SHAPE DATA FOR UI
-    const formatted = orders.map((o) => ({
+    const formatted = orders.map((o: OrderType) => ({
       id: o.id,
       orderNumber: o.orderNumber,
       tableNumber: o.tableNumber ?? null,
@@ -54,7 +81,7 @@ export async function GET() {
       status: o.status,
       paid: o.paid,
       createdAt: o.createdAt.toISOString(),
-      items: o.items.map((i) => ({
+      items: o.items.map((i: OrderItemType) => ({
         id: i.id,
         quantity: i.quantity,
         price: i.price,
@@ -63,8 +90,7 @@ export async function GET() {
     }));
 
     return NextResponse.json(formatted);
-  } catch (error) {
-    console.error("GET /api/orders error:", error);
+  } catch {
     return NextResponse.json([], { status: 500 });
   }
 }
@@ -72,7 +98,11 @@ export async function GET() {
 export async function POST(req: Request) {
   try {
     const session = await auth();
-    const body = await req.json();
+    const body: {
+      tableId?: string;
+      tableNumber?: number;
+      phone?: string;
+    } = await req.json();
 
     const { tableId, tableNumber, phone } = body;
 
@@ -100,10 +130,13 @@ export async function POST(req: Request) {
       );
     }
 
-    const restaurantId = cart.cartItems[0].menuItem.restaurantId;
+    const cartItems = cart.cartItems as CartItemType[];
 
-    const totalAmount = cart.cartItems.reduce(
-      (sum, item) => sum + item.quantity * item.menuItem.price,
+    const restaurantId = cartItems[0].menuItem.restaurantId;
+
+    const totalAmount = cartItems.reduce(
+      (sum: number, item: CartItemType) =>
+        sum + item.quantity * item.menuItem.price,
       0
     );
 
@@ -127,7 +160,7 @@ export async function POST(req: Request) {
         status: "PENDING",
         paid: false,
         items: {
-          create: cart.cartItems.map((item) => ({
+          create: cartItems.map((item: CartItemType) => ({
             menuItemId: item.menuItemId,
             quantity: item.quantity,
             price: item.menuItem.price,
@@ -156,8 +189,7 @@ export async function POST(req: Request) {
     });
 
     return NextResponse.json({ success: true, order });
-  } catch (error) {
-    console.error("POST /api/orders error:", error);
+  } catch {
     return NextResponse.json(
       { success: false, message: "Failed to place order" },
       { status: 500 }

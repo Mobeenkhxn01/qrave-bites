@@ -46,7 +46,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    let baseSlug = slugify(restaurantname, { lower: true, strict: true });
+    const baseSlug = slugify(restaurantname, { lower: true, strict: true });
     let slug = baseSlug;
     let i = 1;
 

@@ -97,7 +97,7 @@ Create a `.env` file in the root with the following keys:
 
 ```env
 DATABASE_URL=your_mongodb_connection_string
-NEXTMOBEEN_AUTH_SECRET=your_MOBEEN_AUTH_SECRET
+NEXTAUTH_SECRET=your_AUTH_SECRET
 NEXTAUTH_URL=https://qrave-bites.onrender.com
 MOBEEN_STRIPE_SECRET_KEY=your_stripe_secret
 STRIPE_PUBLIC_KEY=your_stripe_public
@@ -173,7 +173,7 @@ bun run start
 ```env
 MOBEEN_AUTH_GOOGLE_ID="google client id"
 MOBEEN_AUTH_GOOGLE_SECRET="google secret"
-MOBEEN_AUTH_SECRET="your auth secret"
+AUTH_SECRET="your auth secret"
 MOBEEN_AWS_ACCESS_KEY="your aws access key"
 MOBEEN_AWS_BUCKET_NAME="aws bucket name"
 MOBEEN_AWS_REGION="aws region"

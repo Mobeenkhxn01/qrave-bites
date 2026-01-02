@@ -60,7 +60,10 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       },
     }),
 
-    Google,
+    Google({
+      clientId: process.env.AUTH_GOOGLE_ID!,
+      clientSecret: process.env.AUTH_GOOGLE_SECRET!,
+    }),
   ],
 
   callbacks: {
@@ -91,5 +94,5 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     maxAge: 7 * 24 * 60 * 60,
   },
 
-  secret: process.env.MOBEEN_AUTH_SECRET,
+  secret: process.env.AUTH_SECRET,
 });

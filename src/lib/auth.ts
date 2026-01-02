@@ -20,12 +20,10 @@ declare module "next-auth" {
   }
 }
 
-type PrismaAdapterClient = Parameters<typeof PrismaAdapter>[0];
-
 export const { handlers, signIn, signOut, auth } = NextAuth({
-  adapter: PrismaAdapter(prisma as unknown as PrismaAdapterClient),
+  adapter: PrismaAdapter(prisma as any),
 
-  trustHost: !!process.env.NEXTAUTH_TRUST_HOST,
+  trustHost: true,
 
   providers: [
     CredentialsProvider({

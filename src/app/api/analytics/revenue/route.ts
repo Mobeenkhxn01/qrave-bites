@@ -1,10 +1,14 @@
 import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
 
+type RevenueOrder = {
+  createdAt: Date;
+  totalAmount: number;
+};
+
 export async function GET() {
   try {
-    // Fetch orders from the last 90 days
-    const recentOrders = await prisma.order.findMany({
+    const recentOrders: RevenueOrder[] = await prisma.order.findMany({
       where: {
         createdAt: {
           gte: new Date(Date.now() - 90 * 24 * 60 * 60 * 1000),
@@ -17,19 +21,19 @@ export async function GET() {
       orderBy: { createdAt: "asc" },
     });
 
-    // Group by date and sum revenue
     const revenueMap: Record<string, number> = {};
 
-    recentOrders.forEach((order) => {
+    recentOrders.forEach((order: RevenueOrder) => {
       const date = order.createdAt.toISOString().split("T")[0];
       revenueMap[date] = (revenueMap[date] || 0) + order.totalAmount;
     });
 
-    // Convert to chart-friendly format
-    const chartData = Object.entries(revenueMap).map(([date, revenue]) => ({
-      date,
-      revenue,
-    }));
+    const chartData = Object.entries(revenueMap).map(
+      ([date, revenue]) => ({
+        date,
+        revenue,
+      })
+    );
 
     return NextResponse.json(chartData);
   } catch (error) {

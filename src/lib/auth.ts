@@ -20,8 +20,11 @@ declare module "next-auth" {
   }
 }
 
+type PrismaAdapterClient = Parameters<typeof PrismaAdapter>[0];
+
 export const { handlers, signIn, signOut, auth } = NextAuth({
-  adapter: PrismaAdapter(prisma),
+  adapter: PrismaAdapter(prisma as unknown as PrismaAdapterClient),
+
   trustHost: !!process.env.MOBEEN_NEXTAUTH_TRUST_HOST,
 
   providers: [
@@ -67,7 +70,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     async jwt({ token, user }) {
       if (user) {
         token.id = user.id;
-        token.role = user.role;
+        token.role = (user as { role: Role }).role;
       }
       return token;
     },

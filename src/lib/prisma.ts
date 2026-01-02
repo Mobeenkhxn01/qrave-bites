@@ -1,10 +1,8 @@
-import Prisma from "@prisma/client";
+import { PrismaClient } from "@prisma/client";
 import { withAccelerate } from "@prisma/extension-accelerate";
 
-const { PrismaClient } = Prisma;
-
 const globalForPrisma = globalThis as unknown as {
-  prisma: InstanceType<typeof PrismaClient>;
+  prisma: PrismaClient;
 };
 
 export const prisma =

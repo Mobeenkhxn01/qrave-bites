@@ -59,7 +59,7 @@ export default function OrdersPage() {
 
   useEffect(() => {
     const pusher = new Pusher(process.env.MOBEEN_PUSHER_KEY || "", {
-      cluster: process.env.MOBEEN_NEXT_PUBLIC_PUSHER_CLUSTER as string,
+      cluster: process.env.MOBEEN_PUSHER_CLUSTER as string,
     });
 
     const channel = pusher.subscribe("restaurant-global");

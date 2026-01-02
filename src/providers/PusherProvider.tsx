@@ -11,7 +11,7 @@ export default function PusherProvider({ restaurantId, children }: { restaurantI
   useEffect(() => {
     if (!restaurantId) return;
 
-    const pusher = new Pusher(process.env.MOBEEN_PUSHER_KEY!, { cluster: process.env.MOBEEN_NEXT_PUBLIC_PUSHER_CLUSTER || "ap2" });
+    const pusher = new Pusher(process.env.MOBEEN_PUSHER_KEY!, { cluster: process.env.MOBEEN_PUSHER_CLUSTER || "ap2" });
     const channel = pusher.subscribe(`restaurant-${restaurantId}`);
 
     channel.bind("new-order", (data: any) => {

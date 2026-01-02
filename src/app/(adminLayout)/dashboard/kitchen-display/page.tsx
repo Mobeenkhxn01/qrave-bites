@@ -53,7 +53,7 @@ export default function KitchenPage() {
 
   useEffect(() => {
     const pusherKey: string = process.env.MOBEEN_PUSHER_KEY ?? "";
-    const pusherCluster: string = process.env.MOBEEN_NEXT_PUBLIC_PUSHER_CLUSTER ?? "";
+    const pusherCluster: string = process.env.MOBEEN_PUSHER_CLUSTER ?? "";
 
     if (!pusherKey || !pusherCluster) {
       console.error("Pusher client env variables missing.");

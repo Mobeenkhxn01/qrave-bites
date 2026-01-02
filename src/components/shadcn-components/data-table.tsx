@@ -126,7 +126,7 @@ export default function OrdersTable() {
   // Real-time updates
   useEffect(() => {
     const pusher = new Pusher(process.env.MOBEEN_PUSHER_KEY!, {
-      cluster: process.env.MOBEEN_NEXT_PUBLIC_PUSHER_CLUSTER!,
+      cluster: process.env.MOBEEN_PUSHER_CLUSTER!,
     });
 
     const channel = pusher.subscribe("restaurant-notifications");

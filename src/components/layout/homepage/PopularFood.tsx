@@ -85,7 +85,7 @@ export default function PopularFood() {
                     </motion.div>
                   </CardHeader>
 
-                  <CardFooter className="relative h-[240px] sm:h-[300px] md:h-[360px] p-0 overflow-hidden">
+                  <CardFooter className="relative h-60 sm:h-75 md:h-90 p-0 overflow-hidden">
                     <motion.div
                       whileHover={{ scale: 1.08 }}
                       transition={{ duration: 0.6, ease: "easeOut" }}

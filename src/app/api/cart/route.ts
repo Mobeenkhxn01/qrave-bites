@@ -6,6 +6,14 @@ import {
   cartItemSchema,
 } from "@/lib/validators";
 
+type CartItemType = {
+  id: string;
+  menuItemId: string;
+  quantity: number;
+  cartId: string;
+};
+
+
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
 
@@ -194,9 +202,9 @@ export async function DELETE(req: Request) {
     return NextResponse.json({ success: true });
   }
 
-  const item = cart.cartItems.find(
-    (i) => i.menuItemId === menuItemId
-  );
+  const item = (cart.cartItems as CartItemType[]).find(
+  (i: CartItemType) => i.menuItemId === menuItemId
+);
 
   if (!item) {
     return NextResponse.json({ success: true });

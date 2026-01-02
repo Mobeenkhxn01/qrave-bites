@@ -33,6 +33,7 @@ type OrderType = {
   items: OrderItemType[];
 };
 
+/* ===================== GET ORDERS ===================== */
 export async function GET() {
   try {
     const session = await auth();
@@ -74,15 +75,15 @@ export async function GET() {
       });
     }
 
-    const formatted = orders.map((o: OrderType) => ({
+    const formatted = orders.map((o) => ({
       id: o.id,
       orderNumber: o.orderNumber,
-      tableNumber: o.tableNumber ?? null,
+      tableNumber: o.tableNumber,
       totalAmount: o.totalAmount,
       status: o.status,
       paid: o.paid,
       createdAt: o.createdAt.toISOString(),
-      items: o.items.map((i: OrderItemType) => ({
+      items: o.items.map((i) => ({
         id: i.id,
         quantity: i.quantity,
         price: i.price,
@@ -91,14 +92,17 @@ export async function GET() {
     }));
 
     return NextResponse.json(formatted);
-  } catch {
+  } catch (error) {
+    console.error("GET ORDERS ERROR:", error);
     return NextResponse.json([], { status: 500 });
   }
 }
 
+/* ===================== CREATE ORDER ===================== */
 export async function POST(req: Request) {
   try {
     const session = await auth();
+
     const body: {
       tableId?: string;
       tableNumber?: number;
@@ -132,45 +136,47 @@ export async function POST(req: Request) {
     }
 
     const cartItems = cart.cartItems as CartItemType[];
-
     const restaurantId = cartItems[0].menuItem.restaurantId;
 
     const totalAmount = cartItems.reduce(
-      (sum: number, item: CartItemType) =>
-        sum + item.quantity * item.menuItem.price,
+      (sum, item) => sum + item.quantity * item.menuItem.price,
       0
     );
 
-    const lastOrder = await prisma.order.findFirst({
-      where: { restaurantId },
-      orderBy: { orderNumber: "desc" },
-      select: { orderNumber: true },
-    });
+    /* ========= ATOMIC TRANSACTION (FIXES PROD 500) ========= */
+    const order = await prisma.$transaction(async (tx) => {
+      const lastOrder = await tx.order.findFirst({
+        where: { restaurantId },
+        orderBy: { orderNumber: "desc" },
+        select: { orderNumber: true },
+      });
 
-    const nextOrderNumber = (lastOrder?.orderNumber ?? 0) + 1;
+      const nextOrderNumber = (lastOrder?.orderNumber ?? 0) + 1;
 
-    const order = await prisma.order.create({
-      data: {
-        restaurantId,
-        tableId,
-        tableNumber: tableNumber ?? cart.table?.number ?? null,
-        userId: session?.user?.id ?? null,
-        phone: phone ?? null,
-        totalAmount,
-        orderNumber: nextOrderNumber,
-        status: "PENDING",
-        paid: false,
-        items: {
-          create: cartItems.map((item: CartItemType) => ({
-            menuItemId: item.menuItemId,
-            quantity: item.quantity,
-            price: item.menuItem.price,
-          })),
+      return tx.order.create({
+        data: {
+          restaurantId,
+          tableId,
+          tableNumber: tableNumber ?? cart.table?.number ?? null,
+          userId: session?.user?.id ?? null,
+          phone: phone ?? null,
+          totalAmount,
+          orderNumber: nextOrderNumber,
+          status: "PENDING",
+          paid: false,
+          items: {
+            create: cartItems.map((item) => ({
+              menuItemId: item.menuItemId,
+              quantity: item.quantity,
+              price: item.menuItem.price,
+            })),
+          },
         },
-      },
-      include: { items: true },
+        include: { items: true },
+      });
     });
 
+    /* ================= NOTIFICATION ================= */
     await prisma.notification.create({
       data: {
         restaurantId,
@@ -184,19 +190,25 @@ export async function POST(req: Request) {
         },
       },
     });
-    await pusherServer.trigger(`restaurant-${restaurantId}`, "new-order", {
-      orderId: order.id,
-      orderNumber: order.orderNumber,
-      tableNumber: order.tableNumber,
-      totalAmount,
-    });
+
+    await pusherServer.trigger(
+      `restaurant-${restaurantId}`,
+      "new-order",
+      {
+        orderId: order.id,
+        orderNumber: order.orderNumber,
+        tableNumber: order.tableNumber,
+        totalAmount,
+      }
+    );
 
     await prisma.cartItem.deleteMany({
       where: { cartId: cart.id },
     });
 
     return NextResponse.json({ success: true, order });
-  } catch {
+  } catch (error) {
+    console.error("CREATE ORDER ERROR:", error);
     return NextResponse.json(
       { success: false, message: "Failed to place order" },
       { status: 500 }

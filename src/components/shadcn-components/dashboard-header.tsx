@@ -9,7 +9,7 @@ import {
   SettingsIcon,
 } from "lucide-react";
 import { useTheme } from "next-themes";
-
+import { useNotifications } from "@/hooks/useNotifications";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { SidebarTrigger } from "@/components/ui/sidebar";
@@ -24,11 +24,21 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
-export function DashboardHeader() {
+export function DashboardHeader({
+  restaurantId,
+}: {
+  restaurantId?: string;
+}) {
   const { setTheme, theme } = useTheme();
+  const { data: notifications = [] } = useNotifications(restaurantId);
+
+const unreadCount = notifications.filter(
+  (n: any) => !n.isRead
+).length;
+
 
   return (
-    <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 px-4 md:px-6">
+    <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60 px-4 md:px-6">
       <SidebarTrigger />
       <div className="hidden md:flex md:flex-1">
         <form className="flex-1 md:max-w-sm">
@@ -37,7 +47,7 @@ export function DashboardHeader() {
             <Input
               type="search"
               placeholder="Search orders, tables, customers..."
-              className="w-full bg-background pl-8 md:w-[240px] lg:w-[340px]"
+              className="w-full bg-background pl-8 md:w-60 lg:w-85"
             />
           </div>
         </form>
@@ -70,42 +80,37 @@ export function DashboardHeader() {
               className="rounded-full relative"
             >
               <BellIcon className="h-4 w-4" />
-              <Badge className="absolute -top-1 -right-1 h-5 w-5 rounded-full p-0 flex items-center justify-center text-xs">
-                3
-              </Badge>
+              {unreadCount > 0 && (
+  <Badge className="absolute -top-1 -right-1 h-5 w-5 rounded-full p-0 flex items-center justify-center text-xs">
+    {unreadCount}
+  </Badge>
+)}
+
               <span className="sr-only">Notifications</span>
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-80">
-            <DropdownMenuLabel>Notifications</DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem>
-              <div className="flex flex-col gap-1">
-                <span className="font-medium">New order from Table 7</span>
-                <span className="text-sm text-muted-foreground">
-                  2 minutes ago
-                </span>
-              </div>
-            </DropdownMenuItem>
-            <DropdownMenuItem>
-              <div className="flex flex-col gap-1">
-                <span className="font-medium">Payment received - $45.50</span>
-                <span className="text-sm text-muted-foreground">
-                  5 minutes ago
-                </span>
-              </div>
-            </DropdownMenuItem>
-            <DropdownMenuItem>
-              <div className="flex flex-col gap-1">
-                <span className="font-medium">
-                  Table 3 requested assistance
-                </span>
-                <span className="text-sm text-muted-foreground">
-                  8 minutes ago
-                </span>
-              </div>
-            </DropdownMenuItem>
-          </DropdownMenuContent>
+  <DropdownMenuLabel>Notifications</DropdownMenuLabel>
+  <DropdownMenuSeparator />
+
+  {notifications.length === 0 && (
+    <div className="px-4 py-6 text-center text-sm text-muted-foreground">
+      No notifications
+    </div>
+  )}
+
+  {notifications.slice(0, 5).map((n: any) => (
+    <DropdownMenuItem key={n.id} className="cursor-pointer">
+      <div className="flex flex-col gap-1">
+        <span className="font-medium">{n.message}</span>
+        <span className="text-xs text-muted-foreground">
+          {new Date(n.createdAt).toLocaleString()}
+        </span>
+      </div>
+    </DropdownMenuItem>
+  ))}
+</DropdownMenuContent>
+
         </DropdownMenu>
 
         <DropdownMenu>
@@ -114,6 +119,8 @@ export function DashboardHeader() {
               <Avatar className="h-8 w-8">
                 <AvatarImage
                   src="/placeholder.svg"
+                  width={32}
+                  height={32}
                   alt="User"
                   className="object-cover"
                 />

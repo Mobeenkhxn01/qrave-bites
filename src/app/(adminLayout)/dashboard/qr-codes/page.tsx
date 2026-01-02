@@ -1,10 +1,9 @@
 "use client";
 import {
   PlusIcon,
-  QrCodeIcon,
-  RefreshCwIcon
+  QrCodeIcon
 } from "lucide-react";
-import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
+
 import {
   Dialog,
   DialogContent,
@@ -22,8 +21,6 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { DashboardHeader } from "@/components/shadcn-components/dashboard-header";
-import { AppSidebar } from "@/components/shadcn-components/app-sidebar";
 import TableQRCode from "./TableQRCode";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
@@ -57,18 +54,7 @@ export default function QRCodesPage() {
     return <div className="p-6 text-red-500">Failed to load QR codes.</div>;
 
   return (
-    <div className="flex flex-col">
-      <SidebarProvider
-        style={
-          {
-            "--sidebar-width": "calc(var(--spacing) * 72)",
-            "--header-height": "calc(var(--spacing) * 12)",
-          } as React.CSSProperties
-        }
-      >
-        <AppSidebar variant="inset" />
-        <SidebarInset>
-          <DashboardHeader />
+
           <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
             <div className="flex items-center justify-between">
               <div>
@@ -89,7 +75,7 @@ export default function QRCodesPage() {
                       <PlusIcon className="mr-2 h-4 w-4" /> Generate QR Code
                     </Button>
                   </DialogTrigger>
-                  <DialogContent className="sm:max-w-[650px]">
+                  <DialogContent className="sm:max-w-162.5">
                     <DialogHeader>
                       <DialogTitle>Add Qr code for table</DialogTitle>
                       <DialogDescription>
@@ -212,8 +198,6 @@ export default function QRCodesPage() {
               </TabsContent>
             </Tabs>
           </div>
-        </SidebarInset>
-      </SidebarProvider>
-    </div>
+     
   );
 }

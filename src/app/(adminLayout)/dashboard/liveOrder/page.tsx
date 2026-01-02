@@ -1,10 +1,9 @@
 "use client";
 
-import React, { useEffect } from "react";
+import React from "react";
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import axios from "axios";
-import Pusher from "pusher-js";
-import toast, { Toaster } from "react-hot-toast";
+
 import {
   Card,
   CardHeader,
@@ -12,17 +11,14 @@ import {
   CardDescription,
   CardContent,
 } from "@/components/ui/card";
-import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
-import { AppSidebar } from "@/components/shadcn-components/app-sidebar";
-import { DashboardHeader } from "@/components/shadcn-components/dashboard-header";
+import toast from "react-hot-toast";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
-import {
-  SearchIcon,
-} from "lucide-react";
+import { SearchIcon } from "lucide-react";
+
 
 type OrderItem = {
   id: string;
@@ -46,6 +42,8 @@ function friendlyDate(iso?: string) {
   return iso ? new Date(iso).toLocaleString() : "";
 }
 
+
+
 export default function OrdersPage() {
   const queryClient = useQueryClient();
 
@@ -53,114 +51,83 @@ export default function OrdersPage() {
     queryKey: ["orders"],
     queryFn: async () => {
       const r = await axios.get("/api/orders");
-      return r.data;
+      return r.data ?? [];
     },
   });
 
-  useEffect(() => {
-    const pusher = new Pusher(process.env.MOBEEN_PUSHER_KEY || "", {
-      cluster: process.env.MOBEEN_PUSHER_CLUSTER as string,
-    });
-
-    const channel = pusher.subscribe("restaurant-global");
-
-    channel.bind("new-order", () => {
-      toast.success("New order received");
-      queryClient.invalidateQueries({ queryKey: ["orders"] });
-    });
-
-    channel.bind("order-update", () => {
-      toast("Order updated");
-      queryClient.invalidateQueries({ queryKey: ["orders"] });
-    });
-
-    return () => {
-      channel.unbind_all();
-      channel.unsubscribe();
-      pusher.disconnect();
-    };
-  }, [queryClient]);
-
   return (
-    <SidebarProvider>
-      <AppSidebar variant="inset" />
-      <SidebarInset>
-        <DashboardHeader />
-        <Toaster position="top-right" />
+    <div className="p-6 space-y-4">
+      <div className="flex justify-between items-center">
+        <h2 className="text-3xl font-bold">Orders</h2>
 
-        <div className="p-6 space-y-4">
-          <div className="flex justify-between items-center">
-            <h2 className="text-3xl font-bold">Orders</h2>
-
-            <div className="flex gap-3">
-              <div className="relative">
-                <SearchIcon className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Search orders..."
-                  className="pl-8 md:w-60 lg:w-85"
-                />
-              </div>
-
-              <Button
-                onClick={() =>
-                  queryClient.invalidateQueries({ queryKey: ["orders"] })
-                }
-              >
-                Refresh
-              </Button>
-            </div>
+        <div className="flex gap-3">
+          <div className="relative">
+            <SearchIcon className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Search orders..."
+              className="pl-8 md:w-60 lg:w-85"
+            />
           </div>
 
-          <Tabs defaultValue="all">
-            <TabsList>
-              <TabsTrigger value="all">All</TabsTrigger>
-              <TabsTrigger value="processing">Processing</TabsTrigger>
-              <TabsTrigger value="completed">Completed</TabsTrigger>
-              <TabsTrigger value="cancelled">Cancelled</TabsTrigger>
-            </TabsList>
-
-            <TabsContent value="all">
-              {isLoading ? (
-                <div>Loading...</div>
-              ) : (
-                orders.map((o) => <OrderCard key={o.id} order={o} />)
-              )}
-            </TabsContent>
-
-            <TabsContent value="processing">
-              {orders
-                .filter(
-                  (o) =>
-                    o.status === "PENDING" ||
-                    o.status === "CONFIRMED" ||
-                    o.status === "IN_PROGRESS"
-                )
-                .map((o) => (
-                  <OrderCard key={o.id} order={o} />
-                ))}
-            </TabsContent>
-
-            <TabsContent value="completed">
-              {orders
-                .filter((o) => o.status === "COMPLETED")
-                .map((o) => (
-                  <OrderCard key={o.id} order={o} />
-                ))}
-            </TabsContent>
-
-            <TabsContent value="cancelled">
-              {orders
-                .filter((o) => o.status === "CANCELLED")
-                .map((o) => (
-                  <OrderCard key={o.id} order={o} />
-                ))}
-            </TabsContent>
-          </Tabs>
+          <Button
+            onClick={() =>
+              queryClient.invalidateQueries({ queryKey: ["orders"] })
+            }
+          >
+            Refresh
+          </Button>
         </div>
-      </SidebarInset>
-    </SidebarProvider>
+      </div>
+
+      <Tabs defaultValue="all">
+        <TabsList>
+          <TabsTrigger value="all">All</TabsTrigger>
+          <TabsTrigger value="processing">Processing</TabsTrigger>
+          <TabsTrigger value="completed">Completed</TabsTrigger>
+          <TabsTrigger value="cancelled">Cancelled</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="all">
+          {isLoading ? (
+            <div>Loading...</div>
+          ) : (
+            orders.map((o) => <OrderCard key={o.id} order={o} />)
+          )}
+        </TabsContent>
+
+        <TabsContent value="processing">
+          {orders
+            .filter(
+              (o) =>
+                o.status === "PENDING" ||
+                o.status === "CONFIRMED" ||
+                o.status === "IN_PROGRESS"
+            )
+            .map((o) => (
+              <OrderCard key={o.id} order={o} />
+            ))}
+        </TabsContent>
+
+        <TabsContent value="completed">
+          {orders
+            .filter((o) => o.status === "COMPLETED")
+            .map((o) => (
+              <OrderCard key={o.id} order={o} />
+            ))}
+        </TabsContent>
+
+        <TabsContent value="cancelled">
+          {orders
+            .filter((o) => o.status === "CANCELLED")
+            .map((o) => (
+              <OrderCard key={o.id} order={o} />
+            ))}
+        </TabsContent>
+      </Tabs>
+    </div>
   );
 }
+
 
 function OrderCard({ order }: { order: Order }) {
   const queryClient = useQueryClient();
@@ -172,6 +139,9 @@ function OrderCard({ order }: { order: Order }) {
     onSuccess: () => {
       toast.success("Order updated");
       queryClient.invalidateQueries({ queryKey: ["orders"] });
+    },
+    onError: () => {
+      toast.error("Failed to update order");
     },
   });
 
@@ -204,9 +174,7 @@ function OrderCard({ order }: { order: Order }) {
               key={s}
               size="sm"
               variant={s === "CANCELLED" ? "destructive" : "default"}
-              onClick={() =>
-                mutation.mutate({ id: order.id, status: s })
-              }
+              onClick={() => mutation.mutate({ id: order.id, status: s })}
             >
               {s.replace("_", " ")}
             </Button>
@@ -216,6 +184,7 @@ function OrderCard({ order }: { order: Order }) {
     </Card>
   );
 }
+
 
 function StatusBadge({ status }: { status: Order["status"] }) {
   return (

@@ -1,9 +1,7 @@
 "use client";
 
-import { useEffect } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
-import Pusher from "pusher-js";
 
 import {
   ColumnDef,
@@ -104,7 +102,7 @@ export const columns: ColumnDef<NotificationRow>[] = [
   },
   {
     header: "Actions",
-    cell: ({ row }) => (
+    cell: () => (
       <Button size="sm" variant="outline">
         View
       </Button>
@@ -113,35 +111,14 @@ export const columns: ColumnDef<NotificationRow>[] = [
 ];
 
 export default function OrdersTable() {
-  const queryClient = useQueryClient();
-
-  const { data: notifications = [] } = useQuery({
+  const { data: notifications = [] } = useQuery<NotificationRow[]>({
     queryKey: ["notifications"],
     queryFn: async () => {
       const res = await axios.get("/api/notifications");
-      return res.data.notifications;
+      return res.data?.notifications ?? []; 
     },
   });
 
-  // Real-time updates
-  useEffect(() => {
-    const pusher = new Pusher(process.env.MOBEEN_PUSHER_KEY!, {
-      cluster: process.env.MOBEEN_PUSHER_CLUSTER!,
-    });
-
-    const channel = pusher.subscribe("restaurant-notifications");
-
-    channel.bind("new-notification", () => {
-      queryClient.invalidateQueries({ queryKey: ["notifications"] });
-    });
-
-    return () => {
-      channel.unbind_all();
-      channel.unsubscribe();
-    };
-  }, []);
-
-  // TanStack
   const table = useReactTable({
     data: notifications,
     columns,
@@ -153,6 +130,7 @@ export default function OrdersTable() {
       <CardHeader>
         <CardTitle>Order Notifications</CardTitle>
       </CardHeader>
+
       <CardContent>
         <Table>
           <TableHeader>
@@ -162,7 +140,10 @@ export default function OrdersTable() {
                   <TableHead key={header.id}>
                     {header.isPlaceholder
                       ? null
-                      : flexRender(header.column.columnDef.header, header.getContext())}
+                      : flexRender(
+                          header.column.columnDef.header,
+                          header.getContext()
+                        )}
                   </TableHead>
                 ))}
               </TableRow>
@@ -175,7 +156,10 @@ export default function OrdersTable() {
                 <TableRow key={row.id}>
                   {row.getVisibleCells().map((cell) => (
                     <TableCell key={cell.id}>
-                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                      {flexRender(
+                        cell.column.columnDef.cell,
+                        cell.getContext()
+                      )}
                     </TableCell>
                   ))}
                 </TableRow>

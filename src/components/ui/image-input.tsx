@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { X, ImagePlus  } from "lucide-react"
 import { cn } from "@/lib/utils"
+import Image from "next/image"
 
 interface ImageInputProps {
   id: string
@@ -121,10 +122,10 @@ export function ImageInput({
           </div>
         ) : (
           <div className="relative rounded-md overflow-hidden border">
-            <img
+            <Image
               src={preview || "/placeholder.svg"}
               alt="Preview"
-              className="w-full h-auto max-h-[300px] object-contain bg-black/5"
+              className="w-full h-auto max-h-75 object-contain bg-black/5"
             />
             <Button
               type="button"

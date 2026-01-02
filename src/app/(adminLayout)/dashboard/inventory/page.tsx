@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
-import toast, { Toaster } from "react-hot-toast";
+import toast from "react-hot-toast";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -11,10 +11,6 @@ import { Progress } from "@/components/ui/progress";
 import { Input } from "@/components/ui/input";
 import InventoryForm from "./InventoryForm";
 import { PlusIcon } from "lucide-react";
-
-import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
-import { AppSidebar } from "@/components/shadcn-components/app-sidebar";
-import { DashboardHeader } from "@/components/shadcn-components/dashboard-header";
 
 type InventoryItem = {
   id: string;
@@ -105,20 +101,7 @@ export default function InventoryPageClient() {
   };
 
   return (
-    <SidebarProvider
-      style={
-        {
-          "--sidebar-width": "calc(var(--spacing) * 72)",
-          "--header-height": "calc(var(--spacing) * 12)",
-        } as React.CSSProperties
-      }
-    >
-      <AppSidebar variant="inset" />
-      <SidebarInset>
-        <DashboardHeader />
-        <Toaster />
-
-        {/* Page Wrapper should be inside SidebarInset */}
+    
         <div className="p-4">
 
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
@@ -257,7 +240,5 @@ export default function InventoryPageClient() {
           )}
 
         </div>
-      </SidebarInset>
-    </SidebarProvider>
   );
 }

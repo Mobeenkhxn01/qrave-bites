@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { pusherServer } from "@/lib/pusher";
 
 type CartItemType = {
   menuItemId: string;
@@ -182,6 +183,12 @@ export async function POST(req: Request) {
           totalAmount,
         },
       },
+    });
+    await pusherServer.trigger(`restaurant-${restaurantId}`, "new-order", {
+      orderId: order.id,
+      orderNumber: order.orderNumber,
+      tableNumber: order.tableNumber,
+      totalAmount,
     });
 
     await prisma.cartItem.deleteMany({

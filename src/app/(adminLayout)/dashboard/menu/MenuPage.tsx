@@ -4,10 +4,6 @@ import { useState } from "react";
 import { useSession } from "next-auth/react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
-
-import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
-import { AppSidebar } from "@/components/shadcn-components/app-sidebar";
-import { DashboardHeader } from "@/components/shadcn-components/dashboard-header";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -122,17 +118,7 @@ export default function MenuPage() {
     return <div className="p-4 text-center">Loading...</div>;
 
   return (
-    <SidebarProvider
-      style={
-        {
-          "--sidebar-width": "calc(var(--spacing) * 72)",
-          "--header-height": "calc(var(--spacing) * 12)",
-        } as React.CSSProperties
-      }
-    >
-      <AppSidebar variant="inset" />
-      <SidebarInset>
-        <DashboardHeader />
+
         <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
           {/* Header + Buttons */}
           <div className="flex items-center justify-between">
@@ -155,7 +141,7 @@ export default function MenuPage() {
                     <PlusIcon className="mr-2 h-4 w-4" /> Add Category
                   </Button>
                 </DialogTrigger>
-                <DialogContent className="sm:max-w-[650px]">
+                <DialogContent className="sm:max-w-162.5">
                   <DialogHeader>
                     <DialogTitle>Add New Category Item</DialogTitle>
                     <DialogDescription>
@@ -177,7 +163,7 @@ export default function MenuPage() {
                     <PlusIcon className="mr-2 h-4 w-4" /> Add Menu Item
                   </Button>
                 </DialogTrigger>
-                <DialogContent className="sm:max-w-[650px]">
+                <DialogContent className="sm:max-w-162.5">
                   <DialogHeader>
                     <DialogTitle>Add New Menu Item</DialogTitle>
                     <DialogDescription>
@@ -206,7 +192,7 @@ export default function MenuPage() {
               value={selectedCategory}
               onValueChange={setSelectedCategory}
             >
-              <SelectTrigger className="w-[180px]">
+              <SelectTrigger className="w-45">
                 <SelectValue placeholder="Select category" />
               </SelectTrigger>
               <SelectContent>
@@ -275,7 +261,5 @@ export default function MenuPage() {
             </TabsContent>
           </Tabs>
         </div>
-      </SidebarInset>
-    </SidebarProvider>
   );
 }

@@ -4,6 +4,10 @@ import { prisma } from "@/lib/prisma";
 import Google from "next-auth/providers/google";
 import CredentialsProvider from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
+console.log("AUTH_SECRET:", !!process.env.AUTH_SECRET);
+console.log("AUTH_GOOGLE_ID:", !!process.env.AUTH_GOOGLE_ID);
+console.log("AUTH_GOOGLE_SECRET:", !!process.env.AUTH_GOOGLE_SECRET);
+console.log("NEXTAUTH_URL:", process.env.NEXTAUTH_URL);
 
 type Role = "ADMIN" | "RESTAURANT_OWNER" | "USER";
 

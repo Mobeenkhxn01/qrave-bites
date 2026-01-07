@@ -1,51 +1,58 @@
 # 🍽️ Qrave Bites
 
-![Render](https://img.shields.io/badge/Deployed%20on-Render-blueviolet?style=for-the-badge&logo=render)
-![Bun](https://img.shields.io/badge/Runtime-Bun.js-black?style=for-the-badge&logo=bun)
+![Next.js](https://img.shields.io/badge/Next.js-15/16-black?style=for-the-badge&logo=next.js)
+![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue?style=for-the-badge&logo=typescript)
+![Prisma](https://img.shields.io/badge/Prisma-v6-2D3748?style=for-the-badge&logo=prisma)
 
-**Qrave Bites** is a full-stack QR code-based restaurant ordering platform that enables restaurant owners to onboard their restaurants, generate unique table QR codes, and allow customers to scan, order, and pay directly from their smartphones.
+**Qrave Bites** is a full-stack QR code-based restaurant ordering platform with real-time order updates, secure payments, and comprehensive restaurant management. Customers scan QR codes at tables to browse menus, place orders, and pay instantly. Restaurant owners get a powerful dashboard to manage operations.
 
 ---
 
 ## 🔗 Live Demo
 
-> 🌐 [https://qrave-bites.onrender.com](https://qrave-bites.onrender.com)
+> 🌐 [https://qrave-bites.vercel.app](https://qrave-bites.vercel.app)
 
 ---
 
-## ✨ Features
+## ✨ Core Features
 
 ### 🛍️ For Customers
-- Scan QR code at a table to view the menu
-- Browse digital menu and add items to cart
-- Place orders without staff intervention
-- Secure online payment via **Stripe**
+- **QR Code Scanning** - Instant menu access via table-specific QR codes
+- **Digital Menu** - Browse items with images stored on AWS S3
+- **Smart Cart** - Add/remove items with real-time updates via Pusher
+- **Secure Payments** - Stripe integration for UPI, cards, and digital wallets
+- **Order Tracking** - Real-time order status updates
 
 ### 🍴 For Restaurant Owners
-- Register and authenticate via **NextAuth**
-- Create and manage restaurants and menu items
-- Generate table-specific **QR codes**
-- View and manage customer orders
+- **Restaurant Management** - Create, edit, and manage multiple restaurants
+- **Menu Management** - Add/update menu items with image uploads to AWS S3
+- **Table Management** - Generate and manage table-specific QR codes
+- **Orders Dashboard** - Real-time order tracking with Pusher notifications
+- **Analytics** - View order history and restaurant performance
 
-### 🧑‍💻 Admin Experience
-- Full control over restaurant, table, and menu management
-- Real-time order tracking dashboard
-- Automatic QR generation and download
+### 🔐 Authentication & Security
+- **Auth.js (NextAuth v5)** - OAuth (Google, GitHub) and email/password login
+- **Role-Based Access** - Customer and restaurant owner roles
+- **Secure API Routes** - Protected endpoints with session validation
+- **Zod Validation** - Type-safe request/response validation
 
 ---
 
 ## 🛠️ Tech Stack
 
-| Layer        | Technology                        |
-|-------------|------------------------------------|
-| Frontend     | Next.js, TypeScript, Tailwind CSS |
-| Backend      | Next.js API Routes                |
-| Runtime      | Bun.js                            |
-| Database     | MongoDB, Prisma ORM               |
-| Auth         | NextAuth (OAuth/email login)      |
-| Payments     | Stripe                            |
-| QR Codes     | `qrcode` NPM package              |
-| Hosting      | Render                            |
+| Layer           | Technology                                    |
+|-----------------|-----------------------------------------------|
+| **Framework**   | Next.js 15/16, TypeScript, React 19           |
+| **Styling**     | Tailwind CSS, shadcn/ui components            |
+| **State Mgmt**  | Zustand, TanStack Query (React Query)         |
+| **Database**    | MongoDB, Prisma ORM v6                        |
+| **Auth**        | Auth.js (NextAuth v5), OAuth providers        |
+| **Payments**    | Stripe API, Stripe Checkout                   |
+| **Real-time**   | Pusher (WebSockets for live updates)          |
+| **Storage**     | AWS S3 for images                             |
+| **Validation**  | Zod schema validation                         |
+| **HTTP Client** | Axios                                         |
+| **Hosting**     | Vercel                                        |
 
 ---
 
@@ -53,26 +60,58 @@
 
 ```
 qrave-bites/
-├── app/                    # Next.js app directory
-├── components/             # Reusable UI components
-├── lib/                    # Utility functions (auth, db, Stripe, etc.)
-├── prisma/                 # Prisma schema and DB client
-├── public/                 # Static assets
-├── styles/                 # Tailwind & global CSS
-├── types/                  # TypeScript types
-├── pages/                  # Custom API routes
-└── README.md
+├── app/                          # Next.js app directory (App Router)
+│   ├── api/                      # API routes & webhooks
+│   │   ├── auth/                 # Auth.js configuration
+│   │   ├── orders/               # Order management endpoints
+│   │   ├── restaurants/          # Restaurant management
+│   │   ├── menu/                 # Menu management
+│   │   ├── stripe/               # Stripe webhooks
+│   │   └── pusher/               # Pusher auth & triggers
+│   ├── (auth)/                   # Auth pages (login, register)
+│   ├── dashboard/                # Protected owner dashboard
+│   ├── [city]/                   # Dynamic city routes
+│   └── layout.tsx                # Root layout
+├── components/
+│   ├── ui/                       # shadcn/ui components
+│   ├── dashboard/                # Dashboard components
+│   ├── menu/                     # Menu components
+│   └── common/                   # Shared components
+├── lib/
+│   ├── auth.ts                   # Auth.js configuration
+│   ├── db.ts                      # Prisma client singleton
+│   ├── prisma.ts                 # Prisma utilities
+│   ├── stripe.ts                 # Stripe client setup
+│   ├── pusher.ts                 # Pusher client setup
+│   ├── aws.ts                    # AWS S3 client setup
+│   ├── axios-instance.ts         # Axios with interceptors
+│   └── validations/              # Zod schemas
+├── store/                         # Zustand stores
+│   ├── cartStore.ts              # Shopping cart state
+│   ├── authStore.ts              # Auth state
+│   └── orderStore.ts             # Order state
+├── hooks/                         # Custom React hooks
+│   ├── useAuth.ts                # Auth hook
+│   ├── useCart.ts                # Cart management
+│   └── usePusher.ts              # Real-time subscriptions
+├── types/                         # TypeScript interfaces
+├── prisma/
+│   ├── schema.prisma             # Database schema
+│   └── migrations/               # Database migrations
+├── public/                        # Static assets
+└── env.ts                         # Environment validation
 ```
 
 ---
 
 ## 📦 Prerequisites
 
-- [Bun](https://bun.sh/docs/installation) runtime installed globally
-
-```bash
-curl -fsSL https://bun.sh/install | bash
-```
+- **Node.js** 18+ or **Bun** (latest)
+- **MongoDB** Atlas account (free tier available)
+- **Stripe** account (for payments)
+- **AWS Account** (for S3 storage)
+- **Pusher** account (free tier available)
+- **OAuth Providers** (Google/GitHub apps configured)
 
 ---
 
@@ -88,116 +127,174 @@ cd qrave-bites
 ### 2. Install Dependencies
 
 ```bash
+npm install
+# or
 bun install
 ```
 
 ### 3. Set Up Environment Variables
 
-Create a `.env` file in the root with the following keys:
+Create a `.env.local` file in the root directory with all required variables:
 
 ```env
-DATABASE_URL=your_mongodb_connection_string
-NEXTAUTH_SECRET=your_AUTH_SECRET
-NEXTAUTH_URL=https://qrave-bites.onrender.com
-MOBEEN_STRIPE_SECRET_KEY=your_stripe_secret
-STRIPE_PUBLIC_KEY=your_stripe_public
+# Database
+DATABASE_URL=mongodb+srv://username:password@cluster.mongodb.net/qrave-bites?retryWrites=true&w=majority
+
+# NextAuth / Auth.js
+AUTH_SECRET=your_randomly_generated_secret_key_min_32_chars
+AUTH_URL=http://localhost:3000
+NEXTAUTH_URL=http://localhost:3000
+
+# OAuth Providers
+AUTH_GOOGLE_ID=your_google_oauth_client_id
+AUTH_GOOGLE_SECRET=your_google_oauth_client_secret
+AUTH_GITHUB_ID=your_github_oauth_client_id
+AUTH_GITHUB_SECRET=your_github_oauth_client_secret
+
+# Stripe
+NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_your_stripe_public_key
+STRIPE_SECRET_KEY=sk_test_your_stripe_secret_key
+STRIPE_WEBHOOK_SECRET=whsec_your_webhook_secret
+
+# AWS S3
+NEXT_PUBLIC_AWS_REGION=your_aws_region
+AWS_ACCESS_KEY_ID=your_aws_access_key
+AWS_SECRET_ACCESS_KEY=your_aws_secret_key
+NEXT_PUBLIC_AWS_S3_BUCKET_NAME=your_s3_bucket_name
+
+# Pusher
+NEXT_PUBLIC_PUSHER_APP_KEY=your_pusher_app_key
+NEXT_PUBLIC_PUSHER_CLUSTER=your_pusher_cluster
+PUSHER_APP_ID=your_pusher_app_id
+PUSHER_SECRET=your_pusher_secret
+
+# App
+NEXT_PUBLIC_APP_URL=http://localhost:3000
+NODE_ENV=development
 ```
 
 ### 4. Generate Prisma Client
 
 ```bash
 npx prisma generate
+npx prisma db push
 ```
 
-> Note: Use `npx` for Prisma commands until full Bun support is available.
-
-### 5. Run the App
+### 5. Run Development Server
 
 ```bash
+npm run dev
+# or
 bun run dev
 ```
 
-Visit `http://localhost:3000` to start using Qrave Bites.
+Visit `http://localhost:3000` to start exploring Qrave Bites.
 
 ---
 
-## 🖨️ QR Code Example
+## 🚀 Deployment on Vercel
 
-Each table QR code links to:
+### Step-by-Step Guide
 
-```
-https://yourdomain.com/restaurant/[restaurantId]/table/[tableId]
-```
+1. **Push to GitHub** - Ensure your code is on GitHub
 
-Customers scanning the QR code are taken to a table-specific digital menu where they can place orders.
+2. **Connect to Vercel**:
+   - Go to [Vercel Dashboard](https://vercel.com/dashboard)
+   - Click "Add New Project"
+   - Import your GitHub repository
+   - Select the `main` branch
 
----
+3. **Configure Build Settings**:
+   - **Framework Preset**: Next.js
+   - **Build Command**:
+     ```bash
+     npm ci && npx prisma generate && npm run build
+     ```
+   - **Output Directory**: `.next`
+   - **Install Command**: `npm ci`
 
-## 💳 Payments
-
-Integrated with **Stripe Checkout**. Users can pay securely using UPI, card, or other supported methods.
-
----
-
-## 🔐 Authentication
-
-Implemented using **NextAuth** with support for:
-- OAuth Providers (Google, GitHub, etc.)
-- Email/password login
-
----
-
-## 🚀 Deploying on Render
-
-Qrave Bites is fully deployable on [Render](https://render.com/). Here's how:
-
-### 🛠️ Render Setup
-
-1. Go to [Render Dashboard](https://dashboard.render.com/)
-2. Click **"New Web Service"**
-3. Connect your GitHub repo and choose the `main` branch
-4. Set the **Build Command** to:
-
-```bash
-bun install && npx prisma generate && bun run build
-```
-
-5. Set the **Start Command** to:
-
-```bash
-bun run start
-```
-
-6. Add the following **Environment Variables**:
+4. **Add Environment Variables** in Vercel Project Settings:
 
 ```env
-MOBEEN_AUTH_GOOGLE_ID="google client id"
-MOBEEN_AUTH_GOOGLE_SECRET="google secret"
-AUTH_SECRET="your auth secret"
-MOBEEN_AWS_ACCESS_KEY="your aws access key"
-MOBEEN_AWS_BUCKET_NAME="aws bucket name"
-MOBEEN_AWS_REGION="aws region"
-MOBEEN_AWS_SECRET_KEY="your aws secret key"
-DATABASE_URL="mongodb url"
-AUTH_SECRET="jwt secret token"
+DATABASE_URL=mongodb+srv://username:password@cluster.mongodb.net/qrave-bites
+AUTH_SECRET=your_secure_random_key_32_chars_minimum
+AUTH_URL=https://qrave-bites.vercel.app
+NEXTAUTH_URL=https://qrave-bites.vercel.app
+
+AUTH_GOOGLE_ID=your_google_oauth_id
+AUTH_GOOGLE_SECRET=your_google_oauth_secret
+AUTH_GITHUB_ID=your_github_oauth_id
+AUTH_GITHUB_SECRET=your_github_oauth_secret
+
+NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_live_your_key
+STRIPE_SECRET_KEY=sk_live_your_key
+STRIPE_WEBHOOK_SECRET=whsec_your_webhook_secret
+
+NEXT_PUBLIC_AWS_REGION=us-east-1
+AWS_ACCESS_KEY_ID=your_aws_access_key
+AWS_SECRET_ACCESS_KEY=your_aws_secret_key
+NEXT_PUBLIC_AWS_S3_BUCKET_NAME=your_bucket_name
+
+NEXT_PUBLIC_PUSHER_APP_KEY=your_pusher_key
+NEXT_PUBLIC_PUSHER_CLUSTER=mt1
+PUSHER_APP_ID=your_pusher_app_id
+PUSHER_SECRET=your_pusher_secret
+
+NEXT_PUBLIC_APP_URL=https://qrave-bites.vercel.app
+NODE_ENV=production
 ```
 
-7. Hit Deploy!
+5. **Deploy** - Click "Deploy" button
+
+6. **Configure Stripe Webhook**:
+   - Go to Stripe Dashboard → Developers → Webhooks
+   - Add endpoint: `https://yourdomain.vercel.app/api/stripe/webhook`
+   - Select events: `payment_intent.succeeded`, `payment_intent.payment_failed`
+
+---
+
+## 📊 Key API Endpoints
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `GET` | `/api/restaurants` | Get all restaurants |
+| `POST` | `/api/restaurants` | Create restaurant (owner only) |
+| `GET` | `/api/restaurants/[id]/menu` | Get restaurant menu |
+| `POST` | `/api/orders` | Create order |
+| `GET` | `/api/orders/[id]` | Get order details |
+| `PATCH` | `/api/orders/[id]` | Update order status |
+| `POST` | `/api/stripe/checkout` | Initiate Stripe checkout |
 
 ---
 
 ## 🧩 Future Enhancements
 
-- Order status tracking with WebSockets
-- Multi-language and accessibility support
-- SMS/WhatsApp order notifications
-- Restaurant analytics dashboard
+- **Advanced Analytics** - Order analytics, revenue reports, peak hours
+- **Multi-language Support** - Internationalization (i18n)
+- **SMS/WhatsApp Notifications** - Real-time order updates via messaging
+- **Mobile App** - React Native companion app
+- **Inventory Management** - Stock tracking for menu items
+- **Kitchen Display System (KDS)** - Large display for kitchen staff
+- **Customer Ratings & Reviews** - Feedback system
+- **Loyalty Program** - Points and rewards
 
 ---
 
 ## 🛡️ License
 
-MIT License. You’re free to use, modify, and deploy this project.
+MIT License. See LICENSE file for details.
+
+---
+
+## 🤝 Contributing
+
+Contributions are welcome! Please follow these steps:
+
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit changes (`git commit -m 'Add amazing feature'`)
+4. Push to branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
 
 ---
 
@@ -205,4 +302,16 @@ MIT License. You’re free to use, modify, and deploy this project.
 
 Developed with 💚 by [@Mobeenkhxn01](https://github.com/Mobeenkhxn01)
 
-Feel free to open issues or contribute to improve Qrave Bites!
+For issues, questions, or suggestions, please open an [issue](https://github.com/Mobeenkhxn01/qrave-bites/issues) or [discussion](https://github.com/Mobeenkhxn01/qrave-bites/discussions).
+
+---
+
+## 📞 Support
+
+Need help? Check out:
+- [Next.js Documentation](https://nextjs.org/docs)
+- [Prisma Documentation](https://www.prisma.io/docs)
+- [Auth.js Documentation](https://authjs.dev)
+- [Stripe Documentation](https://stripe.com/docs)
+- [Pusher Documentation](https://pusher.com/docs)
+- [AWS S3 Documentation](https://docs.aws.amazon.com/s3/)

@@ -6,7 +6,6 @@ import CartDialog from "@/app/(userLayout)/cart/CartDialog";
 
 export const revalidate = 60;
 
-// ✅ CORRECT Prisma-inferred type
 type MenuItemType = Awaited<
   ReturnType<typeof prisma.menuItem.findMany>
 >[number];
@@ -63,7 +62,7 @@ export default async function RestaurantPage({
 
         {tableNumber !== null && (
           <p className="mt-2 text-green-600 font-semibold">
-            Ordering for Table #{tableNumber}
+            Ordering for Table <span className="font-sans font-bold text-red-600">{tableNumber}</span>
           </p>
         )}
       </div>

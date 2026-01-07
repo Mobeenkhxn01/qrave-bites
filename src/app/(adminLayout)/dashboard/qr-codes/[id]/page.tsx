@@ -4,17 +4,10 @@ import { redirect } from "next/navigation";
 export default async function QRRedirectPage({
   params,
 }: {
-  params: Promise<{ id: string }>;
+  params: { id: string };
 }) {
-  const { id } = await params;
-  const tableId = id;
-
-  if (!tableId) {
-    return <div>Invalid QR</div>;
-  }
-
   const table = await prisma.table.findUnique({
-    where: { id: tableId },
+    where: { id: params.id },
     include: { restaurant: true },
   });
 
@@ -23,11 +16,11 @@ export default async function QRRedirectPage({
   }
 
   await prisma.table.update({
-    where: { id: tableId },
+    where: { id: table.id },
     data: { scan: { increment: 1 } },
   });
 
   redirect(
-    `/city/${table.restaurant.city}/${table.restaurant.slug}/menu?tableId=${id}`
+    `/city/${table.restaurant.city}/${table.restaurant.slug}/menu?tableId=${table.id}`
   );
 }

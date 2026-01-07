@@ -64,23 +64,37 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     }),
   ],
 
-  callbacks: {
-    async jwt({ token, user }) {
-      if (user) {
-        token.id = user.id;
-        token.role = (user as { role: Role }).role;
-      }
-      return token;
-    },
-
-    async session({ session, token }) {
-      if (session.user) {
-        session.user.id = token.id as string;
-        session.user.role = token.role as Role;
-      }
-      return session;
-    },
+ callbacks: {
+  async jwt({ token, user }) {
+    if (user) {
+      token.id = user.id;
+      token.role = (user as { role: Role }).role;
+    }
+    return token;
   },
+
+  async session({ session, token }) {
+    if (session.user) {
+      session.user.id = token.id as string;
+      session.user.role = token.role as Role;
+    }
+    return session;
+  },
+
+  async redirect({ url, baseUrl }) {
+    if (url.startsWith("/")) {
+      return `${baseUrl}${url}`;
+    }
+
+    if (new URL(url).origin === baseUrl) {
+      return url;
+    }
+
+    // fallback
+    return baseUrl;
+  },
+},
+
 
   pages: {
     signIn: "/login",

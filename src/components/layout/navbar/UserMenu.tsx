@@ -29,7 +29,7 @@ export default function UserMenu() {
   if (!session) {
     return (
       <Link href="/login">
-        <Button className="font-serif text-white bg-[#eb0029] hover:bg-[#d19b6f]">
+        <Button className="font-serif text-white bg-[#006aff] hover:bg-[#d19b6f]">
           Login
         </Button>
       </Link>

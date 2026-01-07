@@ -53,7 +53,7 @@ export default function MenuItemCard({
       <CardContent>
         <div className="flex justify-between items-start mb-2">
           <CardTitle className="text-lg">{item.name}</CardTitle>
-          <span className="font-bold text-lg">${item.price.toFixed(2)}</span>
+          <span className="font-bold text-lg">₹ {item.price.toFixed(2)}</span>
         </div>
         <CardDescription className="line-clamp-2 mb-3">
           {item.description}

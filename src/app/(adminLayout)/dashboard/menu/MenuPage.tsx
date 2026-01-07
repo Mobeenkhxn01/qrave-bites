@@ -22,7 +22,6 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-
 import AddMenuItemForm from "./AddMenuItemForm";
 import AddCategoryItem from "./AddCategoryItem";
 import MenuItemCard from "./MenuItemCard";
@@ -120,7 +119,7 @@ export default function MenuPage() {
   return (
 
         <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
-          {/* Header + Buttons */}
+
           <div className="flex items-center justify-between">
             <div>
               <h2 className="text-3xl font-bold tracking-tight">

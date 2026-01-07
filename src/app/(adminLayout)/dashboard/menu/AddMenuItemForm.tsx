@@ -24,6 +24,7 @@ import { useSession } from "next-auth/react";
 import axios from "axios";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
+
 const formSchema = z.object({
   name: z.string().min(2),
   price: z.coerce.number().positive(),
@@ -108,7 +109,7 @@ export default function AddMenuItemForm({ onClose }: { onClose: () => void }) {
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
 
           <div className="flex flex-col md:flex-row gap-6">
-
+           
             <div className="flex flex-col items-center md:w-1/3 w-full">
               {preview ? (
                 <Image

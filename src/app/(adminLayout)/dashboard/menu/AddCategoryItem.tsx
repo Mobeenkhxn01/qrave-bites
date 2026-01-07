@@ -140,7 +140,6 @@ export default function AddCategoryItem({ onClose }: { onClose: () => void }) {
         </form>
       </Form>
 
-      <Toaster />
     </div>
   );
 }

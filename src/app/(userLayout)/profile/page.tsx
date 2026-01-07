@@ -7,7 +7,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { z } from "zod";
-import toast, { Toaster } from "react-hot-toast";
+import toast from "react-hot-toast";
 
 import { useUserProfile } from "@/hooks/useUserProfile";
 
@@ -139,7 +139,6 @@ export default function ProfilePage() {
   if (isLoading) {
     return (
       <div className="text-center py-10">
-        <Toaster />
         <p>Loading profile...</p>
       </div>
     );
@@ -147,7 +146,6 @@ export default function ProfilePage() {
 
   return (
     <section className="py-10 bg-white">
-      <Toaster position="top-right" />
       <UserTabs />
 
       <div className="max-w-4xl mx-auto p-4">

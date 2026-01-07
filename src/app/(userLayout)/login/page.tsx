@@ -17,18 +17,24 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { signIn } from "next-auth/react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "react-hot-toast";
 
 const formSchema = z.object({
   email: z.string().email({ message: "Invalid email address" }),
-  password: z
-    .string()
-    .min(8, { message: "Password must be at least 8 characters" }),
+  password: z.string().min(8, {
+    message: "Password must be at least 8 characters",
+  }),
 });
 
 export default function LoginPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+
+  // 🔑 IMPORTANT
+  const redirectTo =
+    searchParams.get("redirect") || "/partner-with-us";
+
   const [loading, setLoading] = useState(false);
 
   const form = useForm({
@@ -47,14 +53,16 @@ export default function LoginPage() {
         redirect: false,
         email: values.email,
         password: values.password,
+        callbackUrl: redirectTo,
       });
 
       if (result?.error) {
         toast.error("Invalid email or password");
-      } else {
-        toast.success("Login successful!");
-        router.push("/");
+        return;
       }
+
+      toast.success("Login successful!");
+      router.replace(redirectTo); // ✅ correct redirect
     } catch {
       toast.error("Something went wrong. Try again.");
     } finally {
@@ -63,13 +71,7 @@ export default function LoginPage() {
   }
 
   return (
-    <section
-      className="
-        max-w-md mx-auto mt-10 p-6
-        rounded-xl shadow-md bg-white
-        w-[90%] sm:w-full
-      "
-    >
+    <section className="max-w-md mx-auto mt-10 p-6 rounded-xl shadow-md bg-white w-[90%] sm:w-full">
       <h1 className="text-center text-[#eb0029] text-3xl font-bold mb-6">
         Login
       </h1>
@@ -97,11 +99,7 @@ export default function LoginPage() {
               <FormItem>
                 <FormLabel>Password</FormLabel>
                 <FormControl>
-                  <Input
-                    type="password"
-                    placeholder="Enter your password"
-                    {...field}
-                  />
+                  <Input type="password" placeholder="Enter password" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -123,7 +121,11 @@ export default function LoginPage() {
       <Button
         className="w-full flex items-center gap-3 border py-2"
         variant="outline"
-        onClick={() => signIn("google", { callbackUrl: "/" })}
+        onClick={() =>
+          signIn("google", {
+            callbackUrl: redirectTo,
+          })
+        }
       >
         <Image src="/google.png" alt="Google" width={24} height={24} />
         Login with Google

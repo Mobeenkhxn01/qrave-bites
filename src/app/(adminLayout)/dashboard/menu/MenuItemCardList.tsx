@@ -35,7 +35,7 @@ export default function MenuItemCardList({
               </p>
             </div>
             <div className="text-right">
-              <div className="font-bold text-lg">${item.price.toFixed(2)}</div>
+              <div className="font-bold text-lg">₹ {item.price.toFixed(2)}</div>
               <div className="text-sm text-muted-foreground">
                 {item.prepTime} min
               </div>

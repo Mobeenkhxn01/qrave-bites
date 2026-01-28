@@ -17,10 +17,7 @@ export default function Contact() {
   };
 
   const itemVariants: Variants = {
-    hidden: {
-      opacity: 0,
-      y: 24,
-    },
+    hidden: { opacity: 0, y: 24 },
     visible: {
       opacity: 1,
       y: 0,
@@ -55,9 +52,24 @@ export default function Contact() {
           powerful platform designed for modern restaurants.
         </motion.p>
 
+        {/* 🔹 MOBILE & TABLET (COLUMN LAYOUT) */}
         <motion.div
           variants={itemVariants}
-          className="w-full max-w-md flex flex-col sm:flex-row gap-3 bg-white border rounded-full p-2 shadow-sm"
+          className="flex lg:hidden w-full max-w-md flex-col gap-4"
+        >
+          <Input
+            placeholder="Enter your phone number"
+            className="rounded-xl"
+          />
+          <Button className="w-full rounded-xl bg-blue-600 hover:bg-blue-700">
+            Request Callback
+          </Button>
+        </motion.div>
+
+        {/* 🔹 DESKTOP (PILL LAYOUT) */}
+        <motion.div
+          variants={itemVariants}
+          className="hidden lg:flex w-full max-w-md gap-3 bg-white border rounded-full p-2 shadow-sm"
         >
           <Input
             placeholder="Enter your phone number"

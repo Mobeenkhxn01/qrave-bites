@@ -51,7 +51,7 @@ export function ContactDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="!max-w-[95vw] sm:!max-w-[85vw] md:!max-w-[75vw] lg:!max-w-[900px] xl:!max-w-[1000px] w-full h-auto p-0 gap-0 overflow-hidden rounded-xl sm:rounded-2xl border-0">
+      <DialogContent className="max-w-[95vw]! sm:max-w-[85vw]! md:max-w-[75vw]! lg:max-w-225! xl:max-w-250! w-full h-auto p-0 gap-0 overflow-hidden rounded-xl sm:rounded-2xl border-0">
         <div className="grid grid-cols-1 lg:grid-cols-2 w-full h-full">
           {/* LEFT PANEL - Hidden on mobile */}
           <div className="hidden lg:flex flex-col justify-between bg-[#0f2744] text-white p-6 lg:p-8 xl:p-10">
@@ -150,7 +150,7 @@ export function ContactDialog({
                         <Textarea 
                           rows={2}
                           {...field} 
-                          className="text-xs sm:text-sm resize-none min-h-[60px] sm:min-h-[70px]"
+                          className="text-xs sm:text-sm resize-none min-h-15 sm:min-h-17.5"
                         />
                       </FormControl>
                     </FormItem>

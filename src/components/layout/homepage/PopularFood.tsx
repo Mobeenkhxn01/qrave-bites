@@ -1,9 +1,9 @@
-"use client"
+"use client";
 
-import { Card, CardFooter, CardHeader } from "@/components/ui/card"
-import Image from "next/image"
-import Link from "next/link"
-import { motion } from "framer-motion"
+import { Card, CardFooter, CardHeader } from "@/components/ui/card";
+import Image from "next/image";
+import Link from "next/link";
+import { motion } from "framer-motion";
 
 export default function PopularFood() {
   return (
@@ -21,32 +21,41 @@ export default function PopularFood() {
             transition={{ duration: 0.3 }}
             className="font-sans text-3xl sm:text-4xl md:text-5xl font-bold leading-tight"
           >
-            One platform. <span className="text-blue-800">Four powerful tools.</span>
+            One platform.{" "}
+            <span className="text-blue-800">Four powerful tools.</span>
             <br className="hidden sm:block" />
             Built to grow modern restaurants.
           </motion.h1>
+          <motion.p
+            initial={{ opacity: 0.9 }}
+            whileHover={{ opacity: 1 }}
+            transition={{ duration: 0.3 }}
+            className="mt-4 text-gray-600 text-sm sm:text-base"
+          >
+            QR-based ordering, instant payments, real-time kitchen alerts, and
+            smart analytics — all in one system.
+          </motion.p>
         </motion.div>
-
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {[
             {
-              title: "Smart POS & QR Ordering",
-              desc: "Accept orders directly from customer phones with zero errors. Replace manual order taking with a fast, digital POS synced with your kitchen.",
+              title: "Smart QR Food Ordering System",
+              desc: "End-to-end QR-based food ordering system with table-wise ordering, instant payments, and real-time kitchen notifications.",
               img: "https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=1200&q=80",
             },
             {
-              title: "Online Menu & Storefront",
-              desc: "Showcase your menu online with images, prices, and add-ons. Customers can browse and order anytime via QR or a shareable link.",
+              title: "Restaurant Admin & Management Panel",
+              desc: "Powerful admin dashboard to manage restaurant operations, menu, tables, and users — all in one place.",
               img: "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=1200&q=80",
             },
             {
-              title: "Instant Digital Payments",
-              desc: "Let customers pay instantly using UPI, cards, or wallets. Faster payments mean quicker table turnover and better experience.",
+              title: "Restaurant Analytics & Insights",
+              desc: "Real-time analytics to track restaurant performance and make data-driven decisions.",
               img: "https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=1200&q=80",
             },
             {
-              title: "Restaurant Analytics & Insights",
-              desc: "Track sales, popular items, peak hours, and customer trends in real time to make smarter business decisions.",
+              title: "Custom Restaurant Website & Menu Page",
+              desc: "Customer-facing restaurant page with dynamic menu, table-based ordering, and shareable links.",
               img: "https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=1200&q=80",
             },
           ].map((item, i) => (
@@ -58,7 +67,10 @@ export default function PopularFood() {
               transition={{ duration: 0.6, delay: i * 0.1 }}
               viewport={{ once: false, margin: "0px 0px -100px 0px" }}
             >
-              <motion.div whileTap={{ scale: 0.98 }} transition={{ duration: 0.2 }}>
+              <motion.div
+                whileTap={{ scale: 0.98 }}
+                transition={{ duration: 0.2 }}
+              >
                 <Card className="overflow-hidden transition-shadow duration-300 hover:shadow-2xl pb-0">
                   <CardHeader className="space-y-3">
                     <motion.h2
@@ -78,8 +90,15 @@ export default function PopularFood() {
                       {item.desc}
                     </motion.p>
 
-                    <motion.div whileHover={{ x: 6 }} transition={{ duration: 0.3 }} className="w-fit">
-                      <Link href="/know-more" className="text-blue-600 font-medium">
+                    <motion.div
+                      whileHover={{ x: 6 }}
+                      transition={{ duration: 0.3 }}
+                      className="w-fit"
+                    >
+                      <Link
+                        href="/know-more"
+                        className="text-blue-600 font-medium"
+                      >
                         Know More →
                       </Link>
                     </motion.div>
@@ -91,7 +110,12 @@ export default function PopularFood() {
                       transition={{ duration: 0.6, ease: "easeOut" }}
                       className="absolute inset-0"
                     >
-                      <Image src={item.img || "/placeholder.svg"} alt={item.title} fill className="object-cover" />
+                      <Image
+                        src={item.img || "/placeholder.svg"}
+                        alt={item.title}
+                        fill
+                        className="object-cover"
+                      />
                     </motion.div>
                   </CardFooter>
                 </Card>
@@ -101,5 +125,5 @@ export default function PopularFood() {
         </div>
       </div>
     </section>
-  )
+  );
 }

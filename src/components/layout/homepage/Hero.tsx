@@ -44,17 +44,27 @@ export default function Hero() {
         </motion.div>
 
         <div className="relative w-full mt-20 overflow-hidden">
-          {/* XL layout */}
           <motion.div
             initial={{ opacity: 0, y: 60 }}
             whileInView={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7, ease: "easeOut" }}
             viewport={{ once: false, margin: "0px 0px -100px 0px" }}
-            className="hidden xl:flex items-center justify-center gap-8 py-20"
+            className="
+              flex items-center justify-center gap-4 sm:gap-6 xl:gap-8 py-20
+              scale-50 sm:scale-75 md:scale-90 xl:scale-100
+            "
           >
-            <div className="relative w-190 h-120 rounded-3xl overflow-hidden -ml-95">
+            <div className="
+              relative
+              w-105 h-90
+              sm:w-150 sm:h-100
+              md:w-170 md:h-110
+              xl:w-190 xl:h-120
+              rounded-3xl overflow-hidden
+              -ml-52.5 sm:-ml-70 md:-ml-85 xl:-ml-95
+            ">
               <Image
-                src="https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=1200&q=80"
+                src="/desk_counter.png"
                 alt="Restaurant interior"
                 fill
                 className="object-cover"
@@ -62,84 +72,55 @@ export default function Hero() {
               />
             </div>
 
-            <div className="relative w-62.5 h-105 rounded-2xl overflow-hidden translate-y-14">
+            <div className="
+              relative
+              w-40 h-70
+              sm:w-50 sm:h-85
+              md:w-55 md:h-95
+              xl:w-62.5 xl:h-105
+              rounded-2xl overflow-hidden translate-y-14
+            ">
               <Image
-                src="https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=600&q=80"
+                src="/Qr_code_scanning_image.png"
                 alt="Food dish"
                 fill
                 className="object-cover"
               />
             </div>
 
-            <div className="relative w-62.5 h-105 rounded-2xl overflow-hidden -translate-y-14">
+            <div className="
+              relative
+              w-40 h-70
+              sm:w-50 sm:h-85
+              md:w-55 md:h-95
+              xl:w-62.5 xl:h-105
+              rounded-2xl overflow-hidden -translate-y-14
+            ">
               <Image
-                src="https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=600&q=80"
+                src="/Custom_web.png"
                 alt="Burger"
                 fill
                 className="object-cover"
               />
             </div>
 
-            <div className="relative w-190 h-120 rounded-3xl overflow-hidden -mr-95">
+            <div className="
+              relative
+              w-105 h-90
+              sm:w-150 sm:h-100
+              md:w-170 md:h-110
+              xl:w-190 xl:h-120
+              rounded-3xl overflow-hidden
+              -mr-52.5 sm:-mr-70 md:-mr-85 xl:-mr-95
+            ">
               <Image
-                src="https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=1200&q=80"
+                src="/chef_img.png"
                 alt="Restaurant ambience"
                 fill
                 className="object-cover"
               />
             </div>
           </motion.div>
-
-          {/* MD layout */}
-          <div className="hidden md:flex xl:hidden items-center justify-center gap-6">
-            <div className="relative w-105 h-90 rounded-2xl overflow-hidden -ml-52.5">
-              <Image
-                src="https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=800&q=80"
-                alt="Restaurant interior"
-                fill
-                className="object-cover"
-              />
-            </div>
-
-            <div className="relative w-75 h-95 rounded-2xl overflow-hidden">
-              <Image
-                src="https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=600&q=80"
-                alt="Food dish"
-                fill
-                className="object-cover"
-              />
-            </div>
-
-            <div className="relative w-105 h-90 rounded-2xl overflow-hidden -mr-52.5">
-              <Image
-                src="https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=600&q=80"
-                alt="Burger"
-                fill
-                className="object-cover"
-              />
-            </div>
-          </div>
-
-          {/* Mobile layout */}
-          <div className="flex md:hidden flex-col gap-4 px-4">
-            <div className="relative w-full h-65 rounded-2xl overflow-hidden">
-              <Image
-                src="https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=600&q=80"
-                alt="Restaurant interior"
-                fill
-                className="object-cover"
-              />
-            </div>
-
-            <div className="relative w-full h-65 rounded-2xl overflow-hidden">
-              <Image
-                src="https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=600&q=80"
-                alt="Food dish"
-                fill
-                className="object-cover"
-              />
-            </div>
-          </div>
         </div>
       </div>
     </section>

@@ -50,7 +50,7 @@ export default function LocationMapWithSearch({
 
       try {
         const res = await fetch(
-          `https://api.geoapify.com/v1/geocode/reverse?lat=${lat}&lon=${lng}&apiKey=${process.env.MOBEEN_NEXT_PUBLIC_GEOAPIFY_API_KEY}`
+          `https://api.geoapify.com/v1/geocode/reverse?lat=${lat}&lon=${lng}&apiKey=${process.env.NEXT_PUBLIC_GEOAPIFY_API_KEY}`
         );
 
         if (!res.ok) {

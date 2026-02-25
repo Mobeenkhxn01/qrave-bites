@@ -66,12 +66,28 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
 
  callbacks: {
   async jwt({ token, user }) {
-    if (user) {
-      token.id = user.id;
-      token.role = (user as { role: Role }).role;
-    }
+  if (user) {
+    token.id = user.id;
+    token.role = (user as { role: Role }).role;
     return token;
-  },
+  }
+  if (token?.id) {
+    try {
+      const dbUser = await prisma.user.findUnique({
+        where: { id: token.id as string },
+        select: { role: true },
+      });
+
+      if (dbUser) {
+        token.role = dbUser.role as Role;
+      }
+    } catch (error) {
+      console.error("JWT refresh error:", error);
+    }
+  }
+
+  return token;
+},
 
   async session({ session, token }) {
     if (session.user) {

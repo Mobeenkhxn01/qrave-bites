@@ -18,7 +18,6 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
-import Image from "next/image";
 import { useState, useTransition, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import Right from "@/components/icons/Right";
@@ -30,13 +29,12 @@ import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import toast from "react-hot-toast";
 
-// Lazy loaded map component
 const LocationMapWithSearch = dynamic(
   () => import("@/components/layout/LocationMapWithSearch"),
   { ssr: false }
 );
 
-// Form schema
+
 const formSchema = z.object({
   restaurantname: z
     .string()
@@ -44,7 +42,7 @@ const formSchema = z.object({
   ownername: z
     .string()
     .min(2, "Owner name must be at least 2 characters"),
-  email: z.string().email("Invalid email format"),
+  email: z.email("Invalid email format"),
   phone: z
     .string()
     .regex(/^\d{10,15}$/, "Phone must be 10–15 digits"),

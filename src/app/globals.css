@@ -291,11 +291,24 @@ button{
 .wave-bg {
   background: linear-gradient(
     120deg,
-    #020617,
-    #0f172a,
-    #1e1b4b,
-    #020617
+    #0b0f2a,
+    #1a1456,
+    #2a1c7a,
+    #1a1456
   );
-  background-size: 300% 300%;
-  animation: wave 18s ease infinite;
+  background-size: 400% 400%;
+  animation: waveMove 20s ease infinite;
 }
+
+@keyframes waveMove {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+

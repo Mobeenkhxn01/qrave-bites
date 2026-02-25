@@ -9,7 +9,7 @@ export default function PopularFood() {
   return (
     <section className="w-full bg-white py-24 sm:py-20">
       <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8 flex flex-col gap-12">
-        {/* HEADER */}
+        
         <motion.div
           initial={{ opacity: 0, y: 40 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -34,28 +34,32 @@ export default function PopularFood() {
           </motion.p>
         </motion.div>
 
-        {/* GRID */}
+  
         <div className="grid grid-cols-2 lg:grid-cols-2 gap-8">
           {[
             {
               title: "Smart QR Food Ordering System",
               desc: "End-to-end QR-based food ordering system with table-wise ordering, instant payments, and real-time kitchen notifications.",
               img: "/Qr_code_scanning_image.png",
+              link: "/qr-code-ordering-system",
             },
             {
               title: "Restaurant Admin & Management Panel",
               desc: "Powerful admin dashboard to manage restaurant operations, menu, tables, and users — all in one place.",
               img: "/admin_panel.png",
+              link: "/restaurant-management-system",
             },
             {
               title: "Restaurant Analytics & Insights",
               desc: "Real-time analytics to track restaurant performance and make data-driven decisions.",
               img: "/analytics.png",
+              link: "/restaurant-analytics-system",
             },
             {
               title: "Custom Restaurant Website & Menu Page",
               desc: "Customer-facing restaurant page with dynamic menu, table-based ordering, and shareable links.",
               img: "/Custom_web.png",
+              link: "/restaurant-website-builder",
             },
           ].map((item, i) => (
             <motion.div
@@ -67,7 +71,7 @@ export default function PopularFood() {
               viewport={{ once: false, margin: "0px 0px -100px 0px" }}
             >
               <Card className="h-full flex flex-col overflow-hidden transition-shadow duration-300 hover:shadow-2xl pb-0">
-                {/* TEXT */}
+
                 <CardHeader className="space-y-3 flex-1">
                   <motion.h2
                     whileHover={{ x: 4 }}
@@ -77,16 +81,13 @@ export default function PopularFood() {
                     {item.title}
                   </motion.h2>
 
-                  <motion.p
-                    className="text-gray-600 text-sm sm:text-base line-clamp-3"
-                  >
+                  <motion.p className="text-gray-600 text-sm sm:text-base line-clamp-3">
                     {item.desc}
                   </motion.p>
 
-                  {/* Push link to bottom */}
                   <div className="pt-2 mt-auto">
                     <Link
-                      href="/know-more"
+                      href={item.link}
                       className="text-blue-600 font-medium inline-flex items-center gap-1"
                     >
                       Know More →
@@ -94,7 +95,6 @@ export default function PopularFood() {
                   </div>
                 </CardHeader>
 
-                {/* IMAGE */}
                 <CardFooter className="relative h-60 sm:h-75 md:h-90 p-0  overflow-hidden">
                   <motion.div
                     className="absolute inset-0"

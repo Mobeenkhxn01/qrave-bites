@@ -1,25 +1,9 @@
-"use client";
-
-import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Loader2, Utensils, Sparkles, Store, Star } from "lucide-react";
+import { Utensils, Sparkles, Store, Star } from "lucide-react";
 
 export default function PartnerWithUs() {
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    const timer = setTimeout(() => setIsLoading(false), 1500);
-    return () => clearTimeout(timer);
-  }, []);
-
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-white">
-        <Loader2 className="h-10 w-10 animate-spin text-[#eb0029]" />
-      </div>
-    );
-  }
+  
 
   return (
     <div className="py-12 px-4">

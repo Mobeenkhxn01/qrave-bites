@@ -3,11 +3,16 @@
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useState, useEffect, useTransition } from "react";
+import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
-import axios from "axios";
 import toast from "react-hot-toast";
+
+import {
+  useRestaurantStep2,
+  useSaveRestaurantStep2,
+  uploadImage,
+} from "@/hooks/useRestaurant";
 
 import {
   Form,
@@ -52,82 +57,74 @@ const formSchema = z
   );
 
 export default function NewRestaurantRegister() {
-  const [isPending, startTransition] = useTransition();
-  const [isLoading, setIsLoading] = useState(false);
   const { data: session, status } = useSession();
   const router = useRouter();
-  const userEmail = session?.user?.email || "";
+  const userEmail = session?.user?.email ?? "";
 
+  // ✅ TanStack hooks
+  const { data: existingData } = useRestaurantStep2(userEmail);
+  const saveMutation = useSaveRestaurantStep2();
+
+  // ✅ form
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       cuisine: [],
-      days: ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday"],
+      days: [
+        "monday",
+        "tuesday",
+        "wednesday",
+        "thursday",
+        "friday",
+        "saturday",
+      ],
       openingTime: "09:00",
       closingTime: "22:00",
     },
   });
 
-  // Load Step2 existing data
+  // ✅ populate existing data safely
   useEffect(() => {
-    if (!userEmail || status !== "authenticated") return;
+    if (!existingData) return;
 
-    const loadExistingData = async () => {
-      try {
-        const { data } = await axios.get(`/api/restaurant/step2?email=${userEmail}`);
+    form.reset({
+      cuisine: existingData.cuisine || [],
+      days: existingData.days || [],
+      openingTime: existingData.openingTime || "09:00",
+      closingTime: existingData.closingTime || "22:00",
+    });
+  }, [existingData, form]);
 
-        if (data.success && data.data) {
-          const r = data.data;
-
-          form.setValue("cuisine", r.cuisine || []);
-          form.setValue("days", r.days || []);
-          form.setValue("openingTime", r.openingTime || "09:00");
-          form.setValue("closingTime", r.closingTime || "22:00");
-
-          toast.success("Existing details loaded");
-        }
-      } catch (err) {
-        console.log("Step2 no previous data");
-      }
-    };
-
-    loadExistingData();
-  }, [userEmail, status, form]);
-
-  async function uploadImage(file: File, label: string) {
-    const formData = new FormData();
-    formData.append("file", file);
-
-    try {
-      const res = await axios.post("/api/upload", formData);
-      return res.data.url;
-    } catch {
-      toast.error(`Failed to upload ${label}`);
-      return null;
+  // ✅ handle unauthenticated redirect (SAFE pattern)
+  useEffect(() => {
+    if (status === "unauthenticated") {
+      router.replace("/login");
     }
-  }
+  }, [status, router]);
 
+  // ✅ submit handler
   async function onSubmit(values: z.infer<typeof formSchema>) {
     if (!userEmail) {
-      toast.error("No user found. Please login.");
+      toast.error("Please login first");
       return;
     }
 
-    setIsLoading(true);
+    toast.loading("Saving restaurant details...", { id: "save" });
 
-    startTransition(async () => {
-      toast.loading("Saving restaurant details...", { id: "save" });
-
+    try {
+      // 🔥 parallel uploads
       const [
         restaurantImageUrl,
         foodImageUrl,
         deliveryImageUrl,
         restaurantProfileUrl,
       ] = await Promise.all([
-        values.restaurantImage ? uploadImage(values.restaurantImage, "Restaurant Photo") : null,
-        values.foodImage ? uploadImage(values.foodImage, "Food Photo") : null,
-        values.deliveryImage ? uploadImage(values.deliveryImage, "Delivery Photo") : null,
-        values.restaurantProfileImage ? uploadImage(values.restaurantProfileImage, "Profile Photo") : null,
+        values.restaurantImage ? uploadImage(values.restaurantImage) : null,
+        values.foodImage ? uploadImage(values.foodImage) : null,
+        values.deliveryImage ? uploadImage(values.deliveryImage) : null,
+        values.restaurantProfileImage
+          ? uploadImage(values.restaurantProfileImage)
+          : null,
       ]);
 
       const payload = {
@@ -139,29 +136,27 @@ export default function NewRestaurantRegister() {
         ...(restaurantProfileUrl && { restaurantProfileUrl }),
       };
 
-      try {
-        const res = await axios.post("/api/restaurant/step2", payload);
-        toast.dismiss("save");
+      const res = await saveMutation.mutateAsync(payload);
 
-        if (res.data.success) {
-          toast.success("Details saved");
-          router.push("/partner-with-us/restaurant-documents");
-        } else {
-          toast.error(res.data.message || "Failed to save details");
-        }
-      } catch (error: any) {
-        toast.dismiss("save");
-        toast.error(error.response?.data?.message || "Something went wrong");
-      } finally {
-        setIsLoading(false);
+      toast.dismiss("save");
+
+      if (res?.success) {
+        toast.success("Details saved");
+        router.push("/partner-with-us/restaurant-documents");
+      } else {
+        toast.error(res?.message || "Failed to save details");
       }
-    });
+    } catch (error) {
+      toast.dismiss("save");
+      toast.error(
+        error instanceof Error ? error.message
+          : "An unexpected error occurred. Please try again."
+      
+      );
+    }
   }
 
-  useEffect(() => {
-    if (status === "unauthenticated") router.push("/login");
-  }, [status]);
-
+  // ✅ loading state
   if (status === "loading") {
     return (
       <div className="flex items-center justify-center min-h-screen text-lg">
@@ -170,33 +165,40 @@ export default function NewRestaurantRegister() {
     );
   }
 
+  // ✅ guard render until authenticated
+  if (status === "unauthenticated") return null;
+
   return (
     <div className="px-4 md:px-6 lg:px-8">
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-
           {/* Mobile Stepper */}
           <div className="block lg:hidden mb-6">
             <TitleHeaderPartner activeStep={2} />
           </div>
 
           <div className="flex flex-col lg:flex-row gap-6">
-
             {/* Desktop left panel */}
             <aside className="hidden lg:block w-1/3 p-6">
               <TitleHeaderPartner activeStep={2} />
             </aside>
 
             <section className="w-full lg:w-2/3">
-
-              <h1 className="text-2xl md:text-3xl font-bold mb-4">Menu & Details</h1>
+              <h1 className="text-2xl md:text-3xl font-bold mb-4">
+                Menu & Details
+              </h1>
 
               {/* Images */}
               <Card className="mb-6">
                 <CardHeader>
-                  <h2 className="text-xl font-semibold">Restaurant Images</h2>
-                  <p className="text-sm text-gray-500">Upload 4 images</p>
+                  <h2 className="text-xl font-semibold">
+                    Restaurant Images
+                  </h2>
+                  <p className="text-sm text-gray-500">
+                    Upload 4 images
+                  </p>
                 </CardHeader>
+
                 <CardContent className="grid gap-5">
                   {(
                     [
@@ -213,12 +215,14 @@ export default function NewRestaurantRegister() {
                       render={({ field: f }) => (
                         <FormItem>
                           <FormLabel>
-                            {field.replace(/([A-Z])/g, " $1").replace(/^./, (s) => s.toUpperCase())}
+                            {field
+                              .replace(/([A-Z])/g, " $1")
+                              .replace(/^./, (s) => s.toUpperCase())}
                           </FormLabel>
                           <FormControl>
                             <ImageInput
-                              name={field}
                               id={field}
+                              name={field}
                               onChange={(file) => f.onChange(file)}
                               maxSizeMB={5}
                             />
@@ -234,7 +238,9 @@ export default function NewRestaurantRegister() {
               {/* Cuisine */}
               <Card className="mb-6">
                 <CardHeader>
-                  <h2 className="text-xl font-semibold">Select Cuisines</h2>
+                  <h2 className="text-xl font-semibold">
+                    Select Cuisines
+                  </h2>
                 </CardHeader>
                 <CardContent>
                   <FormField
@@ -260,10 +266,11 @@ export default function NewRestaurantRegister() {
               {/* Working Hours */}
               <Card>
                 <CardHeader>
-                  <h2 className="text-xl font-semibold">Working Hours</h2>
+                  <h2 className="text-xl font-semibold">
+                    Working Hours
+                  </h2>
                 </CardHeader>
                 <CardContent className="space-y-6">
-
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <FormField
                       control={form.control}
@@ -315,7 +322,9 @@ export default function NewRestaurantRegister() {
                                 onCheckedChange={(checked) => {
                                   const list = checked
                                     ? [...field.value, day.id]
-                                    : field.value.filter((d) => d !== day.id);
+                                    : field.value.filter(
+                                        (d) => d !== day.id
+                                      );
                                   field.onChange(list);
                                 }}
                               />
@@ -333,10 +342,10 @@ export default function NewRestaurantRegister() {
               <div className="mt-6 flex justify-end">
                 <Button
                   type="submit"
-                  disabled={isPending || isLoading}
+                  disabled={saveMutation.isPending}
                   className="rounded-xl bg-[#4947e0] text-white px-6 py-3 hover:bg-[#3a38c7]"
                 >
-                  {isLoading ? "Saving..." : "Next"}
+                  {saveMutation.isPending ? "Saving..." : "Next"}
                   <Right />
                 </Button>
               </div>

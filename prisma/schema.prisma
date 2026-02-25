@@ -1,12 +1,11 @@
 generator client {
-  provider = "prisma-client-js"
+  provider      = "prisma-client-js"
   binaryTargets = ["native", "rhel-openssl-3.0.x"]
 }
 
 datasource db {
   provider = "mongodb"
-  url = env("DATABASE_URL")
-  
+  url      = env("DATABASE_URL")
 }
 
 enum Role {
@@ -34,6 +33,19 @@ enum NotificationType {
   ORDER_UPDATE
 }
 
+enum RestaurantStatus {
+  NOT_SUBMITTED
+  PENDING_VERIFICATION
+  APPROVED
+  REJECTED
+}
+
+enum PlanType {
+  FREE
+  BASIC
+  PRO
+}
+
 model User {
   id            String    @id @default(auto()) @map("_id") @db.ObjectId
   name          String?
@@ -42,6 +54,13 @@ model User {
   emailVerified DateTime?
   role          Role      @default(USER)
   image         String?
+
+  restaurantStatus     RestaurantStatus @default(NOT_SUBMITTED)
+  trialEndsAt          DateTime?
+  plan                 PlanType         @default(FREE)
+  stripeCustomerId     String?
+  stripeSubscriptionId String?
+  subscriptionStatus   String?
 
   accounts       Account[]
   sessions       Session[]
@@ -237,11 +256,11 @@ model Order {
   orderNumber Int    @default(1)
   tableNumber Int?
 
-  userId      String?     @db.ObjectId
-  phone       String?
-  totalAmount Float       @default(0)
-  status      OrderStatus @default(PENDING)
-  paid        Boolean     @default(false)
+  userId          String?     @db.ObjectId
+  phone           String?
+  totalAmount     Float       @default(0)
+  status          OrderStatus @default(PENDING)
+  paid            Boolean     @default(false)
   stripeSessionId String?
 
   restaurantId String          @db.ObjectId

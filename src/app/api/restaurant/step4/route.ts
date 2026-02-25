@@ -43,7 +43,7 @@ export async function POST(req: NextRequest) {
 
     await prisma.user.update({
       where: { id: user.id },
-      data: { role: "RESTAURANT_OWNER" },
+      data: { role: "RESTAURANT_OWNER", restaurantStatus: "PENDING_VERIFICATION" },
     });
 
     return NextResponse.json({

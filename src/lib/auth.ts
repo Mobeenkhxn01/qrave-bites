@@ -12,6 +12,10 @@ declare module "next-auth" {
     user: {
       id: string;
       role: Role;
+      restaurantStatus?: string;
+      trialEndsAt?: Date | null;
+      subscriptionStatus?: string | null;
+      plan?: string | null;
     } & DefaultSession["user"];
   }
 
@@ -64,53 +68,91 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     }),
   ],
 
- callbacks: {
-  async jwt({ token, user }) {
-  if (user) {
-    token.id = user.id;
-    token.role = (user as { role: Role }).role;
-    return token;
-  }
-  if (token?.id) {
-    try {
-      const dbUser = await prisma.user.findUnique({
-        where: { id: token.id as string },
-        select: { role: true },
-      });
+  callbacks: {
+    async jwt({ token, user }) {
+      if (user) {
+        token.id = user.id;
+        token.role = (user as { role: Role }).role;
 
-      if (dbUser) {
-        token.role = dbUser.role as Role;
+        const dbUser = await prisma.user.findUnique({
+          where: { id: user.id },
+          select: {
+            role: true,
+            restaurantStatus: true,
+            trialEndsAt: true,
+            subscriptionStatus: true,
+            plan: true,
+          },
+        });
+
+        if (dbUser) {
+          token.role = dbUser.role;
+          token.restaurantStatus = dbUser.restaurantStatus;
+          token.trialEndsAt = dbUser.trialEndsAt;
+          token.subscriptionStatus = dbUser.subscriptionStatus;
+          token.plan = dbUser.plan;
+        }
+
+        return token;
       }
-    } catch (error) {
-      console.error("JWT refresh error:", error);
-    }
+
+      if (token?.id) {
+        try {
+          const dbUser = await prisma.user.findUnique({
+            where: { id: token.id as string },
+            select: {
+              role: true,
+              restaurantStatus: true,
+              trialEndsAt: true,
+              subscriptionStatus: true,
+              plan: true,
+            },
+          });
+
+          if (dbUser) {
+            token.role = dbUser.role;
+            token.restaurantStatus = dbUser.restaurantStatus;
+            token.trialEndsAt = dbUser.trialEndsAt;
+            token.subscriptionStatus = dbUser.subscriptionStatus;
+            token.plan = dbUser.plan;
+          }
+        } catch (error) {
+          console.error("JWT refresh error:", error);
+        }
+      }
+
+      return token;
+    },
+
+   async session({ session, token }) {
+  if (session.user) {
+    session.user.id = token.id as string;
+    session.user.role = token.role as Role;
+
+    session.user.restaurantStatus =
+      token.restaurantStatus as string | undefined;
+    session.user.trialEndsAt =
+      token.trialEndsAt as Date | undefined;
+    session.user.subscriptionStatus =
+      token.subscriptionStatus as string | undefined;
+    session.user.plan = token.plan as string | undefined;
   }
 
-  return token;
+  return session;
 },
+    async redirect({ url, baseUrl }) {
+      if (url.startsWith("/")) {
+        return `${baseUrl}${url}`;
+      }
 
-  async session({ session, token }) {
-    if (session.user) {
-      session.user.id = token.id as string;
-      session.user.role = token.role as Role;
-    }
-    return session;
+      if (new URL(url).origin === baseUrl) {
+        return url;
+      }
+
+      // fallback
+      return baseUrl;
+    },
   },
-
-  async redirect({ url, baseUrl }) {
-    if (url.startsWith("/")) {
-      return `${baseUrl}${url}`;
-    }
-
-    if (new URL(url).origin === baseUrl) {
-      return url;
-    }
-
-    // fallback
-    return baseUrl;
-  },
-},
-
 
   pages: {
     signIn: "/login",

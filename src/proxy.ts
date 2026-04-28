@@ -5,7 +5,7 @@ import type { NextRequest } from "next/server";
 const ALLOWED_ROLES = ["ADMIN", "RESTAURANT_OWNER"];
 
 export async function proxy(req: NextRequest) {
-  console.log("🔥 PROXY RUNNING:", req.nextUrl.pathname);
+  
 
   const token = await getToken({
     req,

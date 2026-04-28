@@ -32,14 +32,15 @@ export default function CartClient() {
     isLoading,
     addToCart,
     removeFromCart,
-    clearCart,
     totalPrice,
   } = useCart(tableId);
 
   const handleQtyChange = (menuItemId: string, change: number) => {
-    change > 0
-      ? addToCart(menuItemId, tableId)
-      : removeFromCart(menuItemId, tableId);
+    if (change > 0) {
+      addToCart(menuItemId, tableId);
+      return;
+    }
+    removeFromCart(menuItemId, tableId);
   };
 
   const handleCheckout = async () => {

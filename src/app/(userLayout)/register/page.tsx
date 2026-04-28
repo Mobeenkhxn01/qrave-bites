@@ -27,7 +27,7 @@ const formSchema = z.object({
     .string()
     .min(8, "Password must be at least 8 characters")
     .regex(/[A-Z]/, "Password must include an uppercase letter")
-    .regex(/[!@#$%^&*(),.?\":{}|<>]/, "Password must include a special character")
+    .regex(/[!@#$%^&*(),.?":{}|<>]/, "Password must include a special character")
 });
 
 export default function RegisterPage() {

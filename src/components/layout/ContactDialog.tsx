@@ -13,15 +13,21 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useForm } from "react-hook-form";
+import { useState } from "react";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { DialogDescription, DialogTitle } from "@radix-ui/react-dialog";
+import { toast } from "react-hot-toast";
+import { api } from "@/lib/api";
 
 const schema = z.object({
-  name: z.string().min(2, "Name is required"),
-  phone: z.string().min(10, "Valid phone number required"),
+  name: z.string().trim().min(2, "Name is required"),
+  phone: z
+    .string()
+    .trim()
+    .regex(/^\+?[0-9\s-]{10,15}$/, "Valid phone number required"),
   email: z.string().email("Enter valid email"),
-  message: z.string().optional(),
+  message: z.string().max(1000, "Message is too long").optional(),
 });
 
 type FormValues = z.infer<typeof schema>;
@@ -33,6 +39,8 @@ export function ContactDialog({
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: {
@@ -43,10 +51,25 @@ export function ContactDialog({
     },
   });
 
-  function onSubmit(data: FormValues) {
-    console.log(data);
-    onOpenChange(false);
-    form.reset();
+  async function onSubmit(data: FormValues) {
+    try {
+      setIsSubmitting(true);
+      await api.post("/contact-demo", data);
+      toast.success("Thanks! We will contact you soon.");
+      onOpenChange(false);
+      form.reset();
+    } catch (error: unknown) {
+      const message =
+        typeof error === "object" &&
+        error !== null &&
+        "message" in error &&
+        typeof error.message === "string"
+          ? error.message
+          : "Failed to submit form";
+      toast.error(message);
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
   return (
@@ -98,6 +121,7 @@ export function ContactDialog({
                         <Input 
                           {...field} 
                           className="h-8 sm:h-9 lg:h-10 text-xs sm:text-sm"
+                          disabled={isSubmitting}
                         />
                       </FormControl>
                       <FormMessage className="text-xs" />
@@ -116,6 +140,7 @@ export function ContactDialog({
                           placeholder="+91" 
                           {...field} 
                           className="h-8 sm:h-9 lg:h-10 text-xs sm:text-sm"
+                          disabled={isSubmitting}
                         />
                       </FormControl>
                       <FormMessage className="text-xs" />
@@ -133,6 +158,7 @@ export function ContactDialog({
                         <Input 
                           {...field} 
                           className="h-8 sm:h-9 lg:h-10 text-xs sm:text-sm"
+                          disabled={isSubmitting}
                         />
                       </FormControl>
                       <FormMessage className="text-xs" />
@@ -151,6 +177,7 @@ export function ContactDialog({
                           rows={2}
                           {...field} 
                           className="text-xs sm:text-sm resize-none min-h-15 sm:min-h-17.5"
+                          disabled={isSubmitting}
                         />
                       </FormControl>
                     </FormItem>
@@ -167,9 +194,10 @@ export function ContactDialog({
                   <Button
                     type="button"
                     onClick={form.handleSubmit(onSubmit)}
+                    disabled={isSubmitting}
                     className="w-full sm:w-auto rounded-full px-6 sm:px-8 py-2 h-auto text-xs sm:text-sm"
                   >
-                    Continue
+                    {isSubmitting ? "Submitting..." : "Continue"}
                   </Button>
                 </div>
               </div>

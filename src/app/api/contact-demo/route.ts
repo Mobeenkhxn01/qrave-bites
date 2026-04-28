@@ -56,12 +56,50 @@ export async function POST(req: Request) {
         `Message: ${message || "N/A"}`,
       ].join("\n"),
       html: `
-        <h2>New Demo Request</h2>
-        <p><strong>Name:</strong> ${name}</p>
-        <p><strong>Phone:</strong> ${phone}</p>
-        <p><strong>Email:</strong> ${email}</p>
-        <p><strong>Message:</strong> ${message || "N/A"}</p>
-      `,
+  <div style="font-family: Arial, sans-serif; background:#f6f9fc; padding:40px 0;">
+    <div style="max-width:600px; margin:0 auto; background:white; border-radius:12px; overflow:hidden; box-shadow:0 10px 25px rgba(0,0,0,0.08);">
+      
+      <!-- Header -->
+      <div style="background:linear-gradient(135deg,#6366f1,#4f46e5); padding:24px; text-align:center; color:white;">
+        <h1 style="margin:0; font-size:22px;">🍽️ Qrave Bites</h1>
+        <p style="margin:5px 0 0; font-size:14px; opacity:0.9;">
+          New Demo Request
+        </p>
+      </div>
+
+      <!-- Body -->
+      <div style="padding:24px;">
+        <p style="font-size:15px; color:#374151;">
+          You have received a new demo request from your website:
+        </p>
+
+        <!-- Info Card -->
+        <div style="margin-top:20px; border:1px solid #e5e7eb; border-radius:10px; padding:16px;">
+          
+          <p style="margin:8px 0;"><strong>👤 Name:</strong> ${name}</p>
+          <p style="margin:8px 0;"><strong>📞 Phone:</strong> ${phone}</p>
+          <p style="margin:8px 0;"><strong>📧 Email:</strong> ${email}</p>
+          <p style="margin:8px 0;"><strong>💬 Message:</strong> ${message || "N/A"}</p>
+
+        </div>
+
+        <!-- CTA -->
+        <div style="margin-top:24px; text-align:center;">
+          <a href="mailto:${email}" 
+             style="display:inline-block; padding:12px 20px; background:#4f46e5; color:white; text-decoration:none; border-radius:8px; font-size:14px;">
+            Reply to Customer
+          </a>
+        </div>
+      </div>
+
+      <!-- Footer -->
+      <div style="background:#f9fafb; padding:16px; text-align:center; font-size:12px; color:#6b7280;">
+        © ${new Date().getFullYear()} Qrave Bites • All rights reserved
+      </div>
+
+    </div>
+  </div>
+`,
     });
 
     return NextResponse.json({ success: true });

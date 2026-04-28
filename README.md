@@ -3,6 +3,28 @@
 Qrave Bites is a full-stack QR-based restaurant ordering platform built with Next.js App Router.
 Customers can scan table QR codes, browse menus, place orders, and pay online. Restaurant owners get a dashboard for menu, orders, inventory, analytics, notifications, billing, and table QR management.
 
+## Live Demo
+
+- Production: [https://qrave-bites.vercel.app](https://qrave-bites.vercel.app)
+
+## Feature Overview
+
+### Customer
+
+- Table QR scan to open menu directly
+- Add to cart and place orders
+- Stripe checkout for order payments
+- Live status and updates
+
+### Restaurant Owner/Admin
+
+- Restaurant onboarding (multi-step)
+- Menu/category management
+- Inventory management
+- Live orders + kitchen display
+- Table QR generation and tracking
+- Billing and plan management
+
 ## Tech Stack
 
 - Next.js 16 (App Router, Turbopack in dev)
@@ -233,6 +255,32 @@ Then set `MOBEEN_STRIPE_WEBHOOK_SECRET` from the CLI output.
    - Cart/checkout
    - Webhook events
 
+### Recommended Production Environment Values
+
+```env
+NODE_ENV=production
+AUTH_URL=https://your-domain.com
+NEXT_PUBLIC_APP_URL=https://your-domain.com
+DATABASE_URL=mongodb+srv://...
+AUTH_SECRET=<long-random-secret>
+AUTH_GOOGLE_ID=...
+AUTH_GOOGLE_SECRET=...
+MOBEEN_STRIPE_SECRET_KEY=sk_live_or_test...
+MOBEEN_STRIPE_WEBHOOK_SECRET=whsec_...
+STRIPE_PRICE_BASIC=price_...
+NEXT_PUBLIC_PUSHER_KEY=...
+NEXT_PUBLIC_PUSHER_CLUSTER=...
+PUSHER_APP_ID=...
+PUSHER_KEY=...
+PUSHER_SECRET=...
+PUSHER_CLUSTER=...
+MOBEEN_AWS_REGION=...
+MOBEEN_AWS_ACCESS_KEY=...
+MOBEEN_AWS_SECRET_KEY=...
+MOBEEN_AWS_BUCKET_NAME=...
+NEXT_PUBLIC_GEOAPIFY_API_KEY=...
+```
+
 ## Troubleshooting
 
 ### Prisma connection errors during build
@@ -278,3 +326,17 @@ pnpm build
 ## License
 
 MIT (or your chosen project license).
+
+## Author
+
+- GitHub: [@Mobeenkhxn01](https://github.com/Mobeenkhxn01)
+
+## Support
+
+- Open an issue in the repository for bug reports or feature requests.
+- For framework docs:
+  - [Next.js](https://nextjs.org/docs)
+  - [Prisma](https://www.prisma.io/docs)
+  - [Auth.js](https://authjs.dev)
+  - [Stripe](https://stripe.com/docs)
+  - [Pusher](https://pusher.com/docs)

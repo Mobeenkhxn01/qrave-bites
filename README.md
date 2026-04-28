@@ -1,317 +1,280 @@
-# 🍽️ Qrave Bites
+# Qrave Bites
 
-![Next.js](https://img.shields.io/badge/Next.js-15/16-black?style=for-the-badge&logo=next.js)
-![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue?style=for-the-badge&logo=typescript)
-![Prisma](https://img.shields.io/badge/Prisma-v6-2D3748?style=for-the-badge&logo=prisma)
+Qrave Bites is a full-stack QR-based restaurant ordering platform built with Next.js App Router.
+Customers can scan table QR codes, browse menus, place orders, and pay online. Restaurant owners get a dashboard for menu, orders, inventory, analytics, notifications, billing, and table QR management.
 
-**Qrave Bites** is a full-stack QR code-based restaurant ordering platform with real-time order updates, secure payments, and comprehensive restaurant management. Customers scan QR codes at tables to browse menus, place orders, and pay instantly. Restaurant owners get a powerful dashboard to manage operations.
+## Tech Stack
 
----
+- Next.js 16 (App Router, Turbopack in dev)
+- React 19 + TypeScript
+- Prisma 6 + MongoDB Atlas
+- Auth.js / NextAuth v5 (JWT session strategy)
+- Stripe (order checkout + subscription billing + webhook handling)
+- Pusher (real-time order + notification updates)
+- AWS S3 (file/image uploads)
+- Tailwind CSS + shadcn/ui
+- React Query + Zustand
 
-## 🔗 Live Demo
+## Core Modules
 
-> 🌐 [https://qrave-bites.vercel.app](https://qrave-bites.vercel.app)
+- Customer flow: city/restaurant pages, cart, checkout, payment success/cancel
+- Admin dashboard: live orders, kitchen display, inventory, menu, table QR, reservation, analytics
+- Restaurant onboarding: multi-step partner flow
+- Auth: credentials + Google OAuth, role-based access
+- Billing: plan subscription checkout + Stripe customer portal
 
----
+## Monorepo Layout (Important Paths)
 
-## ✨ Core Features
-
-### 🛍️ For Customers
-- **QR Code Scanning** - Instant menu access via table-specific QR codes
-- **Digital Menu** - Browse items with images stored on AWS S3
-- **Smart Cart** - Add/remove items with real-time updates via Pusher
-- **Secure Payments** - Stripe integration for UPI, cards, and digital wallets
-- **Order Tracking** - Real-time order status updates
-
-### 🍴 For Restaurant Owners
-- **Restaurant Management** - Create, edit, and manage multiple restaurants
-- **Menu Management** - Add/update menu items with image uploads to AWS S3
-- **Table Management** - Generate and manage table-specific QR codes
-- **Orders Dashboard** - Real-time order tracking with Pusher notifications
-- **Analytics** - View order history and restaurant performance
-
-### 🔐 Authentication & Security
-- **Auth.js (NextAuth v5)** - OAuth (Google, GitHub) and email/password login
-- **Role-Based Access** - Customer and restaurant owner roles
-- **Secure API Routes** - Protected endpoints with session validation
-- **Zod Validation** - Type-safe request/response validation
-
----
-
-## 🛠️ Tech Stack
-
-| Layer           | Technology                                    |
-|-----------------|-----------------------------------------------|
-| **Framework**   | Next.js 15/16, TypeScript, React 19           |
-| **Styling**     | Tailwind CSS, shadcn/ui components            |
-| **State Mgmt**  | Zustand, TanStack Query (React Query)         |
-| **Database**    | MongoDB, Prisma ORM v6                        |
-| **Auth**        | Auth.js (NextAuth v5), OAuth providers        |
-| **Payments**    | Stripe API, Stripe Checkout                   |
-| **Real-time**   | Pusher (WebSockets for live updates)          |
-| **Storage**     | AWS S3 for images                             |
-| **Validation**  | Zod schema validation                         |
-| **HTTP Client** | Axios                                         |
-| **Hosting**     | Vercel                                        |
-
----
-
-## 📁 Project Structure
-
-```
-qrave-bites/
-├── app/                          # Next.js app directory (App Router)
-│   ├── api/                      # API routes & webhooks
-│   │   ├── auth/                 # Auth.js configuration
-│   │   ├── orders/               # Order management endpoints
-│   │   ├── restaurants/          # Restaurant management
-│   │   ├── menu/                 # Menu management
-│   │   ├── stripe/               # Stripe webhooks
-│   │   └── pusher/               # Pusher auth & triggers
-│   ├── (auth)/                   # Auth pages (login, register)
-│   ├── dashboard/                # Protected owner dashboard
-│   ├── [city]/                   # Dynamic city routes
-│   └── layout.tsx                # Root layout
-├── components/
-│   ├── ui/                       # shadcn/ui components
-│   ├── dashboard/                # Dashboard components
-│   ├── menu/                     # Menu components
-│   └── common/                   # Shared components
-├── lib/
-│   ├── auth.ts                   # Auth.js configuration
-│   ├── db.ts                      # Prisma client singleton
-│   ├── prisma.ts                 # Prisma utilities
-│   ├── stripe.ts                 # Stripe client setup
-│   ├── pusher.ts                 # Pusher client setup
-│   ├── aws.ts                    # AWS S3 client setup
-│   ├── axios-instance.ts         # Axios with interceptors
-│   └── validations/              # Zod schemas
-├── store/                         # Zustand stores
-│   ├── cartStore.ts              # Shopping cart state
-│   ├── authStore.ts              # Auth state
-│   └── orderStore.ts             # Order state
-├── hooks/                         # Custom React hooks
-│   ├── useAuth.ts                # Auth hook
-│   ├── useCart.ts                # Cart management
-│   └── usePusher.ts              # Real-time subscriptions
-├── types/                         # TypeScript interfaces
-├── prisma/
-│   ├── schema.prisma             # Database schema
-│   └── migrations/               # Database migrations
-├── public/                        # Static assets
-└── env.ts                         # Environment validation
+```txt
+src/
+  app/
+    (userLayout)/...                 # Customer-facing pages
+    (adminLayout)/dashboard/...      # Protected owner/admin dashboard
+    api/.../route.ts                 # API routes
+  components/                        # Shared UI + feature components
+  hooks/                             # Custom hooks
+  lib/                               # Auth, Prisma, Stripe, Pusher, validators, utils
+  providers/                         # Client providers
+  proxy.ts                           # Dashboard route protection middleware
+prisma/
+  schema.prisma                      # MongoDB data model
 ```
 
----
+## Prerequisites
 
-## 📦 Prerequisites
+- Node.js 20+ recommended
+- pnpm (project lockfile is `pnpm-lock.yaml`)
+- MongoDB Atlas database
+- Stripe account
+- Pusher account
+- AWS account with S3 bucket
+- Google OAuth app
 
-- **Node.js** 18+ or **Bun** (latest)
-- **MongoDB** Atlas account (free tier available)
-- **Stripe** account (for payments)
-- **AWS Account** (for S3 storage)
-- **Pusher** account (free tier available)
-- **OAuth Providers** (Google/GitHub apps configured)
+## Quick Start
 
----
-
-## 🚀 Getting Started
-
-### 1. Clone the Repository
+1) Clone and install
 
 ```bash
-git clone https://github.com/Mobeenkhxn01/qrave-bites.git
+git clone <your-repo-url>
 cd qrave-bites
+pnpm install
 ```
 
-### 2. Install Dependencies
+2) Create env file
+
+- Copy `.env.example` if available, otherwise create `.env` locally.
+- Add all variables listed in the Environment Variables section below.
+
+3) Generate Prisma client
 
 ```bash
-npm install
-# or
-bun install
+pnpm prisma generate
 ```
 
-### 3. Set Up Environment Variables
+4) Sync schema (MongoDB)
 
-Create a `.env.local` file in the root directory with all required variables:
+```bash
+pnpm prisma db push
+```
+
+5) Start development server
+
+```bash
+pnpm dev
+```
+
+6) Verify
+
+```bash
+pnpm lint
+pnpm exec tsc --noEmit
+pnpm build
+```
+
+## Available Scripts
+
+- `pnpm dev` - Start Next.js dev server with Turbopack
+- `pnpm build` - Production build
+- `pnpm start` - Start production server
+- `pnpm lint` - ESLint checks
+- `pnpm postinstall` - Auto-runs `prisma generate`
+
+## Environment Variables
+
+Use placeholder values, never commit real secrets.
+
+### Required
 
 ```env
-# Database
-DATABASE_URL=mongodb+srv://username:password@cluster.mongodb.net/qrave-bites?retryWrites=true&w=majority
-
-# NextAuth / Auth.js
-AUTH_SECRET=your_randomly_generated_secret_key_min_32_chars
+# App/Auth
+AUTH_SECRET=replace_with_a_long_random_secret
 AUTH_URL=http://localhost:3000
-NEXTAUTH_URL=http://localhost:3000
-
-# OAuth Providers
-AUTH_GOOGLE_ID=your_google_oauth_client_id
-AUTH_GOOGLE_SECRET=your_google_oauth_client_secret
-AUTH_GITHUB_ID=your_github_oauth_client_id
-AUTH_GITHUB_SECRET=your_github_oauth_client_secret
-
-# Stripe
-NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_your_stripe_public_key
-STRIPE_SECRET_KEY=sk_test_your_stripe_secret_key
-STRIPE_WEBHOOK_SECRET=whsec_your_webhook_secret
-
-# AWS S3
-NEXT_PUBLIC_AWS_REGION=your_aws_region
-AWS_ACCESS_KEY_ID=your_aws_access_key
-AWS_SECRET_ACCESS_KEY=your_aws_secret_key
-NEXT_PUBLIC_AWS_S3_BUCKET_NAME=your_s3_bucket_name
-
-# Pusher
-NEXT_PUBLIC_PUSHER_APP_KEY=your_pusher_app_key
-NEXT_PUBLIC_PUSHER_CLUSTER=your_pusher_cluster
-PUSHER_APP_ID=your_pusher_app_id
-PUSHER_SECRET=your_pusher_secret
-
-# App
 NEXT_PUBLIC_APP_URL=http://localhost:3000
 NODE_ENV=development
+
+# Database
+DATABASE_URL=mongodb+srv://<user>:<pass>@<cluster>/<db>?retryWrites=true&w=majority
+
+# Google Auth
+AUTH_GOOGLE_ID=your_google_client_id
+AUTH_GOOGLE_SECRET=your_google_client_secret
+
+# Stripe
+MOBEEN_STRIPE_SECRET_KEY=sk_test_or_live_...
+MOBEEN_STRIPE_WEBHOOK_SECRET=whsec_...
+STRIPE_PRICE_BASIC=price_...
+# Optional if used in UI/pricing logic
+STRIPE_PRICE_PRO=price_...
+
+# Pusher
+NEXT_PUBLIC_PUSHER_KEY=your_public_pusher_key
+NEXT_PUBLIC_PUSHER_CLUSTER=ap2
+PUSHER_APP_ID=your_pusher_app_id
+PUSHER_KEY=your_pusher_key
+PUSHER_SECRET=your_pusher_secret
+PUSHER_CLUSTER=ap2
+
+# AWS S3 Upload
+MOBEEN_AWS_REGION=ap-southeast-2
+MOBEEN_AWS_ACCESS_KEY=your_access_key
+MOBEEN_AWS_SECRET_KEY=your_secret_key
+MOBEEN_AWS_BUCKET_NAME=your_bucket_name
+
+# Maps / geocoding
+NEXT_PUBLIC_GEOAPIFY_API_KEY=your_geoapify_key
 ```
 
-### 4. Generate Prisma Client
-
-```bash
-npx prisma generate
-npx prisma db push
-```
-
-### 5. Run Development Server
-
-```bash
-npm run dev
-# or
-bun run dev
-```
-
-Visit `http://localhost:3000` to start exploring Qrave Bites.
-
----
-
-## 🚀 Deployment on Vercel
-
-### Step-by-Step Guide
-
-1. **Push to GitHub** - Ensure your code is on GitHub
-
-2. **Connect to Vercel**:
-   - Go to [Vercel Dashboard](https://vercel.com/dashboard)
-   - Click "Add New Project"
-   - Import your GitHub repository
-   - Select the `main` branch
-
-3. **Configure Build Settings**:
-   - **Framework Preset**: Next.js
-   - **Build Command**:
-     ```bash
-     npm ci && npx prisma generate && npm run build
-     ```
-   - **Output Directory**: `.next`
-   - **Install Command**: `npm ci`
-
-4. **Add Environment Variables** in Vercel Project Settings:
+### Optional / Compatibility
 
 ```env
-DATABASE_URL=mongodb+srv://username:password@cluster.mongodb.net/qrave-bites
-AUTH_SECRET=your_secure_random_key_32_chars_minimum
-AUTH_URL=https://qrave-bites.vercel.app
-NEXTAUTH_URL=https://qrave-bites.vercel.app
-
-AUTH_GOOGLE_ID=your_google_oauth_id
-AUTH_GOOGLE_SECRET=your_google_oauth_secret
-AUTH_GITHUB_ID=your_github_oauth_id
-AUTH_GITHUB_SECRET=your_github_oauth_secret
-
-NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_live_your_key
-STRIPE_SECRET_KEY=sk_live_your_key
-STRIPE_WEBHOOK_SECRET=whsec_your_webhook_secret
-
-NEXT_PUBLIC_AWS_REGION=us-east-1
-AWS_ACCESS_KEY_ID=your_aws_access_key
-AWS_SECRET_ACCESS_KEY=your_aws_secret_key
-NEXT_PUBLIC_AWS_S3_BUCKET_NAME=your_bucket_name
-
-NEXT_PUBLIC_PUSHER_APP_KEY=your_pusher_key
-NEXT_PUBLIC_PUSHER_CLUSTER=mt1
-PUSHER_APP_ID=your_pusher_app_id
-PUSHER_SECRET=your_pusher_secret
-
-NEXT_PUBLIC_APP_URL=https://qrave-bites.vercel.app
-NODE_ENV=production
+# Some code paths still reference this name
+MOBEEN_NEXT_PUBLIC_GEOAPIFY_API_KEY=your_geoapify_key
 ```
 
-5. **Deploy** - Click "Deploy" button
+## Authentication and Access Control
 
-6. **Configure Stripe Webhook**:
-   - Go to Stripe Dashboard → Developers → Webhooks
-   - Add endpoint: `https://yourdomain.vercel.app/api/stripe/webhook`
-   - Select events: `payment_intent.succeeded`, `payment_intent.payment_failed`
+- Auth.js config is in `src/lib/auth.ts`.
+- Session strategy is JWT.
+- Dashboard protection is enforced in `src/proxy.ts` for `/dashboard` routes.
+- Middleware checks:
+  - authenticated token
+  - role must be `ADMIN` or `RESTAURANT_OWNER`
+  - `restaurantStatus` must be `APPROVED`
+  - trial/subscription gating for billing access
 
----
+If dashboard redirects to login in production but not localhost, verify:
+- `AUTH_SECRET` is set correctly in deployment
+- `AUTH_URL` matches deployed domain
+- HTTPS/cookie behavior is correct for deployed host
 
-## 📊 Key API Endpoints
+## Database (Prisma + MongoDB)
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| `GET` | `/api/restaurants` | Get all restaurants |
-| `POST` | `/api/restaurants` | Create restaurant (owner only) |
-| `GET` | `/api/restaurants/[id]/menu` | Get restaurant menu |
-| `POST` | `/api/orders` | Create order |
-| `GET` | `/api/orders/[id]` | Get order details |
-| `PATCH` | `/api/orders/[id]` | Update order status |
-| `POST` | `/api/stripe/checkout` | Initiate Stripe checkout |
+- Provider: MongoDB (`prisma/schema.prisma`)
+- Prisma client generator includes `binaryTargets = ["native", "rhel-openssl-3.0.x"]` for local + common Linux deploy compatibility.
+- Typical workflow:
 
----
+```bash
+pnpm prisma generate
+pnpm prisma db push
+pnpm prisma studio
+```
 
-## 🧩 Future Enhancements
+## Stripe Integration
 
-- **Advanced Analytics** - Order analytics, revenue reports, peak hours
-- **Multi-language Support** - Internationalization (i18n)
-- **SMS/WhatsApp Notifications** - Real-time order updates via messaging
-- **Mobile App** - React Native companion app
-- **Inventory Management** - Stock tracking for menu items
-- **Kitchen Display System (KDS)** - Large display for kitchen staff
-- **Customer Ratings & Reviews** - Feedback system
-- **Loyalty Program** - Points and rewards
+- Order checkout endpoint: `src/app/api/checkout/route.ts` and `src/app/api/stripe/checkout-order/route.ts`
+- Subscription checkout endpoint: `src/app/api/stripe/checkout-subscribe/route.ts`
+- Customer portal endpoint: `src/app/api/stripe/portal/route.ts`
+- Session lookup endpoint: `src/app/api/stripe/session/[sessionId]/route.ts`
+- Webhook handler: `src/app/api/stripe/webhook/route.ts`
 
----
+### Local webhook testing
 
-## 🛡️ License
+```bash
+stripe listen --forward-to localhost:3000/api/stripe/webhook
+```
 
-MIT License. See LICENSE file for details.
+Then set `MOBEEN_STRIPE_WEBHOOK_SECRET` from the CLI output.
 
----
+## Real-time Events (Pusher)
 
-## 🤝 Contributing
+- Server config: `src/lib/pusher.ts`
+- Client config: `src/lib/pusher-client.ts`
+- Provider: `src/providers/PusherProvider.tsx`
+- Used for live dashboard updates and notifications.
 
-Contributions are welcome! Please follow these steps:
+## File Uploads (AWS S3)
 
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit changes (`git commit -m 'Add amazing feature'`)
-4. Push to branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
+- Upload API: `src/app/api/upload/route.ts`
+- Requires valid IAM credentials and S3 bucket access policy.
 
----
+## API Surface (Current Route Files)
 
-## 👨‍💻 Author
+- Auth: `/api/auth/[...nextauth]`, `/api/login`, `/api/register`
+- User/profile: `/api/profile`, `/api/users`
+- Restaurant onboarding: `/api/restaurant/step1..step4`, `/api/restaurant/me`, `/api/restaurants`
+- Menu/category/inventory: `/api/menu-items`, `/api/categories`, `/api/inventory`
+- Cart/orders/kitchen: `/api/cart`, `/api/orders`, `/api/kds/orders`, `/api/kds/items`
+- Analytics/notifications: `/api/analytics`, `/api/analytics/revenue`, `/api/notifications`
+- Table QR: `/api/table-qr`
+- Stripe: `/api/stripe/*`
+- Upload: `/api/upload`
 
-Developed with 💚 by [@Mobeenkhxn01](https://github.com/Mobeenkhxn01)
+## Deployment (Vercel Recommended)
 
-For issues, questions, or suggestions, please open an [issue](https://github.com/Mobeenkhxn01/qrave-bites/issues) or [discussion](https://github.com/Mobeenkhxn01/qrave-bites/discussions).
+1. Import repo in Vercel.
+2. Set all environment variables (Production + Preview as needed).
+3. Ensure MongoDB Atlas network access allows your deployment environment.
+4. Configure Google OAuth callback URL(s) for deployed domain.
+5. Configure Stripe webhook endpoint:
+   - `https://<your-domain>/api/stripe/webhook`
+6. Deploy and validate:
+   - Login
+   - Dashboard access
+   - Cart/checkout
+   - Webhook events
 
----
+## Troubleshooting
 
-## 📞 Support
+### Prisma connection errors during build
 
-Need help? Check out:
-- [Next.js Documentation](https://nextjs.org/docs)
-- [Prisma Documentation](https://www.prisma.io/docs)
-- [Auth.js Documentation](https://authjs.dev)
-- [Stripe Documentation](https://stripe.com/docs)
-- [Pusher Documentation](https://pusher.com/docs)
-- [AWS S3 Documentation](https://docs.aws.amazon.com/s3/)
+If you see `PrismaClientInitializationError` with DNS/network messages:
+- validate `DATABASE_URL`
+- check DNS/network reachability to MongoDB Atlas
+- check Atlas IP/network access rules
+
+### Redirect loop to `/login` from `/dashboard`
+
+- verify `AUTH_SECRET` and `AUTH_URL` in deployment
+- confirm cookies are set for the same host/domain
+- confirm user role and restaurant approval status in DB
+
+### Stripe checkout errors
+
+- verify `MOBEEN_STRIPE_SECRET_KEY`
+- verify `STRIPE_PRICE_BASIC` exists and is active in Stripe
+- verify `NEXT_PUBLIC_APP_URL`/`AUTH_URL` match active environment
+
+## Security Notes
+
+- Never commit `.env` files with real keys.
+- Rotate any leaked credentials immediately.
+- Use least-privilege IAM policy for S3 access.
+- Restrict webhook endpoints and verify signatures.
+
+## Contributing
+
+1. Create a feature branch
+2. Implement changes with tests/checks
+3. Run:
+
+```bash
+pnpm lint
+pnpm exec tsc --noEmit
+pnpm build
+```
+
+4. Open a PR
+
+## License
+
+MIT (or your chosen project license).

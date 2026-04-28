@@ -11,7 +11,7 @@ import {ContactDialog} from "@/components/layout/ContactDialog";
 export default function FloatingNavbar() {
   const [visible, setVisible] = useState(false);
   const [open, setOpen] = useState(false);
-  const { data: session } = useSession();
+  const { data: session, status } = useSession();
   const router = useRouter();
 
   useEffect(() => {
@@ -28,11 +28,15 @@ export default function FloatingNavbar() {
     session?.user?.role === "RESTAURANT_OWNER";
 
   const handleCTA = () => {
+    if (status === "loading") {
+      return;
+    }
 
-    if (!session) {
+    if (status === "unauthenticated") {
       router.push("/login");
       return;
     }
+
     if (isOwner) {
       router.push("/dashboard");
       return;
@@ -59,6 +63,7 @@ export default function FloatingNavbar() {
             <Button
               className="font-serif text-white bg-[#006aff] hover:bg-[#d19b6f]"
               onClick={handleCTA}
+              disabled={status === "loading"}
             >
               {isOwner ? "Dashboard" : "Request a Demo"}
             </Button>

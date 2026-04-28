@@ -5,12 +5,30 @@ import type { NextRequest } from "next/server";
 const ALLOWED_ROLES = ["ADMIN", "RESTAURANT_OWNER"];
 
 export async function proxy(req: NextRequest) {
-  
+  // In different environments Auth.js may use different cookie names
+  // (authjs vs next-auth, secure vs non-secure). Try all supported names.
+  const cookieNames = [
+    undefined,
+    "authjs.session-token",
+    "__Secure-authjs.session-token",
+    "next-auth.session-token",
+    "__Secure-next-auth.session-token",
+  ];
 
-  const token = await getToken({
-    req,
-    secret: process.env.AUTH_SECRET,
-  });
+  let token = null;
+
+  for (const cookieName of cookieNames) {
+    token = await getToken({
+      req,
+      secret: process.env.AUTH_SECRET,
+      cookieName,
+      secureCookie: req.nextUrl.protocol === "https:",
+    });
+
+    if (token) {
+      break;
+    }
+  }
 
   const url = req.nextUrl.clone();
 

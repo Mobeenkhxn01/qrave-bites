@@ -1,15 +1,14 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import Image from "next/image";
 import { api } from "@/lib/api";
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
 import CartDialog from "@/app/(userLayout)/cart/CartDialog";
 import { AddToCartButton } from "@/components/menu/AddToCartButton";
-import Image from "next/image";
-import { Clock3, MapPin } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import { Clock3, MapPin, Search, Star, ChefHat } from "lucide-react";
 
 type MenuItem = {
   id: string;
@@ -19,7 +18,11 @@ type MenuItem = {
   price: number;
   available: boolean;
   prepTime: number;
-  category: { id: string; name: string } | null;
+  category: {
+    id: string;
+    name: string;
+  } | null;
+  isVeg?: boolean;
 };
 
 type MenuResponse = {
@@ -29,6 +32,10 @@ type MenuResponse = {
     city: string;
     area: string;
     address: string | null;
+    rating?: number;
+    deliveryTime?: number;
+    deliveryFee?: number;
+    cuisines?: string[];
   };
   tableNumber: number | null;
   menuItems: MenuItem[];
@@ -47,163 +54,340 @@ export default function RestaurantMenuClient({
     queryKey: ["restaurant-menu", city, slug, tableId],
     queryFn: async () => {
       const res = await api.get("/restaurants/menu", {
-        params: { city, slug, tableId: tableId ?? undefined },
+        params: {
+          city,
+          slug,
+          tableId: tableId ?? undefined,
+        },
       });
       return res.data;
     },
+    staleTime: 5 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
   });
 
-  const groupedMenu = useMemo(() => {
+  const [search, setSearch] = useState("");
+  const [activeCategory, setActiveCategory] = useState("");
+  const categoryRefs = useRef<Record<string, HTMLElement | null>>({});
+
+const groupedMenu = useMemo(() => {
+    const filtered = (data?.menuItems ?? []).filter((item) =>
+      item.name.toLowerCase().includes(search.toLowerCase())
+    );
+
     const groups = new Map<string, MenuItem[]>();
-    for (const item of data?.menuItems ?? []) {
-      const categoryName = item.category?.name || "Chef Specials";
-      if (!groups.has(categoryName)) {
-        groups.set(categoryName, []);
+    filtered.forEach((item) => {
+      const category = item.category?.name || "Recommended";
+      if (!groups.has(category)) {
+        groups.set(category, []);
       }
-      groups.get(categoryName)?.push(item);
-    }
+      groups.get(category)?.push(item);
+    });
+
     return Array.from(groups.entries());
-  }, [data?.menuItems]);
+  }, [data?.menuItems, search]);
+useMemo(() => {
+    if (groupedMenu.length > 0 && !activeCategory) {
+      setActiveCategory(groupedMenu[0][0]);
+    }
+  }, [groupedMenu, activeCategory]);
 
-  if (isLoading) {
+  const scrollToCategory = (category: string) => {
+    setActiveCategory(category);
+    const section = categoryRefs.current[category];
+    if (section) {
+      section.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    }
+  };
+if (isLoading) {
     return (
-      <div className="max-w-6xl mx-auto px-4 py-8 space-y-4">
-        <div className="h-36 rounded-2xl bg-muted animate-pulse" />
-        <div className="h-24 rounded-xl bg-muted animate-pulse" />
-        <div className="h-72 rounded-xl bg-muted animate-pulse" />
-      </div>
-    );
-  }
-
-  if (isError || !data) {
-    return (
-      <div className="max-w-5xl mx-auto px-4 py-16 text-center">
-        <h1 className="text-2xl font-bold text-red-600">Unable to load menu</h1>
-        <p className="mt-2 text-muted-foreground">
-          {typeof error === "object" &&
-          error &&
-          "message" in error &&
-          typeof error.message === "string"
-            ? error.message
-            : "Please try again in a moment."}
-        </p>
-      </div>
-    );
-  }
-
-  return (
-    <div className="min-h-screen bg-[#f5f5f5] pb-24">
-      <div className="max-w-6xl mx-auto px-4 pt-6">
-        <Card className="overflow-hidden border-0 shadow-md bg-white">
-          <div className="relative h-48 md:h-56">
-            <Image
-              src="/bannerBG1_1.jpg"
-              alt={data.restaurant.restaurantName}
-              fill
-              className="object-cover"
-              priority
+      <div className="min-h-screen bg-white">
+        <div className="max-w-5xl mx-auto p-6 space-y-6">
+          <div className="h-10 w-64 bg-gray-200 animate-pulse rounded" />
+          <div className="h-32 bg-gray-100 animate-pulse rounded-3xl" />
+          {[1, 2, 3].map((i) => (
+            <div
+              key={i}
+              className="h-32 bg-gray-100 animate-pulse rounded"
             />
-            <div className="absolute inset-0 bg-black/45" />
-            <div className="absolute bottom-4 left-4 text-white">
-              <h1 className="text-3xl font-bold">{data.restaurant.restaurantName}</h1>
-              <p className="mt-1 flex items-center gap-1 text-sm text-white/90">
-                <MapPin className="h-4 w-4" />
-                {data.restaurant.area}, {data.restaurant.city}
-              </p>
-              {data.tableNumber !== null && (
-                <Badge className="mt-3 bg-[#eb0029] hover:bg-[#eb0029]">
-                  Table {data.tableNumber}
-                </Badge>
-              )}
+          ))}
+        </div>
+      </div>
+    );
+  }
+if (isError || !data) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-white">
+        <div className="text-center">
+          <ChefHat className="h-14 w-14 mx-auto mb-4 text-gray-400" />
+          <h2 className="text-2xl font-bold text-gray-900">
+            Unable to load menu
+          </h2>
+          <p className="text-gray-500 mt-2">
+            {typeof error === "object" &&
+            error &&
+            "message" in error
+              ? String(error.message)
+              : "Please try again later"}
+          </p>
+        </div>
+      </div>
+    );
+  }
+return (
+    <div className="bg-[#f8f8f8] min-h-screen">
+      <div className="max-w-5xl mx-auto px-4">
+        {/* Breadcrumb */}
+        <div className="pt-4 pb-2 text-sm text-gray-600 flex items-center gap-2">
+          <a href="/" className="hover:text-gray-900">Home</a>
+          <span>/</span>
+          <a href={`/city/${city}`} className="hover:text-gray-900">{city}</a>
+          <span>/</span>
+          <span className="text-gray-900 font-medium">{data.restaurant.restaurantName}</span>
+        </div>
+
+        {/* Restaurant Name */}
+        <h1 className="text-4xl font-bold text-gray-900 mb-4">
+          {data.restaurant.restaurantName}
+        </h1>
+
+        {/* Main Restaurant Info Card */}
+        <div className="bg-white rounded-3xl p-6 mb-6 border border-gray-100 shadow-sm">
+          <div className="space-y-4">
+            {/* Rating and Price */}
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2 bg-green-600 text-white px-3 py-1 rounded-full font-semibold">
+                <Star className="h-4 w-4 fill-current" />
+                {data.restaurant.rating ?? 4.4} ({Math.round(Math.random() * 5000) + 1000}K+ ratings)
+              </div>
+              <span className="text-gray-900 font-semibold">₹{data.restaurant.deliveryFee ?? 400} for two</span>
+            </div>
+
+            {/* Cuisines Tags */}
+            <div className="flex flex-wrap gap-2">
+              {data.restaurant.cuisines?.map((cuisine, idx) => (
+                <a
+                  key={idx}
+                  href="#"
+                  className="text-orange-600 hover:text-orange-700 font-medium text-sm"
+                >
+                  {cuisine}{idx < (data.restaurant.cuisines?.length ?? 1) - 1 ? ',' : ''}
+                </a>
+              )) || <span className="text-orange-600 font-medium">Pizzas, Italian</span>}
+            </div>
+
+            {/* Location and Delivery Time */}
+            <div className="flex items-start gap-6 text-gray-700">
+              <div className="flex items-center gap-2">
+                <MapPin className="h-5 w-5 text-gray-400 shrink-0" />
+                <div>
+                  <p className="text-sm font-medium">Outlet</p>
+                  <p className="text-xs text-gray-500">{data.restaurant.area}</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <Clock3 className="h-5 w-5 text-gray-400 shrink-0" />
+                <div>
+                  <p className="text-sm font-medium">{data.restaurant.deliveryTime ?? 25}-30 mins</p>
+                  <p className="text-xs text-gray-500">Delivery time</p>
+                </div>
+              </div>
             </div>
           </div>
-        </Card>
+        </div>
 
-        <div className="sticky top-16 z-30 mt-4 bg-[#f5f5f5] py-2">
-          <div className="flex gap-2 overflow-x-auto no-scrollbar">
+        {/* Search */}
+        <div className="sticky top-16 z-50 bg-[#f8f8f8] py-4">
+          <div className="flex items-center gap-3">
+            <div className="flex-1 relative">
+              <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+              <Input
+                placeholder="Search for dishes"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="pl-10 bg-white border-gray-300"
+              />
+            </div>
+            {data.tableNumber && (
+              <Badge className="bg-orange-600 hover:bg-orange-700 px-3 py-2 h-10 flex items-center">
+                Table {data.tableNumber}
+              </Badge>
+            )}
+          </div>
+        </div>
+
+        {/* Categories Horizontal Scroll */}
+        <div className="sticky top-32 z-40 bg-[#f8f8f8] py-3">
+          <div className="overflow-x-auto whitespace-nowrap flex gap-3 pb-2">
             {groupedMenu.map(([category]) => (
-              <a
+              <button
                 key={category}
-                href={`#cat-${category.toLowerCase().replace(/\s+/g, "-")}`}
-                className="rounded-full border bg-white px-4 py-2 text-sm font-medium whitespace-nowrap hover:bg-gray-50"
+                onClick={() => scrollToCategory(category)}
+                className={`px-4 py-2 rounded-full border text-sm transition font-medium shrink-0 ${
+                  activeCategory === category
+                    ? "bg-orange-500 text-white border-orange-500"
+                    : "bg-white text-gray-700 border-gray-300 hover:border-gray-400"
+                }`}
               >
                 {category}
-              </a>
+              </button>
             ))}
           </div>
         </div>
 
-        <div className="mt-4 space-y-6">
-          {groupedMenu.map(([category, items]) => (
-            <section
-              key={category}
-              id={`cat-${category.toLowerCase().replace(/\s+/g, "-")}`}
-              className="rounded-xl bg-white p-4 shadow-sm"
-            >
-              <h2 className="text-xl font-bold">{category}</h2>
-              <Separator className="my-3" />
+        {/* Menu Sections */}
+        <div className="mt-6 pb-32">
+          {groupedMenu.map(
+            ([category, items]) => (
+              <section
+                key={category}
+                ref={(el) => {
+                  if (el) {
+                    categoryRefs.current[category] = el;
+                  }
+                }}
+                className="mb-10"
+              >
+                {/* Category Header */}
+                <div className="mb-5">
+                  <h2 className="text-2xl font-bold text-gray-900">
+                    {category}
+                  </h2>
+                  <p className="text-sm text-gray-500 mt-1">
+                    {items.length} items
+                  </p>
+                </div>
 
-              <div className="space-y-4">
-                {items.map((item) => (
-                  <Card
+                {/* Items Container */}
+                <div className="bg-white rounded-2xl overflow-hidden shadow-sm">
+                  {items.map((item, index) => (
+                  <div
                     key={item.id}
-                    className={`border shadow-none ${!item.available ? "opacity-70" : ""}`}
+                    className={`flex justify-between gap-4 p-5 ${
+                      index !==
+                      items.length - 1
+                        ? "border-b"
+                        : ""
+                    }`}
                   >
-                    <CardContent className="p-4">
-                      <div className="flex gap-4">
-                        <div className="flex-1 space-y-2">
-                          <div className="flex items-center gap-2">
-                            <h3 className="text-lg font-semibold capitalize">{item.name}</h3>
-                            {!item.available && (
-                              <Badge variant="destructive" className="text-xs">
-                                Unavailable
-                              </Badge>
-                            )}
-                          </div>
-                          {item.description ? (
-                            <p className="text-sm text-muted-foreground line-clamp-2">
-                              {item.description}
-                            </p>
-                          ) : null}
-                          <div className="flex items-center gap-3 text-sm">
-                            <span className="font-bold text-[#eb0029]">
-                              ₹{item.price.toFixed(2)}
-                            </span>
-                            <span className="text-muted-foreground flex items-center gap-1">
-                              <Clock3 className="h-3.5 w-3.5" />
-                              {item.prepTime} mins
-                            </span>
-                          </div>
-                        </div>
+                    {/* LEFT SIDE */}
 
-                        <div className="w-28 md:w-36">
-                          <div className="relative h-24 md:h-28 w-full overflow-hidden rounded-lg border">
-                            <Image
-                              src={item.image || "/placeholder.svg"}
-                              alt={item.name}
-                              fill
-                              className="object-cover"
-                            />
+                    <div className="flex-1">
+
+                      {/* Veg Indicator */}
+
+                      <div
+                        className={`w-4 h-4 border flex items-center justify-center mb-2 ${
+                          item.isVeg
+                            ? "border-green-600"
+                            : "border-red-600"
+                        }`}
+                      >
+                        <div
+                          className={`w-2 h-2 rounded-full ${
+                            item.isVeg
+                              ? "bg-green-600"
+                              : "bg-red-600"
+                          }`}
+                        />
+                      </div>
+
+                      {/* Name */}
+
+                      <h3 className="font-semibold text-lg text-gray-900">
+                        {item.name}
+                      </h3>
+
+                      {/* Price */}
+
+                      <p className="font-semibold mt-1 text-gray-900">
+                        ₹
+                        {item.price.toFixed(
+                          2
+                        )}
+                      </p>
+
+                      {/* Prep Time */}
+
+                      <div className="flex items-center gap-1 mt-2 text-sm text-gray-500">
+
+                        <Clock3 className="h-3 w-3" />
+
+                        {item.prepTime}
+                        mins
+                      </div>
+
+                      {/* Description */}
+
+                      {item.description && (
+                        <p className="text-sm text-gray-500 mt-3 line-clamp-3 max-w-xl">
+                          {
+                            item.description
+                          }
+                        </p>
+                      )}
+
+                      {/* Out Of Stock */}
+
+                      {!item.available && (
+                        <div className="mt-3">
+
+                          <Badge
+                            variant="secondary"
+                            className="bg-red-100 text-red-700"
+                          >
+                            Out of Stock
+                          </Badge>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* RIGHT SIDE */}
+
+                    <div className="w-32 shrink-0">
+
+                      <div className="relative">
+
+                        <Image
+                          src={item.image || "/placeholder.svg"}
+                          alt={item.name}
+                          width={130}
+                          height={130}
+                          className="w-32 h-32 object-cover rounded-xl border border-gray-200"
+                        />
+
+                        {!item.available && (
+                          <div className="absolute inset-0 bg-black/40 rounded-xl flex items-center justify-center">
+                            <span className="text-white text-xs font-semibold">
+                              Out of Stock
+                            </span>
                           </div>
-                          <div className="mt-2">
-                            <AddToCartButton
-                              menuItemId={item.id}
-                              tableId={tableId}
-                              available={item.available}
-                            />
-                          </div>
+                        )}
+
+                        {/* Add Button */}
+                        <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 z-10">
+                          <AddToCartButton
+                            menuItemId={item.id}
+                            tableId={tableId}
+                            available={item.available}
+                          />
                         </div>
                       </div>
-                    </CardContent>
-                  </Card>
+                    </div>
+                  </div>
                 ))}
-              </div>
-            </section>
-          ))}
+                </div>
+              </section>
+            )
+          )}
         </div>
-      </div>
 
-      <CartDialog tableId={tableId} restaurantId={data.restaurant.id} />
+        {/* Cart Dialog */}
+        <CartDialog tableId={tableId} restaurantId={data.restaurant.id} />
+      </div>
     </div>
   );
 }

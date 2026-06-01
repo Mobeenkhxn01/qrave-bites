@@ -11,6 +11,8 @@ export function useRestaurantStep2(email: string) {
       return data.data;
     },
     enabled: !!email,
+    staleTime: 15 * 60 * 1000, // 15 minutes
+    gcTime: 30 * 60 * 1000, // 30 minutes cache
   });
 }
 

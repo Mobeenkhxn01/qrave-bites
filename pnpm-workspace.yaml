@@ -1,0 +1,14 @@
+packages:
+  - .
+
+overrides:
+  "@auth/core": 0.41.1
+
+allowBuilds:
+  "@prisma/client": true
+  "@prisma/engines": true
+  bcrypt: true
+  msw: false
+  prisma: true
+  sharp: true
+  unrs-resolver: true

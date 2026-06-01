@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
+import React from "react";
 
 interface CartItem {
   id: string;
@@ -90,14 +91,18 @@ export const useCart = (tableId: string | null) => {
     },
   });
 
-  const totalItems =
-    cart?.cartItems?.reduce((sum, item) => sum + item.quantity, 0) || 0;
+  const totalItems = React.useMemo(
+    () => cart?.cartItems?.reduce((sum, item) => sum + item.quantity, 0) || 0,
+    [cart?.cartItems]
+  );
 
-  const totalPrice =
-    cart?.cartItems?.reduce(
+  const totalPrice = React.useMemo(
+    () => cart?.cartItems?.reduce(
       (sum, item) => sum + item.menuItem.price * item.quantity,
       0
-    ) || 0;
+    ) || 0,
+    [cart?.cartItems]
+  );
 
   return {
     cart,

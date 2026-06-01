@@ -3,10 +3,12 @@
 import { SessionProvider } from "next-auth/react";
 import ReactQueryProvider from "@/providers/ReactQueryProvider";
 import { CartProvider } from "@/context/CardContext";
-import ClientLoadingWrapper from "@/providers/ClientLoadingWrapper";
-
-import { Suspense } from "react";
+import { Suspense, memo } from "react";
 import PusherProvider from "./PusherProvider";
+
+// Memoize to prevent unnecessary re-renders
+const MemoizedCartProvider = memo(CartProvider);
+const MemoizedPusherProvider = memo(PusherProvider);
 
 export default function ClientProviders({
   children,
@@ -14,19 +16,16 @@ export default function ClientProviders({
   children: React.ReactNode;
 }) {
   return (
-    <Suspense fallback={<div className="p-10 text-center">Loading...</div>}>
-
-      <ReactQueryProvider>
-        <CartProvider>
-          <ClientLoadingWrapper>
-            <SessionProvider>
-        <PusherProvider>
+    <ReactQueryProvider>
+      <SessionProvider>
+        <Suspense fallback={null}>
+          <MemoizedCartProvider>
+            <MemoizedPusherProvider>
               {children}
-        </PusherProvider>
-            </SessionProvider>
-          </ClientLoadingWrapper>
-        </CartProvider>
-      </ReactQueryProvider>
-    </Suspense>
+            </MemoizedPusherProvider>
+          </MemoizedCartProvider>
+        </Suspense>
+      </SessionProvider>
+    </ReactQueryProvider>
   );
 }

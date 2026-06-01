@@ -2,6 +2,8 @@
 import { useEffect, useState } from "react";
 import { pusherClient } from "@/lib/pusher-client";
 
+const MAX_ORDERS_DISPLAY = 50; // Prevent memory leak from unlimited array growth
+
 export default function RestaurantOrderListener({ restaurantId }: { restaurantId: string }) {
   const [orders, setOrders] = useState<any[]>([]);
 
@@ -9,13 +11,19 @@ export default function RestaurantOrderListener({ restaurantId }: { restaurantId
     const pusher = pusherClient;
     const channel = pusher.subscribe(`restaurant-${restaurantId}`);
 
-    channel.bind("new-order", (data: any) => {
+    const handleNewOrder = (data: any) => {
       console.log("New order:", data);
-      setOrders((prev) => [data, ...prev]);
-    });
+      setOrders((prev) => {
+        const updated = [data, ...prev];
+        // Keep only last 50 orders to prevent memory bloat
+        return updated.slice(0, MAX_ORDERS_DISPLAY);
+      });
+    };
+
+    channel.bind("new-order", handleNewOrder);
 
     return () => {
-      channel.unbind_all();
+      channel.unbind("new-order", handleNewOrder);
       channel.unsubscribe();
       pusher.disconnect();
     };

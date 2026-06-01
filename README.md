@@ -48,11 +48,11 @@ Customers can scan table QR codes, browse menus, place orders, and pay online. R
 ## Monorepo Layout (Important Paths)
 
 ```txt
+app/
+  (userLayout)/...                   # Customer-facing pages
+  (adminLayout)/dashboard/...        # Protected owner/admin dashboard
+  api/.../route.ts                   # API routes
 src/
-  app/
-    (userLayout)/...                 # Customer-facing pages
-    (adminLayout)/dashboard/...      # Protected owner/admin dashboard
-    api/.../route.ts                 # API routes
   components/                        # Shared UI + feature components
   hooks/                             # Custom hooks
   lib/                               # Auth, Prisma, Stripe, Pusher, validators, utils
@@ -203,11 +203,11 @@ pnpm prisma studio
 
 ## Stripe Integration
 
-- Order checkout endpoint: `src/app/api/checkout/route.ts` and `src/app/api/stripe/checkout-order/route.ts`
-- Subscription checkout endpoint: `src/app/api/stripe/checkout-subscribe/route.ts`
-- Customer portal endpoint: `src/app/api/stripe/portal/route.ts`
-- Session lookup endpoint: `src/app/api/stripe/session/[sessionId]/route.ts`
-- Webhook handler: `src/app/api/stripe/webhook/route.ts`
+- Order checkout endpoint: `app/api/checkout/route.ts` and `app/api/stripe/checkout-order/route.ts`
+- Subscription checkout endpoint: `app/api/stripe/checkout-subscribe/route.ts`
+- Customer portal endpoint: `app/api/stripe/portal/route.ts`
+- Session lookup endpoint: `app/api/stripe/session/[sessionId]/route.ts`
+- Webhook handler: `app/api/stripe/webhook/route.ts`
 
 ### Local webhook testing
 
@@ -226,7 +226,7 @@ Then set `MOBEEN_STRIPE_WEBHOOK_SECRET` from the CLI output.
 
 ## File Uploads (AWS S3)
 
-- Upload API: `src/app/api/upload/route.ts`
+- Upload API: `app/api/upload/route.ts`
 - Requires valid IAM credentials and S3 bucket access policy.
 
 ## API Surface (Current Route Files)

@@ -3,12 +3,13 @@
 import React, { createContext, useContext } from "react";
 import { useSearchParams } from "next/navigation";
 import { useCart } from "@/hooks/useCart";
+import { Suspense } from "react";
 
 type CartContextType = ReturnType<typeof useCart>;
 
 const CartContext = createContext<CartContextType | null>(null);
 
-export function CartProvider({ children }: { children: React.ReactNode }) {
+function CartProviderContent({ children }: { children: React.ReactNode }) {
   const searchParams = useSearchParams();
   const tableId = searchParams.get("tableId");
 
@@ -18,6 +19,14 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     <CartContext.Provider value={cart}>
       {children}
     </CartContext.Provider>
+  );
+}
+
+export function CartProvider({ children }: { children: React.ReactNode }) {
+  return (
+    <Suspense fallback={null}>
+      <CartProviderContent>{children}</CartProviderContent>
+    </Suspense>
   );
 }
 

@@ -10,15 +10,11 @@ export default function ClientLoadingWrapper({
 }: {
   children: React.ReactNode;
 }) {
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    // Simulate loading delay or wait for data
-    const timer = setTimeout(() => {
-      setIsLoading(false);
-    }, 2000); // 2 seconds
-
-    return () => clearTimeout(timer);
+    // Disable loading screen immediately - use skeleton screens for real data loading
+    setIsLoading(false);
   }, []);
 
   return (

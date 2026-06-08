@@ -133,7 +133,7 @@ export async function POST(req: Request) {
         select: { orderNumber: true },
       });
 
-      return tx.order.create({
+      const createdOrder = await tx.order.create({
         data: {
           restaurantId,
           tableId,
@@ -153,6 +153,16 @@ export async function POST(req: Request) {
           },
         },
       });
+
+      // Clear the cart after creating the order
+      await tx.cartItem.deleteMany({
+        where: { cartId: cart.id },
+      });
+      await tx.cart.delete({
+        where: { id: cart.id },
+      });
+
+      return createdOrder;
     });
 
     return NextResponse.json({ success: true, order });
@@ -161,4 +171,3 @@ export async function POST(req: Request) {
     return NextResponse.json({ message: "Failed" }, { status: 500 });
   }
 }
-

@@ -1,389 +1,1282 @@
 generator client {
-  provider      = "prisma-client-js"
-  binaryTargets = ["native", "rhel-openssl-3.0.x"]
+  provider = "prisma-client"
+  output   = "../generated/prisma"
 }
 
 datasource db {
-  provider = "mongodb"
-  url      = env("DATABASE_URL")
+  provider = "postgresql"
 }
+
+
 
 enum Role {
+
   USER
+
   RESTAURANT_OWNER
+
   STAFF
+
   ADMIN
+
 }
+
+
 
 enum OrderStatus {
+
   PENDING
+
   CONFIRMED
+
   IN_PROGRESS
+
   COMPLETED
+
   CANCELLED
+
 }
+
+
 
 enum AccountType {
+
   SAVINGS
+
   CURRENT
+
 }
+
+
 
 enum NotificationType {
+
   NEW_ORDER
+
   ORDER_UPDATE
+
 }
+
+
 
 enum RestaurantStatus {
+
   NOT_SUBMITTED
+
   PENDING_VERIFICATION
+
   APPROVED
+
   REJECTED
+
 }
+
+
 
 enum PlanType {
+
   FREE
+
   BASIC
+
   PRO
+
 }
+
+
+
+enum OrderType {
+
+  DINE_IN
+
+  TAKEAWAY
+
+  DELIVERY
+
+}
+
+
+
+enum PaymentMethod {
+
+  CARD
+
+  UPI
+
+  CASH
+
+  WALLET
+
+}
+
+
+
+enum TableStatus {
+
+  AVAILABLE
+
+  OCCUPIED
+
+  RESERVED
+
+  CLEANING
+
+}
+
+
+
+enum StaffRole {
+
+  MANAGER
+
+  CHEF
+
+  WAITER
+
+  CASHIER
+
+  DELIVERY
+
+}
+
+
 
 model User {
-  id            String    @id @default(auto()) @map("_id") @db.ObjectId
+
+  id            String    @id @default(uuid())  
+
   name          String?
+
   email         String    @unique
+
   password      String?
+
   emailVerified DateTime?
+
   role          Role      @default(USER)
+
   image         String?
 
+
+
   restaurantStatus     RestaurantStatus @default(NOT_SUBMITTED)
+
   trialEndsAt          DateTime?
+
   plan                 PlanType         @default(FREE)
+
   stripeCustomerId     String?
+
   stripeSubscriptionId String?
+
   subscriptionStatus   String?
 
+
+
   accounts       Account[]
+
   sessions       Session[]
+
   authenticators Authenticator[]
 
+
+
   menuItems     MenuItem[]    @relation("UserMenuItems")
+
   orders        Order[]
+
   categories    Category[]
+
   userAddresses UserAddress[]
+
   carts         Cart[]
 
+  reviews       Review[]
+
+
+
   createdAt DateTime @default(now())
+
   updatedAt DateTime @updatedAt
+
+
 
   restaurantStep1 RestaurantStep1?
+
   restaurantStep3 RestaurantStep3[]
+
   restaurantStep4 RestaurantStep4[]
+
 }
+
+
 
 model Account {
-  id                String  @id @default(auto()) @map("_id") @db.ObjectId
-  userId            String  @db.ObjectId
+
+  id                String  @id @default(uuid())  
+
+  userId            String  
+
   type              String
+
   provider          String
+
   providerAccountId String
+
   refresh_token     String?
+
   access_token      String?
+
   expires_at        Int?
+
   token_type        String?
+
   scope             String?
+
   id_token          String?
+
   session_state     String?
 
+
+
   createdAt DateTime @default(now())
+
   updatedAt DateTime @updatedAt
 
+
+
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+
 
   @@unique([provider, providerAccountId])
+
 }
+
+
 
 model Session {
-  id           String   @id @default(auto()) @map("_id") @db.ObjectId
+
+  id           String   @id @default(uuid())  
+
   sessionToken String   @unique
-  userId       String   @db.ObjectId
+
+  userId       String   
+
   expires      DateTime
+
   user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+
+
   createdAt DateTime @default(now())
+
   updatedAt DateTime @updatedAt
+
 }
+
+
 
 model VerificationToken {
-  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+
+  id         String   @id @default(uuid())  
+
   identifier String
+
   token      String
+
   expires    DateTime
 
+
+
   @@unique([identifier, token])
+
 }
 
+
+
 model Authenticator {
-  credentialID         String  @id @map("_id")
-  userId               String  @db.ObjectId
+
+  credentialID         String  @id 
+
+  userId               String  
+
   providerAccountId    String
+
   credentialPublicKey  String
+
   counter              Int
+
   credentialDeviceType String
+
   credentialBackedUp   Boolean
+
   transports           String?
+
+
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+
+
   @@unique([userId, credentialID])
+
 }
+
+
 
 model Category {
-  id   String @id @default(auto()) @map("_id") @db.ObjectId
+
+  id   String @id @default(uuid())  
+
   name String
 
-  userId String @db.ObjectId
+
+
+  userId String 
+
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+
 
   menuItems MenuItem[] @relation("CategoryMenuItems")
+
 }
+
+
 
 model MenuItem {
-  id          String  @id @default(auto()) @map("_id") @db.ObjectId
+
+  id          String  @id @default(uuid())  
+
   name        String
+
   price       Float
+
   description String?
+
   image       String?
+
   prepTime    Int     @default(15)
+
   available   Boolean @default(true)
 
-  userId String @db.ObjectId
+  isVeg       Boolean @default(false)
+
+  isBestseller Boolean @default(false)
+
+
+
+  userId String 
+
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade, name: "UserMenuItems")
 
-  categoryId String   @db.ObjectId
+
+
+  categoryId String   
+
   category   Category @relation(fields: [categoryId], references: [id], onDelete: Cascade, name: "CategoryMenuItems")
 
-  restaurantId    String          @db.ObjectId
+
+
+  restaurantId    String          
+
   restaurantStep1 RestaurantStep1 @relation(fields: [restaurantId], references: [id], onDelete: Cascade, name: "RestaurantMenuItems")
 
+
+
   cartItems CartItem[]
+
   OrderItem OrderItem[]
 
+  modifiers ItemModifier[] @relation("MenuItemModifiers")
+
+  reviews   Review[]
+
+
+
   @@index([restaurantId])
+
 }
 
+
+
 model RestaurantStep1 {
-  id             String   @id @default(auto()) @map("_id") @db.ObjectId
+
+  id             String   @id @default(uuid())  
+
   restaurantName String
+
   slug           String   @unique
+
   ownerName      String
+
   email          String   @unique
+
   phone          String   @unique
+
   mobile         Boolean?
+
   shop           Int
+
   floor          String?
+
   area           String
+
   city           String
+
   landmark       String?
+
   latitude       Float?
+
   longitude      Float?
+
   address        String?
 
-  userId String @unique @db.ObjectId
+  cuisines       String[]
+
+
+
+  userId String @unique 
+
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+
 
   menu MenuItem[] @relation("RestaurantMenuItems")
 
+
+
   step2 RestaurantStep2?
 
+
+
   createdAt    DateTime       @default(now())
+
   updatedAt    DateTime       @updatedAt
+
   Notification Notification[]
+
   Table        Table[]
+
   orders       Order[]
 
+  staff        Staff[]
+
+  reservations Reservation[]
+
+  promoCodes   PromoCode[]
+
+  loyaltyPrograms LoyaltyProgram[]
+
+  invoices     Invoice[]
+
+  waiterCalls  WaiterCall[]
+
+
+
   @@index([city])
+
 }
+
+
 
 model RestaurantStep2 {
-  id                   String   @id @default(auto()) @map("_id") @db.ObjectId
+
+  id                   String   @id @default(uuid())  
+
   cuisine              String[]
+
   restaurantImageUrl   String
+
   foodImageUrl         String
+
   deliveryImageUrl     String
+
   restaurantProfileUrl String
+
   days                 String[]
+
   openingTime          String
+
   closingTime          String
 
-  step1Id String          @unique @db.ObjectId
+
+
+  step1Id String          @unique 
+
   step1   RestaurantStep1 @relation(fields: [step1Id], references: [id], onDelete: Cascade)
 
+
+
   createdAt DateTime @default(now())
+
   updatedAt DateTime @updatedAt
+
 }
+
+
 
 model RestaurantStep3 {
-  id                String      @id @default(auto()) @map("_id") @db.ObjectId
+
+  id                String      @id @default(uuid())  
+
   panNumber         String      @unique
+
   fullName          String
+
   restaurantAddress String
+
   panImage          String?
+
   accountNumber     String      @unique
+
   ifscCode          String
+
   accountType       AccountType
+
   upiId             String?     @unique
 
-  userId String @db.ObjectId
+
+
+  userId String 
+
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+
+
   createdAt DateTime @default(now())
+
   updatedAt DateTime @updatedAt
+
 }
+
+
 
 model RestaurantStep4 {
-  id        String  @id @default(auto()) @map("_id") @db.ObjectId
+
+  id        String  @id @default(uuid())  
+
   agreement Boolean
 
-  userId String @db.ObjectId
+
+
+  userId String 
+
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+
 
   createdAt DateTime @default(now())
+
   updatedAt DateTime @default(now()) @updatedAt
+
 }
+
+
 
 model Order {
-  id          String @id @default(auto()) @map("_id") @db.ObjectId
+
+  id          String @id @default(uuid())  
+
   orderNumber Int    @default(1)
+
   tableNumber Int?
 
-  userId          String?     @db.ObjectId
+
+
+  userId          String?     
+
   phone           String?
+
   totalAmount     Float       @default(0)
+
   status          OrderStatus @default(PENDING)
+
   paid            Boolean     @default(false)
+
   stripeSessionId String?
 
-  restaurantId String          @db.ObjectId
+  orderType       OrderType   @default(DINE_IN)
+
+  paymentMethod   PaymentMethod?
+
+  specialInstructions String?
+
+  estimatedTime   Int? // in minutes
+
+  completedAt     DateTime?
+
+
+
+  restaurantId String          
+
   restaurant   RestaurantStep1 @relation(fields: [restaurantId], references: [id])
 
+
+
   items     OrderItem[]
+
   createdAt DateTime    @default(now())
+
   updatedAt DateTime    @updatedAt
+
   user      User?       @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+
+
   table         Table?         @relation(fields: [tableId], references: [id])
-  tableId       String?        @db.ObjectId
+
+  tableId       String?        
+
   notifications Notification[]
 
+  invoice       Invoice?
+
+  staffAssigned StaffAssignment[]
+
+
+
   @@index([restaurantId])
+
   @@index([tableNumber])
+
   @@index([orderNumber])
+
 }
+
+
 
 model OrderItem {
-  id         String   @id @default(auto()) @map("_id") @db.ObjectId
-  orderId    String   @db.ObjectId
-  menuItemId String   @db.ObjectId
+
+  id         String   @id @default(uuid())  
+
+  orderId    String   
+
+  menuItemId String   
+
   quantity   Int      @default(1)
+
   price      Float
+
   status     String   @default("pending")
+
+  specialInstructions String?
+
+  
+
   order      Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
   menuItem   MenuItem @relation(fields: [menuItemId], references: [id])
+
+  modifiers  OrderItemModifier[] @relation("OrderItemModifiers")
+
 }
+
+
 
 model Cart {
-  id     String  @id @default(auto()) @map("_id") @db.ObjectId
-  userId String? @db.ObjectId
+
+  id     String  @id @default(uuid())  
+
+  userId String? 
+
   user   User?   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  tableId String? @db.ObjectId
+
+
+  tableId String? 
+
   table   Table?  @relation(fields: [tableId], references: [id], onDelete: Cascade)
 
+
+
   cartItems CartItem[]
+
   createdAt DateTime   @default(now())
+
   updatedAt DateTime   @updatedAt
 
+
+
   @@index([userId])
+
   @@index([tableId])
+
 }
+
+
 
 model CartItem {
-  id         String   @id @default(auto()) @map("_id") @db.ObjectId
-  menuItemId String   @db.ObjectId
+
+  id         String   @id @default(uuid())  
+
+  menuItemId String   
+
   menuItem   MenuItem @relation(fields: [menuItemId], references: [id])
+
   quantity   Int      @default(1)
-  cartId     String   @db.ObjectId
+
+  cartId     String   
+
   cart       Cart     @relation(fields: [cartId], references: [id], onDelete: Cascade)
+
   createdAt  DateTime @default(now())
+
   updatedAt  DateTime @updatedAt
+
 }
+
+
 
 model UserAddress {
-  id            String   @id @default(auto()) @map("_id") @db.ObjectId
+
+  id            String   @id @default(uuid())  
+
   email         String
+
   streetAddress String?
+
   postalCode    String?
+
   city          String?
+
   country       String?
+
   phone         String?
+
   createdAt     DateTime @default(now())
+
   updatedAt     DateTime @updatedAt
 
-  userId String @db.ObjectId
+
+
+  userId String 
+
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+
+
   @@unique([email, userId])
+
 }
 
+
+
 model Notification {
-  id           String           @id @default(auto()) @map("_id") @db.ObjectId
-  restaurantId String           @db.ObjectId
+
+  id           String           @id @default(uuid())  
+
+  restaurantId String           
+
   message      String
+
   type         NotificationType
+
   isRead       Boolean          @default(false)
+
   payload      Json?
+
   createdAt    DateTime         @default(now())
 
-  orderId String? @db.ObjectId
+
+
+  orderId String? 
+
   order   Order?  @relation(fields: [orderId], references: [id])
+
+
 
   restaurant RestaurantStep1 @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
 
+
+
   @@index([restaurantId])
+
 }
+
+
 
 model Table {
-  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+
+  id        String   @id @default(uuid())  
+
   number    Int
+
   qrCodeUrl String
+
   createdAt DateTime @default(now())
+
   scan      Int      @default(0)
 
-  restaurantId String          @db.ObjectId
+  status    TableStatus @default(AVAILABLE)
+
+  capacity  Int @default(4)
+
+  lastOccupied DateTime?
+
+  
+
+  restaurantId String          
+
   restaurant   RestaurantStep1 @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+
   orders       Order[]
+
   Cart         Cart[]
 
+  waiterCalls  WaiterCall[]
+
+  reservations Reservation[]
+
+
+
   @@unique([restaurantId, number])
+
   @@index([restaurantId])
+
 }
+
+
 
 model Inventory {
-  id            String   @id @default(auto()) @map("_id") @db.ObjectId
+
+  id            String   @id @default(uuid())  
+
   name          String
+
   category      String
+
   currentStock  Int      @default(0)
+
   minStock      Int      @default(0)
+
   maxStock      Int      @default(0)
+
   unit          String
+
   cost          Float    @default(0)
+
   supplier      String?
+
   lastRestocked DateTime @default(now())
+
   createdAt     DateTime @default(now())
+
   updatedAt     DateTime @updatedAt
+
 }
 
-model StripeEvent {
-  id        String  @id @map("_id")
+
+
+// ========== NEW MODELS FOR ENHANCED QR SYSTEM ==========
+
+
+
+model ItemModifier {
+
+  id         String @id @default(uuid())  
+
+  name       String
+
+  options    String[] // e.g., ["Small", "Medium", "Large"]
+
+  priceVariance Float[] // price differences for each option
+
+  isRequired Boolean @default(false)
+
+
+
+  menuItemId String   
+
+  menuItem   MenuItem @relation(fields: [menuItemId], references: [id], onDelete: Cascade, name: "MenuItemModifiers")
+
+
+
   createdAt DateTime @default(now())
+
+  updatedAt DateTime @updatedAt
+
+
+
+  @@index([menuItemId])
+
+}
+
+
+
+model OrderItemModifier {
+
+  id         String @id @default(uuid())  
+
+  modifierName String
+
+  selectedOption String
+
+
+
+  orderItemId String     
+
+  orderItem   OrderItem  @relation(fields: [orderItemId], references: [id], onDelete: Cascade, name: "OrderItemModifiers")
+
+
+
+  createdAt DateTime @default(now())
+
+}
+
+
+
+model Review {
+
+  id         String @id @default(uuid())  
+
+  rating     Int // 1-5
+
+  comment    String?
+
+  photos     String[]
+
+
+
+  userId String 
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+
+
+  menuItemId String   
+
+  menuItem   MenuItem @relation(fields: [menuItemId], references: [id], onDelete: Cascade)
+
+
+
+  createdAt DateTime @default(now())
+
+  updatedAt DateTime @updatedAt
+
+
+
+  @@index([menuItemId])
+
+  @@index([userId])
+
+}
+
+
+
+model Invoice {
+
+  id           String @id @default(uuid())  
+
+  invoiceNumber String @unique
+
+  subtotal     Float
+
+  tax          Float @default(0)
+
+  discount     Float @default(0)
+
+  totalAmount  Float
+
+  items        String // JSON stringified order items
+
+  paymentMethod PaymentMethod?
+
+  isPaid       Boolean @default(false)
+
+  paidAt       DateTime?
+
+  notes        String?
+
+
+
+  orderId String  @unique 
+
+  order   Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+
+
+  restaurantId String          
+
+  restaurant   RestaurantStep1 @relation(fields: [restaurantId], references: [id])
+
+
+
+  createdAt DateTime @default(now())
+
+  updatedAt DateTime @updatedAt
+
+
+
+  @@index([restaurantId])
+
+}
+
+
+
+model Staff {
+
+  id       String @id @default(uuid())  
+
+  name     String
+
+  phone    String
+
+  email    String?
+
+  role     StaffRole
+
+  password String?
+
+  
+
+  restaurantId String          
+
+  restaurant   RestaurantStep1 @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+
+  
+
+  assignments StaffAssignment[]
+
+  createdAt DateTime @default(now())
+
+  updatedAt DateTime @updatedAt
+
+
+
+  @@unique([restaurantId, phone])
+
+  @@index([restaurantId])
+
+}
+
+
+
+model StaffAssignment {
+
+  id       String @id @default(uuid())  
+
+  assignedAt DateTime @default(now())
+
+  unassignedAt DateTime?
+
+
+
+  orderId String 
+
+  order   Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+
+
+  staffId String 
+
+  staff   Staff  @relation(fields: [staffId], references: [id], onDelete: Cascade)
+
+
+
+  @@index([orderId])
+
+  @@index([staffId])
+
+}
+
+
+
+model WaiterCall {
+
+  id        String @id @default(uuid())  
+
+  reason    String? // bill, water, service, etc.
+
+  resolved  Boolean @default(false)
+
+  resolvedAt DateTime?
+
+
+
+  tableId String 
+
+  table   Table  @relation(fields: [tableId], references: [id], onDelete: Cascade)
+
+
+
+  restaurantId String          
+
+  restaurant   RestaurantStep1 @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+
+
+
+  createdAt DateTime @default(now())
+
+
+
+  @@index([tableId])
+
+  @@index([restaurantId])
+
+}
+
+
+
+model Reservation {
+
+  id             String @id @default(uuid())  
+
+  customerName   String
+
+  customerPhone  String
+
+  customerEmail  String?
+
+  numberOfGuests Int
+
+  reservationTime DateTime
+
+  notes          String?
+
+  status         String @default("confirmed") // confirmed, completed, cancelled
+
+
+
+  tableId String? 
+
+  table   Table?  @relation(fields: [tableId], references: [id])
+
+
+
+  restaurantId String          
+
+  restaurant   RestaurantStep1 @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+
+
+
+  createdAt DateTime @default(now())
+
+  updatedAt DateTime @updatedAt
+
+
+
+  @@index([restaurantId])
+
+  @@index([reservationTime])
+
+}
+
+
+
+model PromoCode {
+
+  id           String @id @default(uuid())  
+
+  code         String @unique
+
+  description  String?
+
+  discountType String // "fixed" or "percentage"
+
+  discountValue Float
+
+  maxUses      Int?
+
+  currentUses  Int @default(0)
+
+  validFrom    DateTime
+
+  validUntil   DateTime
+
+  isActive     Boolean @default(true)
+
+  minOrderAmount Float? // minimum order amount to apply
+
+
+
+  restaurantId String          
+
+  restaurant   RestaurantStep1 @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+
+
+
+  createdAt DateTime @default(now())
+
+  updatedAt DateTime @updatedAt
+
+
+
+  @@index([restaurantId])
+
+}
+
+
+
+model LoyaltyProgram {
+
+  id           String @id @default(uuid())  
+
+  name         String
+
+  pointsPerRupee Float @default(1)
+
+  redeemValue  Float // how much 1 point is worth in rupees
+
+  isActive     Boolean @default(true)
+
+
+
+  restaurantId String          
+
+  restaurant   RestaurantStep1 @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+
+
+
+  members LoyaltyMember[]
+
+  createdAt DateTime @default(now())
+
+  updatedAt DateTime @updatedAt
+
+
+
+  @@index([restaurantId])
+
+}
+
+
+
+model LoyaltyMember {
+
+  id       String @id @default(uuid())  
+
+  phoneNumber String
+
+  totalPoints Int @default(0)
+
+  
+
+  programId String          
+
+  program   LoyaltyProgram @relation(fields: [programId], references: [id], onDelete: Cascade)
+
+
+
+  createdAt DateTime @default(now())
+
+  updatedAt DateTime @updatedAt
+
+
+
+  @@unique([programId, phoneNumber])
+
+  @@index([programId])
+
+}
+
+
+
+model StripeEvent {
+
+  id        String  @id 
+
+  createdAt DateTime @default(now())
+
 }

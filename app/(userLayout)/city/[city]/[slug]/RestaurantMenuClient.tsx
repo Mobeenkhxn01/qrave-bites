@@ -3,6 +3,7 @@
 import { useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import Image from "next/image";
+import Link from "next/link";
 import { api } from "@/lib/api";
 import CartDialog from "@/app/(userLayout)/cart/CartDialog";
 import { AddToCartButton } from "@/components/menu/AddToCartButton";
@@ -142,9 +143,9 @@ return (
       <div className="max-w-5xl mx-auto px-4">
         {/* Breadcrumb */}
         <div className="pt-4 pb-2 text-sm text-gray-600 flex items-center gap-2">
-          <a href="/" className="hover:text-gray-900">Home</a>
+          <Link href="/" className="hover:text-gray-900">Home</Link>
           <span>/</span>
-          <a href={`/city/${city}`} className="hover:text-gray-900">{city}</a>
+          <Link href={`/city/${city}`} className="hover:text-gray-900">{city}</Link>
           <span>/</span>
           <span className="text-gray-900 font-medium">{data.restaurant.restaurantName}</span>
         </div>

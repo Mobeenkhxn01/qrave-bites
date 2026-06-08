@@ -125,8 +125,8 @@ export function ChartAreaInteractive() {
           <AreaChart data={filteredData}>
             <defs>
               <linearGradient id="fillRevenue" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="var(--color-revenue)" stopOpacity={0.8} />
-                <stop offset="95%" stopColor="var(--color-revenue)" stopOpacity={0.05} />
+                <stop offset="5%" stopColor="var(--primary)" stopOpacity={0.8} />
+                <stop offset="95%" stopColor="var(--primary)" stopOpacity={0.05} />
               </linearGradient>
             </defs>
 
@@ -148,7 +148,7 @@ export function ChartAreaInteractive() {
               dataKey="revenue"
               type="natural"
               fill="url(#fillRevenue)"
-              stroke="var(--color-revenue)"
+              stroke="var(--primary)"
               strokeWidth={2}
             />
           </AreaChart>

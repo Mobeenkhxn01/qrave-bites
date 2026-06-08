@@ -115,7 +115,7 @@ export default function OrdersTable() {
     queryKey: ["notifications"],
     queryFn: async () => {
       const res = await axios.get("/api/notifications");
-      return res.data?.notifications ?? []; 
+      return res.data?.notifications ?? [];
     },
   });
 

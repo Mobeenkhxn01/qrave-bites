@@ -9,13 +9,14 @@ import {
   IconFileWord,
   IconFolder,
   IconHelp,
-
   IconListDetails,
   IconReport,
   IconSearch,
   IconSettings,
-
-  IconCalendar
+  IconCalendar,
+  IconUsers,
+  IconTicket,
+  IconBell,
 } from "@tabler/icons-react"
 
 import { NavDocuments } from "@/components/shadcn-components/nav-documents"
@@ -64,6 +65,11 @@ const data = {
       title: "Table Qr Management",
       url: "/dashboard/qr-codes",
       icon: IconCalendar,
+    },
+    {
+      title: "Floor Service",
+      url: "/dashboard/management",
+      icon: IconBell,
     }
   ],
   navSecondary: [
@@ -86,17 +92,27 @@ const data = {
   business: [
     {
       name: "Payments",
-      url: "dashboard/payments",
+      url: "/dashboard/payments",
       icon: IconDatabase,
     },
     {
       name: "Management",
-      url: "dashboard/management",
+      url: "/dashboard/management",
       icon: IconReport,
     },
     {
+      name: "Staff",
+      url: "/dashboard/management?tab=staff",
+      icon: IconUsers,
+    },
+    {
+      name: "Promotions",
+      url: "/dashboard/management?tab=promos",
+      icon: IconTicket,
+    },
+    {
       name: "Billing",
-      url: "dashboard/billing",
+      url: "/dashboard/billing",
       icon: IconFileWord,
     },
   ],
